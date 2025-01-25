@@ -27,13 +27,8 @@ class WarningIndicators extends StatelessWidget {
             isBlinking: state.blinkerState == 'left' || state.blinkerState == 'both',
           ),
 
-          // Parking indicator
-          _IndicatorSvgIcon(
-            iconPath: 'librescoot-parking-brake.svg',
-            isActive: state.isParked,
-            activeColor: Colors.red,
-            size: 36, // Smaller than blinkers
-          ),
+          // Center indicators
+          _CenterIndicators(state: state),
 
           // Right turn signal
           _IndicatorSvgIcon(
@@ -198,7 +193,7 @@ class _IndicatorSvgIconState extends State<_IndicatorSvgIcon> with SingleTickerP
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final inactiveColor = isDark ? Colors.white24 : Colors.black26;
-    
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -216,4 +211,47 @@ class _IndicatorSvgIconState extends State<_IndicatorSvgIcon> with SingleTickerP
       },
     );
   }
+}
+
+class _CenterIndicators extends StatelessWidget {
+ final VehicleState state;
+ final double baseSize;
+
+ const _CenterIndicators({
+   required this.state,
+   this.baseSize = 36,
+ });
+
+ @override
+ Widget build(BuildContext context) {
+   return Row(
+     mainAxisSize: MainAxisSize.min,
+     children: [
+       if (state.isUnableToDrive) 
+         _IndicatorSvgIcon(
+           iconPath: 'librescoot-engine-warning.svg',
+           isActive: true,
+           activeColor: Colors.yellow,
+           size: baseSize,
+         ),
+         
+       if (state.blinkerState == 'both')
+         _IndicatorSvgIcon(
+           iconPath: 'librescoot-hazards.svg', 
+           isActive: true,
+           activeColor: Colors.red,
+           size: baseSize,
+           isBlinking: true,
+         ),
+         
+       if (state.isParked)
+         _IndicatorSvgIcon(
+           iconPath: 'librescoot-parking-brake.svg',
+           isActive: true,
+           activeColor: Colors.red,
+           size: baseSize,
+         ),
+     ],
+   );
+ }
 }
