@@ -75,6 +75,7 @@ class VehicleState {
   int signalQuality = 0;
   String mdbVersion = '';
   String nrfFwVersion = '';
+  bool isUnableToDrive = false;
 
   // Bluetooth connection status
   bool isBluetoothConnected = false;
