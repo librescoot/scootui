@@ -290,7 +290,8 @@ class MapOffline implements MapState {
       required this.mbTiles,
       required this.theme,
       this.onReady,
-      this.isReady = false});
+      this.isReady = false,
+      this.route = null});
 
   @override
   final MapController controller;
@@ -303,6 +304,8 @@ class MapOffline implements MapState {
   final void Function()? onReady;
   @JsonKey()
   final bool isReady;
+  @JsonKey()
+  final Route? route;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -326,16 +329,17 @@ class MapOffline implements MapState {
             (identical(other.mbTiles, mbTiles) || other.mbTiles == mbTiles) &&
             (identical(other.theme, theme) || other.theme == theme) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
-            (identical(other.isReady, isReady) || other.isReady == isReady));
+            (identical(other.isReady, isReady) || other.isReady == isReady) &&
+            (identical(other.route, route) || other.route == route));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, controller, position,
-      orientation, mbTiles, theme, onReady, isReady);
+      orientation, mbTiles, theme, onReady, isReady, route);
 
   @override
   String toString() {
-    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, mbTiles: $mbTiles, theme: $theme, onReady: $onReady, isReady: $isReady)';
+    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, mbTiles: $mbTiles, theme: $theme, onReady: $onReady, isReady: $isReady, route: $route)';
   }
 }
 
@@ -354,7 +358,8 @@ abstract mixin class $MapOfflineCopyWith<$Res>
       MbTiles mbTiles,
       Theme theme,
       void Function()? onReady,
-      bool isReady});
+      bool isReady,
+      Route? route});
 }
 
 /// @nodoc
@@ -376,6 +381,7 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
     Object? theme = null,
     Object? onReady = freezed,
     Object? isReady = null,
+    Object? route = freezed,
   }) {
     return _then(MapOffline(
       controller: null == controller
@@ -406,6 +412,10 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
               as bool,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
     ));
   }
 }
@@ -418,7 +428,8 @@ class MapOnline implements MapState {
       required this.orientation,
       required this.controller,
       this.onReady,
-      this.isReady = false});
+      this.isReady = false,
+      this.route = null});
 
   @override
   final LatLng position;
@@ -429,6 +440,8 @@ class MapOnline implements MapState {
   final void Function()? onReady;
   @JsonKey()
   final bool isReady;
+  @JsonKey()
+  final Route? route;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -450,16 +463,17 @@ class MapOnline implements MapState {
             (identical(other.controller, controller) ||
                 other.controller == controller) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
-            (identical(other.isReady, isReady) || other.isReady == isReady));
+            (identical(other.isReady, isReady) || other.isReady == isReady) &&
+            (identical(other.route, route) || other.route == route));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, position, orientation, controller, onReady, isReady);
+      runtimeType, position, orientation, controller, onReady, isReady, route);
 
   @override
   String toString() {
-    return 'MapState.online(position: $position, orientation: $orientation, controller: $controller, onReady: $onReady, isReady: $isReady)';
+    return 'MapState.online(position: $position, orientation: $orientation, controller: $controller, onReady: $onReady, isReady: $isReady, route: $route)';
   }
 }
 
@@ -475,7 +489,8 @@ abstract mixin class $MapOnlineCopyWith<$Res>
       double orientation,
       MapController controller,
       void Function()? onReady,
-      bool isReady});
+      bool isReady,
+      Route? route});
 }
 
 /// @nodoc
@@ -495,6 +510,7 @@ class _$MapOnlineCopyWithImpl<$Res> implements $MapOnlineCopyWith<$Res> {
     Object? controller = null,
     Object? onReady = freezed,
     Object? isReady = null,
+    Object? route = freezed,
   }) {
     return _then(MapOnline(
       position: null == position
@@ -517,6 +533,10 @@ class _$MapOnlineCopyWithImpl<$Res> implements $MapOnlineCopyWith<$Res> {
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
               as bool,
+      route: freezed == route
+          ? _self.route
+          : route // ignore: cast_nullable_to_non_nullable
+              as Route?,
     ));
   }
 }

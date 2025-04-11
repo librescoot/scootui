@@ -23,6 +23,7 @@ sealed class MapState with _$MapState {
     required Theme theme,
     void Function()? onReady,
     @Default(false) bool isReady,
+    @Default(null) Route? route,
   }) = MapOffline;
 
   const factory MapState.online({
@@ -31,5 +32,6 @@ sealed class MapState with _$MapState {
     required MapController controller,
     void Function()? onReady,
     @Default(false) bool isReady,
+    @Default(null) Route? route,
   }) = MapOnline;
 }

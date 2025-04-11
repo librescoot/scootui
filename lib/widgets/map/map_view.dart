@@ -1,12 +1,22 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
     show Alignment, BuildContext, Colors, Icon, Icons, StatelessWidget, Widget;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_map/flutter_map.dart'
-    show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, TileLayer;
+    show
+        FlutterMap,
+        MapController,
+        MapOptions,
+        Marker,
+        MarkerLayer,
+        Polyline,
+        PolylineLayer,
+        TileLayer;
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
+import 'package:routing_client_dart/routing_client_dart.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart'
     show TileProviders, VectorTileLayer;
 import 'package:vector_map_tiles_mbtiles/vector_map_tiles_mbtiles.dart'
@@ -71,6 +81,8 @@ class OfflineMapView extends StatelessWidget {
   final LatLng position;
   final double orientation;
   final void Function()? mapReady;
+  final FutureOr<void> Function(LatLng)? setDestination;
+  final Route? route;
 
   const OfflineMapView({
     super.key,
@@ -79,11 +91,35 @@ class OfflineMapView extends StatelessWidget {
     required this.mbTiles,
     required this.position,
     required this.orientation,
+    this.setDestination,
+    this.route,
     this.mapReady,
   });
 
+  Widget? _routeLayer() {
+    final line = route?.polyline;
+    if (line == null || line.isEmpty) {
+      return null;
+    }
+
+    final points =
+        line.map((lnglat) => LatLng(lnglat.lat, lnglat.lng)).toList();
+
+    return PolylineLayer(
+      polylines: [
+        Polyline(
+          points: points,
+          strokeWidth: 4.0,
+          color: Colors.lightBlue,
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final routeLayer = _routeLayer();
+
     return FlutterMap(
       options: MapOptions(
         onMapReady: mapReady,
@@ -91,6 +127,11 @@ class OfflineMapView extends StatelessWidget {
         maxZoom: 18,
         initialCenter: position,
         initialZoom: 17,
+        onSecondaryTap: (position, coordinates) {
+          if (setDestination != null) {
+            setDestination!(coordinates);
+          }
+        },
       ),
       mapController: mapController,
       children: [
@@ -130,6 +171,7 @@ class OfflineMapView extends StatelessWidget {
             ),
           ),
         ]),
+        if (routeLayer != null) routeLayer,
       ],
     );
   }

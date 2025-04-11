@@ -27,6 +27,7 @@ dependencies:
   freezed_annotation: ^3.0.0
   nested: ^1.0.0
   simple_animations: ^5.1.0
+  routing_client_dart: ^1.0.7
 
 dev_dependencies:
   flutter_test:

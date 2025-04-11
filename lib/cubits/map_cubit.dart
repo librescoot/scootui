@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:routing_client_dart/routing_client_dart.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../state/gps.dart';
@@ -24,6 +25,7 @@ const defaultCoordinates = LatLng(52.52437, 13.41053);
 class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
+  final RoutingManager _routingManager;
 
   static MapCubit create(BuildContext context) => MapCubit(
         context.read<GpsSync>().stream,
@@ -33,7 +35,8 @@ class MapCubit extends Cubit<MapState> {
         .._loadMap(context.read<ThemeCubit>().state);
 
   MapCubit(Stream<GpsData> stream, Stream<ThemeState> themeUpdates)
-      : super(MapLoading(
+      : _routingManager = RoutingManager(),
+        super(MapLoading(
             controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = stream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
@@ -52,6 +55,33 @@ class MapCubit extends Cubit<MapState> {
     _themeSub.cancel();
     _gpsSub.cancel();
     return super.close();
+  }
+
+  Future<void> setDestination(LatLng destination) async {
+    final current = state;
+    if (current is! MapOffline && current is! MapOnline) {
+      return;
+    }
+
+    final waypoints = [
+      state.position,
+      destination,
+    ]
+        .map((latlng) => LngLat(lng: latlng.longitude, lat: latlng.latitude))
+        .toList();
+
+    final route = await _routingManager.getRoute(
+        request: OSRMRequest.route(
+      waypoints: waypoints,
+      geometries: Geometries.polyline,
+      routingType: RoutingType.car,
+    ));
+
+    emit(switch (current) {
+      MapOnline() => current.copyWith(route: route),
+      MapOffline() => current.copyWith(route: route),
+      _ => current,
+    });
   }
 
   void _moveAndRotate(LatLng center, double course) {
