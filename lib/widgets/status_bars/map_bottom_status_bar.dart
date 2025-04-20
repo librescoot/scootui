@@ -11,7 +11,8 @@ class MapBottomStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final speed = EngineSync.select(context, (data) => data.speed);
+    final engine = EngineSync.watch(context);
+    final speed = engine.speed;
     final vehicle = VehicleSync.watch(context);
     final ThemeState(:isDark, :theme) = ThemeCubit.watch(context);
     final textColor = isDark ? Colors.white : Colors.black;
