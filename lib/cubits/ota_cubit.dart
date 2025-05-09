@@ -6,89 +6,10 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../cubits/mdb_cubits.dart';
 import '../state/vehicle.dart';
+import '../utils/ota_utils.dart';
 
 part 'ota_cubit.freezed.dart';
 part 'ota_state.dart';
-
-// Define possible OTA update states
-enum OtaStatus {
-  initializing,
-  checkingUpdates,
-  checkingUpdateError,
-  deviceUpdated,
-  waitingDashboard,
-  downloadingUpdates,
-  downloadingUpdateError,
-  installingUpdates,
-  installingUpdateError,
-  installationCompleteWaitingDashboardReboot,
-  installationCompleteWaitingReboot,
-  unknown,
-  none, // Add a 'none' state for when no update is in progress
-}
-
-// Helper function to map string status from MDB to OtaStatus enum
-OtaStatus mapOtaStatus(String? status) {
-  switch (status) {
-    case 'initializing':
-      return OtaStatus.initializing;
-    case 'checking-updates':
-      return OtaStatus.checkingUpdates;
-    case 'checking-update-error':
-      return OtaStatus.checkingUpdateError;
-    case 'device-updated':
-      return OtaStatus.deviceUpdated;
-    case 'waiting-dashboard':
-      return OtaStatus.waitingDashboard;
-    case 'downloading-updates':
-      return OtaStatus.downloadingUpdates;
-    case 'downloading-update-error':
-      return OtaStatus.downloadingUpdateError;
-    case 'installing-updates':
-      return OtaStatus.installingUpdates;
-    case 'installing-update-error':
-      return OtaStatus.installingUpdateError;
-    case 'installation-complete-waiting-dashboard-reboot':
-      return OtaStatus.installationCompleteWaitingDashboardReboot;
-    case 'installation-complete-waiting-reboot':
-      return OtaStatus.installationCompleteWaitingReboot;
-    case 'unknown':
-      return OtaStatus.unknown;
-    default:
-      return OtaStatus.none;
-  }
-}
-
-// Helper function to get display text for OTA status
-String getOtaStatusText(OtaStatus status) {
-  switch (status) {
-    case OtaStatus.initializing:
-      return 'Initializing update...';
-    case OtaStatus.checkingUpdates:
-      return 'Checking for updates...';
-    case OtaStatus.checkingUpdateError:
-      return 'Update check failed.';
-    case OtaStatus.deviceUpdated:
-      return 'Device updated.';
-    case OtaStatus.waitingDashboard:
-      return 'Waiting for dashboard...';
-    case OtaStatus.downloadingUpdates:
-      return 'Downloading updates...';
-    case OtaStatus.downloadingUpdateError:
-      return 'Download failed.';
-    case OtaStatus.installingUpdates:
-      return 'Installing updates...';
-    case OtaStatus.installingUpdateError:
-      return 'Installation failed.';
-    case OtaStatus.installationCompleteWaitingDashboardReboot:
-      return 'Installation complete, waiting for dashboard reboot...';
-    case OtaStatus.installationCompleteWaitingReboot:
-      return 'Installation complete, waiting for reboot...';
-    case OtaStatus.unknown:
-    case OtaStatus.none:
-      return ''; // Should not be displayed
-  }
-}
 
 class OtaCubit extends Cubit<OtaState> {
   final OtaSync _otaSync;
@@ -117,79 +38,33 @@ class OtaCubit extends Cubit<OtaState> {
   void _updateState(String? otaStatusString) {
     final otaStatus = mapOtaStatus(otaStatusString);
     final vehicleState = _vehicleSync.state.state;
-    final isReadyToDrive = vehicleState == ScooterState.readyToDrive;
-    final isParked = vehicleState == ScooterState.parked;
-    final isStandby = vehicleState == ScooterState.standBy;
-    final isUpdating = vehicleState == ScooterState.updating;
 
-    // Check if the scooter is in a special state where we don't want to show OTA
-    final isSpecialState = vehicleState == ScooterState.booting ||
-        vehicleState == ScooterState.shuttingDown ||
-        vehicleState == ScooterState.hibernating ||
-        vehicleState == ScooterState.hibernatingImminent ||
-        vehicleState == ScooterState.suspending ||
-        vehicleState == ScooterState.suspendingImminent;
-
-    // Always hide if OTA status is none/empty or in special states
-    if (otaStatus == OtaStatus.none ||
-        otaStatusString?.trim().isEmpty == true ||
-        isSpecialState) {
+    // Always hide if OTA status is none/empty or vehicle state doesn't allow showing OTA
+    if (!isOtaActive(otaStatusString) || !isVehicleStateAllowingOta(vehicleState)) {
       emit(const OtaState.inactive());
       return;
     }
 
-    // If the vehicle is in updating state, show the full screen OTA
-    if (isUpdating) {
-      emit(OtaState.fullScreen(
-        status: otaStatus,
-        statusText: getOtaStatusText(otaStatus),
-        isParked: false, // Fully opaque background in updating mode
-      ));
-      return;
-    }
+    // Get the appropriate display mode for the current state
+    final displayMode = getOtaDisplayMode(vehicleState, otaStatus);
+    final statusText = getOtaStatusText(otaStatus);
 
-    // Determine visibility and display mode based on scooter state and OTA status
-    if (isReadyToDrive) {
-      // In ready-to-drive mode, show minimal info for downloading, installing, and their errors
-      final showMinimal = otaStatus == OtaStatus.downloadingUpdates ||
-          otaStatus == OtaStatus.downloadingUpdateError ||
-          otaStatus == OtaStatus.installingUpdates ||
-          otaStatus == OtaStatus.installingUpdateError;
-
-      if (showMinimal) {
-        emit(OtaState.minimal(
-            status: otaStatus, statusText: getOtaStatusText(otaStatus)));
-      } else {
+    // Emit the appropriate state based on the display mode
+    switch (displayMode) {
+      case OtaDisplayMode.none:
         emit(const OtaState.inactive());
-      }
-    } else if (isParked) {
-      // In parked mode, show full screen for most statuses
-      final showFullScreen = !(otaStatus == OtaStatus.unknown ||
-          otaStatus == OtaStatus.initializing ||
-          otaStatus == OtaStatus.checkingUpdates);
 
-      if (showFullScreen) {
+      case OtaDisplayMode.minimal:
+        emit(OtaState.minimal(status: otaStatus, statusText: statusText));
+
+      case OtaDisplayMode.fullScreen:
+        // Use semi-transparent background only in parked mode
+        final isParked = vehicleState == ScooterState.parked;
         emit(OtaState.fullScreen(
           status: otaStatus,
-          statusText: getOtaStatusText(otaStatus),
-          isParked: true, // Semi-transparent background in parked mode
+          statusText: statusText,
+          isParked: isParked,
         ));
-      } else {
-        emit(const OtaState.inactive());
-      }
-    } else {
-      // In other modes (like standby/locked), show full screen for all statuses except deviceUpdated
-      final showFullScreen = otaStatus != OtaStatus.deviceUpdated;
-
-      if (showFullScreen) {
-        emit(OtaState.fullScreen(
-          status: otaStatus,
-          statusText: getOtaStatusText(otaStatus),
-          isParked: false, // Fully opaque background in standby mode
-        ));
-      } else {
-        emit(const OtaState.inactive());
-      }
     }
   }
 
