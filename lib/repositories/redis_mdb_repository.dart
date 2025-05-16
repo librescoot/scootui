@@ -241,4 +241,20 @@ class RedisMDBRepository implements MDBRepository {
       return cmd.send_object(["PUBLISH", "buttons", event]);
     });
   }
+
+  @override
+  Future<List<String>> getSetMembers(String setKey) {
+    return _withConnection((cmd) async {
+      final result = await cmd.send_object(["SMEMBERS", setKey]);
+      final List<String> members = [];
+
+      if (result is List) {
+        for (final item in result) {
+          members.add(item.toString());
+        }
+      }
+
+      return members;
+    });
+  }
 }

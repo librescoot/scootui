@@ -17,6 +17,9 @@ abstract class MDBRepository {
 
   // For direct button events via PUBSUB
   Future<void> publishButtonEvent(String event);
+
+  // For Redis sets
+  Future<List<String>> getSetMembers(String setKey);
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -119,5 +122,13 @@ class InMemoryMDBRepository implements MDBRepository {
     if (vehicleState != "updating") {
       await set("dashboard", "ready", "true");
     }
+  }
+
+  @override
+  Future<List<String>> getSetMembers(String setKey) async {
+    // For in-memory implementation, we'll simulate Redis sets using a special format
+    // in our storage map: setKey -> {"member1": "1", "member2": "1", ...}
+    final setData = _storage[setKey] ?? {};
+    return setData.keys.toList();
   }
 }

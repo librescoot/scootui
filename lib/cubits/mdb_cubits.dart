@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -53,7 +55,53 @@ class VehicleSync extends SyncableCubit<VehicleData> {
 }
 
 class BatterySync extends SyncableCubit<BatteryData> {
-  BatterySync(MDBRepository repo, String id) : super(redisRepository: repo, initialState: BatteryData(id: id));
+  final String id;
+  Timer? _faultCheckTimer;
+
+  BatterySync(MDBRepository repo, this.id) : super(redisRepository: repo, initialState: BatteryData(id: id)) {
+    // Start periodic fault check
+    _startFaultCheck();
+  }
+
+  void _startFaultCheck() {
+    // Check for faults every 5 seconds
+    _faultCheckTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _checkFaults();
+    });
+  }
+
+  Future<void> _checkFaults() async {
+    final faultSetKey = "battery:${id}:fault";
+    final faultCodes = await redisRepository.getSetMembers(faultSetKey);
+
+    // Convert string fault codes to BatteryFault objects
+    final faults = faultCodes.map((code) => BatteryFault(int.parse(code))).toList();
+
+    // Only emit if the faults have changed
+    if (!_sameFaults(state.faults, faults)) {
+      emit(state.copyWith(faults: faults));
+    }
+  }
+
+  bool _sameFaults(List<BatteryFault> a, List<BatteryFault> b) {
+    if (a.length != b.length) return false;
+
+    // Sort both lists by fault code for comparison
+    final sortedA = List<BatteryFault>.from(a)..sort((f1, f2) => f1.code.compareTo(f2.code));
+    final sortedB = List<BatteryFault>.from(b)..sort((f1, f2) => f1.code.compareTo(f2.code));
+
+    for (int i = 0; i < sortedA.length; i++) {
+      if (sortedA[i].code != sortedB[i].code) return false;
+    }
+
+    return true;
+  }
+
+  @override
+  Future<void> close() {
+    _faultCheckTimer?.cancel();
+    return super.close();
+  }
 }
 
 class Battery1Sync extends BatterySync {
@@ -120,9 +168,9 @@ class OtaSync extends SyncableCubit<OtaData> {
 class SpeedLimitSync extends SyncableCubit<SpeedLimitData> {
   static SpeedLimitData watch(BuildContext context) => context.watch<SpeedLimitSync>().state;
 
-  static SpeedLimitSync create(BuildContext context) => 
+  static SpeedLimitSync create(BuildContext context) =>
       SpeedLimitSync(RepositoryProvider.of<MDBRepository>(context))..start();
-  
+
   static T select<T>(BuildContext context, T Function(SpeedLimitData) selector) =>
       selector(context.select((SpeedLimitSync e) => e.state));
 
