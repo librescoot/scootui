@@ -83,32 +83,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final trip = context.read<TripCubit>();
     final theme = context.read<ThemeCubit>();
     final vehicle = context.read<VehicleSync>();
-
-    switch (menu.state) {
-      case MenuHidden():
-        if (!_animController.isDismissed) {
-          // if the menu is still visible, but should be hidden =>
-          // start the animation
-          _animController.reverse();
-        } else {
-          // once menu is completely hidden, reset the selected index.
-          // we don't need to use setState here, because we don't need
-          // to re-render. this is just setting it up for next time it's shown
-          // if the menu is already hidden, just return an empty widget
-          return const SizedBox.shrink();
-        }
-        break;
-      case MenuVisible():
-        if (_animController.isDismissed) {
-          _selectedIndex = 0;
-          // use a separate variable here, because we only want to set this
-          // just before we start fading in the menu
-          _showMapView = screen.state is ScreenMap;
-          _animController.forward();
-        }
-        break;
-    }
-
     final isDark = theme.state.themeMode == ThemeMode.dark;
 
     final items = [
@@ -169,140 +143,167 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       )
     ];
 
-    return ControlGestureDetector(
-      stream: context.read<VehicleSync>().stream,
-      onLeftPress: () => setState(() {
-        _selectedIndex = (_selectedIndex + 1) % items.length;
-        _scrollToSelectedItem();
-      }),
-      onRightPress: () {
-        final item = items[_selectedIndex];
-        item.onChanged?.call(item.currentValue);
-      },
-      child: FadeTransition(
-        opacity: _animation,
-        child: Container(
-          color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-          padding: const EdgeInsets.only(top: 40),
-          // Leave space for top status bar
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'MENU',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
+    bool isMenuInteractable = menu.state is MenuVisible;
+
+    switch (menu.state) {
+      case MenuHidden():
+        if (!_animController.isDismissed) {
+          _animController.reverse();
+          isMenuInteractable = false;
+        } else {
+          _selectedIndex = 0;
+          return const SizedBox.shrink();
+        }
+        break;
+      case MenuVisible():
+        if (_animController.isDismissed) {
+          _selectedIndex = 0;
+          _showMapView = screen.state is ScreenMap;
+          _animController.forward();
+        }
+        break;
+    }
+
+    final menuContentAndVisuals = FadeTransition(
+      opacity: _animation,
+      child: Container(
+        color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+        padding: const EdgeInsets.only(top: 40),
+        // Leave space for top status bar
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Text(
+              'MENU',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-              // Menu items with scroll indicators
-              Expanded(
-                child: Stack(
-                  children: [
-                    // Menu items list
-                    ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(40, 20, 40, 20),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: MenuItemWidget(
-                            item: item,
-                            isSelected: _selectedIndex == index,
-                            isInSubmenu: false, //widget.isInSubmenu && widget.selectedIndex == index,
-                          ),
-                        );
-                      },
-                    ),
+            // Menu items with scroll indicators
+            Expanded(
+              child: Stack(
+                children: [
+                  // Menu items list
+                  ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(40, 20, 40, 20),
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: MenuItemWidget(
+                          item: item,
+                          isSelected: _selectedIndex == index,
+                          isInSubmenu: false, //widget.isInSubmenu && widget.selectedIndex == index,
+                        ),
+                      );
+                    },
+                  ),
 
-                    // Top scroll indicator
-                    if (_showTopScrollIndicator)
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          height: 40,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
-                              ],
-                            ),
+                  // Top scroll indicator
+                  if (_showTopScrollIndicator)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                              isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
+                            ],
                           ),
-                          child: Center(
-                            child: Icon(
-                              Icons.keyboard_arrow_up,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                            ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.keyboard_arrow_up,
+                            color: isDark ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       ),
+                    ),
 
-                    // Bottom scroll indicator
-                    if (_showBottomScrollIndicator)
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          height: 40,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
-                              ],
-                            ),
+                  // Bottom scroll indicator
+                  if (_showBottomScrollIndicator)
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+                              isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
+                            ],
                           ),
-                          child: Center(
-                            child: Icon(
-                              Icons.keyboard_arrow_down,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                            ),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: isDark ? Colors.white54 : Colors.black54,
                           ),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
+            ),
 
-              // Controls help
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildControlHint(
-                      context,
-                      'Left Brake',
-                      false ? 'Change Value' : 'Next Item',
-                      // widget.isInSubmenu ? 'Change Value' : 'Next Item',
-                    ),
-                    _buildControlHint(
-                      context,
-                      'Right Brake',
-                      false ? 'Confirm' : 'Select',
-                      // widget.isInSubmenu ? 'Confirm' : 'Select',
-                    ),
-                  ],
-                ),
+            // Controls help
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildControlHint(
+                    context,
+                    'Left Brake',
+                    false ? 'Change Value' : 'Next Item',
+                    // widget.isInSubmenu ? 'Change Value' : 'Next Item',
+                  ),
+                  _buildControlHint(
+                    context,
+                    'Right Brake',
+                    false ? 'Confirm' : 'Select',
+                    // widget.isInSubmenu ? 'Confirm' : 'Select',
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+
+    if (isMenuInteractable) {
+      return ControlGestureDetector(
+        stream: context.read<VehicleSync>().stream,
+        onLeftPress: () => setState(() {
+          _selectedIndex = (_selectedIndex + 1) % items.length;
+          _scrollToSelectedItem();
+        }),
+        onRightPress: () {
+          final item = items[_selectedIndex];
+          item.onChanged?.call(item.currentValue);
+        },
+        child: menuContentAndVisuals,
+      );
+    } else {
+      return menuContentAndVisuals;
+    }
   }
 
   Widget _buildControlHint(BuildContext context, String control, String action) {
