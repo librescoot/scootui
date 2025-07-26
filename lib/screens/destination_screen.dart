@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:rbush/rbush.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer;
+import 'package:vector_map_tiles/vector_map_tiles.dart'
+    show TileProviders, VectorTileLayer;
 
-import '../cubits/address_cubit.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
-import '../repositories/address_repository.dart';
 import '../utils/theme_aware_cache.dart';
 
 class DestinationScreen extends StatefulWidget {
@@ -17,22 +15,20 @@ class DestinationScreen extends StatefulWidget {
   State<DestinationScreen> createState() => _DestinationScreenState();
 }
 
-class _DestinationScreenState extends State<DestinationScreen> with SingleTickerProviderStateMixin {
-  Address? _currentDestination;
-
+class _DestinationScreenState extends State<DestinationScreen>
+    with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final ThemeState(:theme) = ThemeCubit.watch(context);
     final mapCubit = context.watch<MapCubit>();
-    final addressCubit = context.watch<AddressCubit>();
 
     return Container(
       color: theme.scaffoldBackgroundColor,
-      child: _buildMap(context, mapCubit, addressCubit, theme),
+      child: _buildMap(context, mapCubit, theme),
     );
   }
 
-  Widget _buildMap(BuildContext context, MapCubit map, AddressCubit address, ThemeData themeData) {
+  Widget _buildMap(BuildContext context, MapCubit map, ThemeData themeData) {
     final mapState = map.state;
     if (mapState is! MapOffline) {
       return Center(
@@ -66,20 +62,14 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
       );
     }
 
-    final addressState = address.state;
-    late final Map<String, Address> addrs;
-    switch (addressState) {
-      case AddressStateLoading():
-        return const Center(child: CircularProgressIndicator());
-      case AddressStateError(:final message):
-        return Center(child: Text(message));
-      case AddressStateLoaded(:final addresses):
-        addrs = addresses;
-        break;
-    }
-
-    final MapOffline(:tiles, :position, :controller, :theme, :themeMode, :onReady, :orientation) = // Removed route, nextInstruction
-        mapState;
+    final MapOffline(
+      :tiles,
+      :position,
+      :controller,
+      :theme,
+      :themeMode,
+      :onReady
+    ) = mapState;
 
     return FlutterMap(
       options: MapOptions(
@@ -110,125 +100,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
           tileDelay: Duration.zero,
           cacheFolder: ThemeAwareCache.getCacheFolderProvider(themeMode),
         ),
-        // MarkerClusterLayerWidget(
-        //   options: MarkerClusterLayerOptions(
-        //     maxZoom: 20,
-        //     size: const Size(30, 30),
-        //     markers: addresses.values
-        //         .map(
-        //           (address) => Marker(
-        //             rotate: true,
-        //             point: address.coordinates,
-        //             child: GestureDetector(
-        //               onTap: () {
-        //                 setState(() {
-        //                   _currentDestination = address;
-        //                 });
-        //               },
-        //               child: const Icon(
-        //                 Icons.location_pin,
-        //                 size: 30.0,
-        //               ),
-        //             ),
-        //           ),
-        //         )
-        //         .toList(),
-        //     builder: (context, markers) {
-        //       return Container(
-        //         decoration: BoxDecoration(
-        //             borderRadius: BorderRadius.circular(20),
-        //             color: Colors.blue),
-        //         child: Center(
-        //           child: Text(
-        //             markers.length.toString(),
-        //             style: const TextStyle(color: Colors.white, fontSize: 16),
-        //           ),
-        //         ),
-        //       );
-        //     },
-        //   ),
-        // ),
-        CameraFilteredMarkerLayer(
-          minZoom: 17.5,
-          markers: addrs.values
-              .map((e) => Marker(
-                    point: e.coordinates,
-                    child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _currentDestination = e;
-                          });
-                        },
-                        child: const Icon(Icons.location_pin)),
-                  ))
-              .toList(),
-        ),
-        if (_currentDestination != null)
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _currentDestination = null;
-              });
-            },
-            child: ColoredBox(
-              color: Colors.grey,
-              child: Center(
-                child: Text(
-                  _currentDestination!.id,
-                  style: TextStyle(fontSize: 36),
-                ),
-              ),
-            ),
-          ),
       ],
-    );
-  }
-}
-
-class CameraFilteredMarkerLayer extends StatefulWidget {
-  const CameraFilteredMarkerLayer({super.key, required this.markers, this.minZoom = 0});
-  final List<Marker> markers;
-  final double minZoom;
-
-  @override
-  State<CameraFilteredMarkerLayer> createState() => _CameraFilteredMarkerLayerState();
-}
-
-class _CameraFilteredMarkerLayerState extends State<CameraFilteredMarkerLayer> {
-  final _bush = RBush<Marker>();
-
-  @override
-  void initState() {
-    super.initState();
-
-    for (final marker in widget.markers) {
-      _bush.insert(RBushElement(
-          data: marker,
-          minX: marker.point.longitude,
-          maxX: marker.point.longitude,
-          minY: marker.point.latitude,
-          maxY: marker.point.latitude));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mapCamera = MapCamera.maybeOf(context);
-    if (mapCamera == null || mapCamera.zoom < widget.minZoom) {
-      return const SizedBox.shrink();
-    }
-
-    final cameraBounds = mapCamera.visibleBounds;
-
-    final markers = _bush.search(RBushBox(
-      minX: cameraBounds.west,
-      maxX: cameraBounds.east,
-      minY: cameraBounds.south,
-      maxY: cameraBounds.north,
-    ));
-
-    return MarkerLayer(
-      markers: markers.map((e) => e.data).toList(),
     );
   }
 }

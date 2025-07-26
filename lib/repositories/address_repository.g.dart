@@ -19,17 +19,3 @@ Map<String, dynamic> _$AddressToJson(_Address instance) => <String, dynamic>{
       'x': instance.x,
       'y': instance.y,
     };
-
-_AddressDatabase _$AddressDatabaseFromJson(Map<String, dynamic> json) =>
-    _AddressDatabase(
-      mapHash: json['mapHash'] as String,
-      addresses: (json['addresses'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(k, Address.fromJson(e as Map<String, dynamic>)),
-      ),
-    );
-
-Map<String, dynamic> _$AddressDatabaseToJson(_AddressDatabase instance) =>
-    <String, dynamic>{
-      'mapHash': instance.mapHash,
-      'addresses': instance.addresses,
-    };

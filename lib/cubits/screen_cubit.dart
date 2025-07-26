@@ -27,8 +27,10 @@ class ScreenCubit extends Cubit<ScreenState> {
       : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
     _settingsSubscription = _settingsService.settingsStream.listen((settings) {
-      final screenMode = _settingsService.getScreenSetting(); // Get updated screen mode
-      emit(_getInitialState(screenMode)); // Emit new state based on updated mode
+      final screenMode =
+          _settingsService.getScreenSetting(); // Get updated screen mode
+      emit(
+          _getInitialState(screenMode)); // Emit new state based on updated mode
     });
 
     // Subscribe to vehicle state updates
@@ -38,8 +40,7 @@ class ScreenCubit extends Cubit<ScreenState> {
 
       // Store current normal state if we're about to enter a special state
       if (currentState is ScreenCluster || currentState is ScreenMap) {
-        if (vehicleData.state == ScooterState.updating ||
-            isOtaFullScreen) {
+        if (vehicleData.state == ScooterState.updating || isOtaFullScreen) {
           _previousNormalState = currentState;
         }
       }
@@ -67,7 +68,8 @@ class ScreenCubit extends Cubit<ScreenState> {
       if (currentState is ScreenOta &&
           vehicleData.state != ScooterState.updating) {
         // Restore previous state or default to cluster
-        final stateToRestore = _previousNormalState ?? const ScreenState.cluster();
+        final stateToRestore =
+            _previousNormalState ?? const ScreenState.cluster();
         _previousNormalState = null; // Clear the stored state
         emit(stateToRestore);
       }
@@ -106,16 +108,11 @@ class ScreenCubit extends Cubit<ScreenState> {
     _persistScreenMode('speedometer'); // Persist as OEM 'speedometer'
   }
 
-  void showMap() {
-    // No need to emit here, the stream listener will handle it
-    _persistScreenMode('navigation'); // Persist as OEM 'navigation'
-  }
+  void showOta() => emit(const ScreenState.ota());
+  void showAddressSelection() => emit(const ScreenState.addressSelection());
+  void showDownloadMap() => emit(const ScreenState.downloadMap());
 
-  void showAddressSelection() {
-    // Directly emit the state without persisting
-    emit(const ScreenState.addressSelection());
-    // Do not persist address_selection mode as it can cause hanging
-  }
+  void showMap() => emit(const ScreenState.map());
 
   void showDebug() {
     // Directly emit the debug state without persisting

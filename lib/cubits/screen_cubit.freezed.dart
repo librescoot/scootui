@@ -175,4 +175,24 @@ class ScreenShuttingDown implements ScreenState {
   }
 }
 
+/// @nodoc
+
+class ScreenDownloadMap implements ScreenState {
+  const ScreenDownloadMap();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ScreenDownloadMap);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() {
+    return 'ScreenState.downloadMap()';
+  }
+}
+
 // dart format on

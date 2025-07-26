@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -8,15 +9,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
+import 'package:path/path.dart' as p;
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 
 import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
-import '../repositories/tiles_repository.dart';
+import '../repositories/tiles_update_repository.dart';
+import '../services/map_service.dart';
+import '../services/task_service.dart';
+import '../services/toast_service.dart';
+import '../services/valhalla_service_controller.dart';
 import '../state/gps.dart';
+import '../map/download/download_task.dart';
+import '../theme_config.dart';
 import 'mdb_cubits.dart';
 import 'navigation_cubit.dart';
 import 'navigation_state.dart';
@@ -34,29 +43,40 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<ThemeState> _themeSub;
   late final StreamSubscription<ShutdownState> _shutdownSub;
   late final StreamSubscription<NavigationState> _navigationStateSub; // Added
-  final TilesRepository _tilesRepository;
+  final MapService _mapService;
+  final TaskService _taskService;
+  final ValhallaServiceController _valhallaServiceController;
 
   // Dynamic zoom constants based on navigation context
   static const double _zoomLongStraight = 15.5; // Long straight sections (>2km)
   static const double _zoomDefault = 17.0; // Default navigation zoom
   static const double _zoomApproachingTurn = 18.0; // Approaching turn (<500m)
-  static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
-  static const Offset _mapCenterOffset = Offset(0, 120); // Restored original offset Y value
+  static const double _zoomComplexTurn =
+      19.0; // Complex intersections/roundabouts
+  static const Offset _mapCenterOffset =
+      Offset(0, 120); // Restored original offset Y value
 
   AnimatedMapController? _animatedController;
   final bool _mapLocked = false;
   Timer? _updateTimer; // For throttling GPS updates
-  NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
+  NavigationState?
+      _currentNavigationState; // Store current navigation state for zoom logic
+  ThemeState? _lastThemeState; // Store last theme state for map updates
 
   static MapCubit create(BuildContext context) => MapCubit(
         gpsStream: context.read<GpsSync>().stream,
         themeUpdates: context.read<ThemeCubit>().stream,
         shutdownStream: context.read<ShutdownCubit>().stream,
         navigationStateStream: context.read<NavigationCubit>().stream, // Added
-        tilesRepository: context.read<TilesRepository>(),
+        mapService: RepositoryProvider.of<MapService>(context),
+        taskService: RepositoryProvider.of<TaskService>(context),
+        valhallaServiceController:
+            RepositoryProvider.of<ValhallaServiceController>(context),
         mdbRepository: RepositoryProvider.of<MDBRepository>(context),
       )
         .._onGpsData(context.read<GpsSync>().state)
+        .._lastThemeState =
+            context.read<ThemeCubit>().state // Store initial theme state
         .._loadMap(context.read<ThemeCubit>().state);
 
   MapCubit({
@@ -64,29 +84,26 @@ class MapCubit extends Cubit<MapState> {
     required Stream<ThemeState> themeUpdates,
     required Stream<ShutdownState> shutdownStream,
     required Stream<NavigationState> navigationStateStream, // Added
-    required TilesRepository tilesRepository,
+    required MapService mapService,
+    required TaskService taskService,
+    required ValhallaServiceController valhallaServiceController,
     required MDBRepository mdbRepository,
-  })  : _tilesRepository = tilesRepository,
-        super(MapLoading(controller: MapController(), position: defaultCoordinates)) {
+  })  : _mapService = mapService,
+        _taskService = taskService,
+        _valhallaServiceController = valhallaServiceController,
+        super(MapLoading(
+            controller: MapController(), position: defaultCoordinates)) {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
     _shutdownSub = shutdownStream.listen(_onShutdownStateChange);
-    _navigationStateSub = navigationStateStream.listen(_onNavigationStateChanged); // Added
+    _navigationStateSub =
+        navigationStateStream.listen(_onNavigationStateChanged); // Added
   }
 
   @override
   Future<void> close() {
     final current = state;
     current.controller.dispose();
-    switch (current) {
-      case MapOffline():
-        final tiles = current.tiles;
-        if (tiles is AsyncMbTilesProvider) {
-          tiles.dispose();
-        }
-        break;
-      default:
-    }
     _themeSub.cancel();
     _gpsSub.cancel();
     _shutdownSub.cancel();
@@ -124,7 +141,8 @@ class MapCubit extends Cubit<MapState> {
     }
     final ctrl = _animatedController;
     if (ctrl == null) {
-      print("MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
+      print(
+          "MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
       return;
     }
 
@@ -150,7 +168,9 @@ class MapCubit extends Cubit<MapState> {
   double _calculateDynamicZoom() {
     final navState = _currentNavigationState;
 
-    if (navState == null || !navState.isNavigating || navState.upcomingInstructions.isEmpty) {
+    if (navState == null ||
+        !navState.isNavigating ||
+        navState.upcomingInstructions.isEmpty) {
       return _zoomDefault;
     }
 
@@ -170,7 +190,8 @@ class MapCubit extends Cubit<MapState> {
     const bottomBarHeight = 60.0;
     const vehicleVerticalOffset = 0.75;
 
-    const visibleMapHeight = screenHeight - topStatusBarHeight - bottomBarHeight;
+    const visibleMapHeight =
+        screenHeight - topStatusBarHeight - bottomBarHeight;
 
     // The point of interest (the turn) should be visible in the upper part of the map.
     // The vehicle is not in the center, it's offset downwards.
@@ -185,7 +206,8 @@ class MapCubit extends Cubit<MapState> {
     // The constants are tuned to fit the visual layout.
     // C - log2(meters) -> zoom
     // The value 15.6 is a magic number that works well for this screen size and projection.
-    double requiredZoom = 15.6 - math.log(targetVisibleMeters / lookAheadHeight) / math.ln2;
+    double requiredZoom =
+        15.6 - math.log(targetVisibleMeters / lookAheadHeight) / math.ln2;
 
     // Clamp the zoom level to reasonable bounds
     return requiredZoom.clamp(_zoomLongStraight, _zoomComplexTurn);
@@ -201,12 +223,13 @@ class MapCubit extends Cubit<MapState> {
     final orientationForMarker = data.course;
 
     final rawPosition = LatLng(data.latitude, data.longitude);
-    
+
     // Use snapped position when navigating and on-route, otherwise use raw GPS position
     final navState = _currentNavigationState;
-    final positionForDisplay = (navState?.isNavigating == true && navState?.snappedPosition != null) 
-        ? navState!.snappedPosition! 
-        : rawPosition;
+    final positionForDisplay =
+        (navState?.isNavigating == true && navState?.snappedPosition != null)
+            ? navState!.snappedPosition!
+            : rawPosition;
 
     emit(current.copyWith(
       position: positionForDisplay,
@@ -221,43 +244,35 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onThemeUpdate(ThemeState event) {
+    _lastThemeState = event; // Store the theme state
     final current = state;
-    emit(MapState.loading(controller: state.controller, position: state.position));
+    emit(MapState.loading(
+        controller: state.controller, position: state.position));
     _getTheme(event.isDark).then((theme) => emit(switch (current) {
-          MapOffline() => current.copyWith(theme: theme, themeMode: event.isDark ? 'dark' : 'light'),
+          MapOffline() => current.copyWith(
+              theme: theme, themeMode: event.isDark ? 'dark' : 'light'),
           _ => current, // Should not happen if map is loaded
         }));
   }
 
   Future<void> _onMapReady(TickerProvider vsync) async {
     final current = state;
+    if (current is! MapOffline) {
+      // This should not happen, but as a safeguard.
+      return;
+    }
     _animatedController = AnimatedMapController(
         vsync: vsync,
         mapController: current.controller,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut);
 
-    emit(switch (current) {
-      MapOffline() => current.copyWith(isReady: true),
-      MapOnline() => current.copyWith(isReady: true),
-      MapLoading(:final position, :final controller) => MapOffline(
-          // Default to offline if was loading
-          position: position,
-          orientation: 0,
-          controller: controller,
-          tiles: AsyncMbTilesProvider(_tilesRepository), // Re-init or ensure it's available
-          theme: await _getTheme(true), // Default theme
-          themeMode: 'dark', // Default to dark
-          onReady: _onMapReady,
-          isReady: true,
-        ),
-      MapUnavailable() => current,
-    });
+    // The controller is now ready. Move the map to the correct position
+    // BEFORE emitting the final ready state to avoid race conditions.
+    _moveAndRotate(current.position, current.orientation);
 
-    final mapIsReady = state is MapOffline || state is MapOnline;
-    if (mapIsReady) {
-      _moveAndRotate(state.position, state.orientation);
-    }
+    // Now, emit the ready state.
+    emit(current.copyWith(isReady: true));
   }
 
   Future<Theme> _getTheme(bool isDark) async {
@@ -281,28 +296,76 @@ class MapCubit extends Cubit<MapState> {
     return state.position;
   }
 
+  /// Fire and forget map download
+  void downloadMap(Region region) async {
+    try {
+      ToastService.showInfo('Starting map download for ${region.name}...');
+
+      final mapsDir = await _mapService.getMapsDirectory();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final newMapPath = p.join(mapsDir.path, 'map_$timestamp.mbtiles');
+
+      // Create download tasks
+      final osmTask = DownloadTask(
+        url: region.osmTilesUrl,
+        destination: newMapPath,
+        description: 'Downloading ${region.name} map data',
+      );
+
+      _taskService.addTask(osmTask);
+      final osmStatus = await osmTask.wait();
+
+      if (osmStatus is TaskCompleted) {
+        await _applyMapUpdate(newMapPath);
+      } else if (osmStatus is TaskError) {
+        ToastService.showError(
+            'Failed to download map data: ${osmStatus.message}');
+      }
+    } catch (e) {
+      ToastService.showError('Map download failed: $e');
+    }
+  }
+
+  Future<void> _applyMapUpdate(String newMapPath) async {
+    try {
+      await _mapService.updateMap(newMapPath);
+
+      ToastService.showSuccess('Map updated successfully!');
+    } on MapUnavailableException catch (e) {
+      ToastService.showError('Update failed: ${e.message}');
+      print('Update failed: ${e.toString()}');
+    } catch (e) {
+      ToastService.showError('An unexpected error occurred: ${e.toString()}');
+      print('An unexpected error occurred: ${e.toString()}');
+    } finally {
+      if (_lastThemeState != null) {
+        await _loadMap(_lastThemeState!);
+      }
+    }
+  }
+
   Future<void> _loadMap(ThemeState themeState) async {
     _animatedController = null;
-    emit(MapState.loading(controller: state.controller, position: state.position));
+    emit(MapState.loading(
+        controller: state.controller, position: state.position));
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    final provider = AsyncMbTilesProvider(_tilesRepository);
-    final tilesInit = await provider.init();
-
-    switch (tilesInit) {
-      case InitSuccess(:final metadata):
-        emit(MapState.offline(
-          tiles: provider,
-          position: _getInitialCoordinates(metadata),
-          orientation: 0,
-          controller: ctrl,
-          theme: theme,
-          themeMode: themeState.isDark ? 'dark' : 'light',
-          onReady: _onMapReady,
-        ));
-      case InitError(:final message):
-        emit(MapState.unavailable(message, controller: ctrl, position: state.position));
+    try {
+      final metadata = await _mapService.getMetadata();
+      final provider = AsyncMbTilesProvider(_mapService, metadata);
+      emit(MapState.offline(
+        tiles: provider,
+        position: _getInitialCoordinates(metadata),
+        orientation: 0,
+        controller: ctrl,
+        theme: theme,
+        themeMode: themeState.isDark ? 'dark' : 'light',
+        onReady: _onMapReady,
+      ));
+    } on MapUnavailableException catch (e) {
+      emit(MapState.unavailable(e.message,
+          controller: ctrl, position: state.position));
     }
   }
 }

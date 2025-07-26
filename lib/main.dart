@@ -4,14 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:oktoast/oktoast.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
 import 'env_config.dart';
 import 'repositories/all.dart';
 import 'screens/main_screen.dart';
-import 'widgets/toast_listener_wrapper.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,18 +71,14 @@ class ScooterClusterApp extends StatelessWidget {
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, state) {
-            return OKToast(
-              child: ToastListenerWrapper(
-                child: MaterialApp(
-                  title: 'Scooter Cluster',
-                  theme: state.lightTheme,
-                  darkTheme: state.darkTheme,
-                  themeMode: state.effectiveThemeMode,
-                  debugShowCheckedModeBanner: false,
-                  home: Scaffold(
-                    body: MainScreen(),
-                  ),
-                ),
+            return MaterialApp(
+              title: 'Scooter Cluster',
+              theme: state.lightTheme,
+              darkTheme: state.darkTheme,
+              themeMode: state.effectiveThemeMode,
+              debugShowCheckedModeBanner: false,
+              home: Scaffold(
+                body: MainScreen(),
               ),
             );
           },

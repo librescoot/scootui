@@ -8,6 +8,7 @@ import '../../state/gps.dart';
 import '../../state/internet.dart';
 import 'indicator_light.dart';
 import 'ota_status_indicator.dart';
+import 'task_progress_indicator.dart';
 
 class _Icons {
   static const String connected0 = 'librescoot-internet-modem-connected-0.svg';
@@ -15,12 +16,16 @@ class _Icons {
   static const String connected2 = 'librescoot-internet-modem-connected-2.svg';
   static const String connected3 = 'librescoot-internet-modem-connected-3.svg';
   static const String connected4 = 'librescoot-internet-modem-connected-4.svg';
-  static const String diconnected = 'librescoot-internet-modem-disconnected.svg';
+  static const String diconnected =
+      'librescoot-internet-modem-disconnected.svg';
   static const String off = 'librescoot-internet-modem-off.svg';
   static const String bluetoothConnected = 'librescoot-bluetooth-connected.svg';
-  static const String bluetoothDisconnected = 'librescoot-bluetooth-disconnected.svg';
-  static const String cloudConnected = 'librescoot-internet-cloud-connected.svg';
-  static const String cloudDisconnected = 'librescoot-internet-cloud-disconnected.svg';
+  static const String bluetoothDisconnected =
+      'librescoot-bluetooth-disconnected.svg';
+  static const String cloudConnected =
+      'librescoot-internet-cloud-connected.svg';
+  static const String cloudDisconnected =
+      'librescoot-internet-cloud-disconnected.svg';
   static const String gpsOff = 'librescoot-gps-off.svg';
   static const String gpsSearching = 'librescoot-gps-searching.svg';
   static const String gpsFixEstablished = 'librescoot-gps-fix-established.svg';
@@ -41,7 +46,9 @@ class StatusIndicators extends StatelessWidget {
   String internetIcon(InternetData internet) {
     return switch (internet.status) {
       ConnectionStatus.disconnected => _Icons.diconnected,
-      ConnectionStatus.connected => signalQuality.firstWhere((element) => internet.signalQuality >= element.$1).$2
+      ConnectionStatus.connected => signalQuality
+          .firstWhere((element) => internet.signalQuality >= element.$1)
+          .$2
     };
   }
 
@@ -97,6 +104,8 @@ class StatusIndicators extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       spacing: 4,
       children: [
+        // Task progress indicator (only shows when active)
+        const TaskProgressIndicator(),
         // OTA status indicator (only shows when active)
         const OtaStatusIndicator(),
         IndicatorLight(
@@ -106,9 +115,15 @@ class StatusIndicators extends StatelessWidget {
           activeColor: color,
         ),
         IndicatorLight(
-            icon: IndicatorLight.svgAsset(bluetoothIcon(bluetooth)), isActive: true, size: size, activeColor: color),
+            icon: IndicatorLight.svgAsset(bluetoothIcon(bluetooth)),
+            isActive: true,
+            size: size,
+            activeColor: color),
         IndicatorLight(
-            icon: IndicatorLight.svgAsset(cloudIcon(internet)), isActive: true, size: size, activeColor: color),
+            icon: IndicatorLight.svgAsset(cloudIcon(internet)),
+            isActive: true,
+            size: size,
+            activeColor: color),
         IndicatorLight(
           icon: IndicatorLight.svgAsset(internetIcon(internet)),
           isActive: true,

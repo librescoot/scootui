@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,7 +20,8 @@ class MenuOverlay extends StatefulWidget {
   State<MenuOverlay> createState() => _MenuOverlayState();
 }
 
-class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStateMixin {
+class _MenuOverlayState extends State<MenuOverlay>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _animation;
   late ScrollController _scrollController;
@@ -45,7 +47,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       parent: _animController,
       curve: Curves.easeOut,
     );
-    _scrollController = ScrollController()..addListener(_updateScrollIndicators);
+    _scrollController = ScrollController()
+      ..addListener(_updateScrollIndicators);
   }
 
   @override
@@ -59,7 +62,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     if (!mounted) return;
     setState(() {
       _showTopScrollIndicator = _scrollController.offset > 20;
-      _showBottomScrollIndicator = _scrollController.offset < _scrollController.position.maxScrollExtent - 20;
+      _showBottomScrollIndicator = _scrollController.offset <
+          _scrollController.position.maxScrollExtent - 20;
     });
   }
 
@@ -75,7 +79,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeOut,
       );
-    } else if (targetOffset + itemHeight > _scrollController.offset + viewportHeight) {
+    } else if (targetOffset + itemHeight >
+        _scrollController.offset + viewportHeight) {
       _scrollController.animateTo(
         targetOffset - viewportHeight + itemHeight,
         duration: const Duration(milliseconds: 200),
@@ -145,7 +150,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             type: MenuItemType.action,
             onChanged: (_) {
               final mdbRepo = context.read<MDBRepository>();
-              mdbRepo.set("navigation", "destination", location.coordinatesString);
+              mdbRepo.set(
+                  "navigation", "destination", location.coordinatesString);
               savedLocationsCubit.updateLastUsed(location.id);
               context.read<MenuCubit>().hideMenu();
             },
@@ -161,7 +167,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             title: 'Delete saved location',
             type: MenuItemType.action,
             onChanged: (_) async {
-              final success = await savedLocationsCubit.deleteLocation(location.id);
+              final success =
+                  await savedLocationsCubit.deleteLocation(location.id);
               if (success) {
                 ToastService.showSuccess('Location deleted successfully!');
               } else {
@@ -251,20 +258,24 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
           // Validate GPS before attempting to save
           if (!gpsData.hasRecentFix) {
-            ToastService.showError('No recent GPS fix available. Please wait for GPS signal.');
+            ToastService.showError(
+                'No recent GPS fix available. Please wait for GPS signal.');
             return;
           }
 
           if (gpsData.latitude == 0.0 && gpsData.longitude == 0.0) {
-            ToastService.showError('Invalid GPS coordinates. Please wait for valid location.');
+            ToastService.showError(
+                'Invalid GPS coordinates. Please wait for valid location.');
             return;
           }
 
-          final success = await savedLocationsCubit.saveCurrentLocation(gpsData, internetData);
+          final success = await savedLocationsCubit.saveCurrentLocation(
+              gpsData, internetData);
           if (success) {
             ToastService.showSuccess('Location saved successfully!');
           } else {
-            ToastService.showError('Failed to save location. Storage may be full.');
+            ToastService.showError(
+                'Failed to save location. Storage may be full.');
           }
 
           menu.hideMenu();
@@ -285,6 +296,15 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           menu.hideMenu();
         },
       ),
+      if (!kIsWeb)
+        MenuItem(
+          title: 'Download Map',
+          type: MenuItemType.action,
+          onChanged: (_) {
+            screen.showDownloadMap();
+            menu.hideMenu();
+          },
+        ),
       MenuItem(
         title: 'Exit Menu',
         type: MenuItemType.action,
@@ -343,7 +363,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     // Use the proper isDark getter that handles auto mode
     final isDark = theme.state.isDark;
 
-    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle);
+    final items =
+        _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle);
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
@@ -362,7 +383,9 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       child: FadeTransition(
         opacity: _animation,
         child: Container(
-          color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
+          color: isDark
+              ? Colors.black.withOpacity(0.9)
+              : Colors.white.withOpacity(0.9),
           padding: const EdgeInsets.only(top: 40),
           // Leave space for top status bar
           child: Column(
@@ -413,8 +436,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
+                                isDark
+                                    ? Colors.black.withOpacity(0.9)
+                                    : Colors.white.withOpacity(0.9),
+                                isDark
+                                    ? Colors.black.withOpacity(0.0)
+                                    : Colors.white.withOpacity(0.0),
                               ],
                             ),
                           ),
@@ -440,8 +467,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.9),
-                                isDark ? Colors.black.withOpacity(0.0) : Colors.white.withOpacity(0.0),
+                                isDark
+                                    ? Colors.black.withOpacity(0.9)
+                                    : Colors.white.withOpacity(0.9),
+                                isDark
+                                    ? Colors.black.withOpacity(0.0)
+                                    : Colors.white.withOpacity(0.0),
                               ],
                             ),
                           ),
@@ -483,7 +514,8 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildControlHint(BuildContext context, String control, String action) {
+  Widget _buildControlHint(
+      BuildContext context, String control, String action) {
     final theme = ThemeCubit.watch(context);
 
     return Column(

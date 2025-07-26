@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oktoast/oktoast.dart';
 
 import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
@@ -10,10 +11,13 @@ import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
+import '../widgets/toast_listener_wrapper.dart';
 import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
 import 'debug_screen.dart';
+import 'destination_screen.dart';
+import 'download_map_screen.dart';
 import 'map_screen.dart';
 import 'ota_background_screen.dart';
 import 'ota_screen.dart';
@@ -39,14 +43,18 @@ class MainScreen extends StatelessWidget {
       return SizedBox(
         width: 480,
         height: 480,
-        child: Stack(
-          children: [
-            const DebugScreen(),
+        child: OKToast(
+          child: ToastListenerWrapper(
+            child: Stack(
+              children: [
+                const DebugScreen(),
 
-            // Overlay essential components that should always be visible
-            ShutdownOverlay(),
-            BluetoothPinCodeOverlay(),
-          ],
+                // Overlay essential components that should always be visible
+                ShutdownOverlay(),
+                BluetoothPinCodeOverlay(),
+              ],
+            ),
+          ),
         ),
       );
     }
@@ -54,34 +62,40 @@ class MainScreen extends StatelessWidget {
     return SizedBox(
       width: 480,
       height: 480,
-      child: Stack(
-        children: [
-          switch (state) {
-            // only map and cluster should trigger the menu
-            ScreenMap() => menuTrigger(const MapScreen()),
-            ScreenCluster() => menuTrigger(const ClusterScreen()),
-            ScreenAddressSelection() => const AddressSelectionScreen(),
-            ScreenOtaBackground() => const OtaBackgroundScreen(),
-            ScreenOta() => const OtaScreen(),
-            ScreenDebug() => const DebugScreen(),
-            ScreenShuttingDown() => menuTrigger(const ClusterScreen()), // Fallback (shouldn't happen)
-          },
+      child: OKToast(
+        child: ToastListenerWrapper(
+          child: Stack(
+            children: [
+              switch (state) {
+                // only map and cluster should trigger the menu
+                ScreenMap() => menuTrigger(const MapScreen()),
+                ScreenCluster() => menuTrigger(ClusterScreen()),
+                ScreenAddressSelection() => const AddressSelectionScreen(),
+                ScreenOtaBackground() => const OtaBackgroundScreen(),
+                ScreenOta() => const OtaScreen(),
+                ScreenDebug() => const DebugScreen(),
+                ScreenShuttingDown() => menuTrigger(
+                    const ClusterScreen()), // Fallback (shouldn't happen)
+                ScreenDownloadMap() => const DownloadMapScreen(),
+              },
 
-          // Menu overlay
-          MenuOverlay(),
+              // Menu overlay
+              MenuOverlay(),
 
-          // Shortcut menu overlay
-          const ShortcutMenuOverlay(),
+              // Shortcut menu overlay
+              const ShortcutMenuOverlay(),
 
-          // Shutdown overlay (with translucency over active screen)
-          ShutdownOverlay(),
+              // Shutdown overlay (with translucency over active screen)
+              ShutdownOverlay(),
 
-          // Bluetooth pin code overlay
-          BluetoothPinCodeOverlay(),
+              // Bluetooth pin code overlay
+              BluetoothPinCodeOverlay(),
 
-          // Version information overlay (triggered by both brakes in parked state)
-          VersionOverlay(),
-        ],
+              // Version information overlay (triggered by both brakes in parked state)
+              VersionOverlay(),
+            ],
+          ),
+        ),
       ),
     );
   }

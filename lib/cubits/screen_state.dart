@@ -9,4 +9,5 @@ sealed class ScreenState with _$ScreenState {
   const factory ScreenState.ota() = ScreenOta;
   const factory ScreenState.debug() = ScreenDebug;
   const factory ScreenState.shuttingDown() = ScreenShuttingDown;
+  const factory ScreenState.downloadMap() = ScreenDownloadMap;
 }
