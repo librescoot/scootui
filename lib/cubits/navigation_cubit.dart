@@ -70,7 +70,8 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      final valhallaService = ValhallaService(serverURL: AppConfig.valhallaEndpoint);
+      final valhallaService =
+          ValhallaService(serverURL: AppConfig.valhallaEndpoint);
       final route = await valhallaService.getRoute(position, destination);
 
       if (route.waypoints.isEmpty) {
@@ -83,7 +84,8 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      final upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
+      final upcomingInstructions =
+          RouteHelpers.findUpcomingInstructions(position, route);
       final distanceToDestination = distanceCalculator.as(
         LengthUnit.Meter,
         position,
@@ -113,27 +115,30 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onNavigationData(NavigationData data) {
-    print("NavigationCubit: Received NavigationData: ${data.destination}");
+    // print("NavigationCubit: Received NavigationData: ${data.destination}");
     try {
       if (data.destination.isEmpty) {
-        print("NavigationCubit: Destination is empty, clearing navigation state.");
+        // print("NavigationCubit: Destination is empty, clearing navigation state.");
         // Clear navigation if destination is empty
         emit(const NavigationState());
         return;
       }
 
-      final coordinates = data.destination.split(",").map(double.parse).toList();
+      final coordinates =
+          data.destination.split(",").map(double.parse).toList();
       final destination = LatLng(coordinates[0], coordinates[1]);
-      print("NavigationCubit: Parsed destination: $destination");
+      // print("NavigationCubit: Parsed destination: $destination");
 
       if (_currentPosition == null) {
-        print("NavigationCubit: Current position is null, cannot calculate route yet.");
+        // print("NavigationCubit: Current position is null, cannot calculate route yet.");
         // Store pending destination and show conditions that need to be met
         emit(state.copyWith(
-            destination: destination, 
-            status: NavigationStatus.idle, 
+            destination: destination,
+            status: NavigationStatus.idle,
             error: "Waiting for recent GPS fix to calculate route.",
-            pendingConditions: ["GPS fix required (last update >10 seconds ago)"]));
+            pendingConditions: [
+              "GPS fix required (last update >10 seconds ago)"
+            ]));
         return;
       }
 
@@ -142,7 +147,7 @@ class NavigationCubit extends Cubit<NavigationState> {
           (state.status == NavigationStatus.navigating ||
               state.status == NavigationStatus.rerouting ||
               state.status == NavigationStatus.calculating)) {
-        print("NavigationCubit: Destination is the same and already actively navigating/processing.");
+        // print("NavigationCubit: Destination is the same and already actively navigating/processing.");
         return;
       }
 
@@ -150,21 +155,22 @@ class NavigationCubit extends Cubit<NavigationState> {
       // or it's the same destination but we are not actively navigating/processing it, e.g., status is idle, arrived, or error),
       // then calculate the route.
       if (_currentPosition != null) {
-        print(
-            "NavigationCubit: Conditions met to calculate route. CurrentPos: $_currentPosition, NewDest: $destination, OldDest: ${state.destination}, Status: ${state.status}");
-        ToastService.showInfo('New navigation destination received. Calculating route...');
+        // print(
+        //     "NavigationCubit: Conditions met to calculate route. CurrentPos: $_currentPosition, NewDest: $destination, OldDest: ${state.destination}, Status: ${state.status}");
+        ToastService.showInfo(
+            'New navigation destination received. Calculating route...');
         // Clear pending conditions since we can now calculate route
         emit(state.copyWith(pendingConditions: []));
         _calculateRoute(destination);
       } else {
         // This case should be covered by the earlier _currentPosition == null check,
         // but kept for clarity if logic changes.
-        print(
-            "NavigationCubit: Current position is null, cannot calculate route yet (should have been handled earlier). Dest: $destination");
+        // print(
+        //     "NavigationCubit: Current position is null, cannot calculate route yet (should have been handled earlier). Dest: $destination");
         // State was already set if _currentPosition was null earlier.
       }
     } catch (e) {
-      print("NavigationCubit: Error processing navigation data: $e");
+      // print("NavigationCubit: Error processing navigation data: $e");
       final errorMsg = 'Error processing navigation data: $e';
       ToastService.showError(errorMsg);
       emit(state.copyWith(
@@ -190,8 +196,9 @@ class NavigationCubit extends Cubit<NavigationState> {
     if (currentState.destination != null && currentState.route == null) {
       // We check for idle or error status to ensure we only trigger this
       // if we're not already in the middle of a calculation or navigation.
-      if (currentState.status == NavigationStatus.idle || currentState.status == NavigationStatus.error) {
-        print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
+      if (currentState.status == NavigationStatus.idle ||
+          currentState.status == NavigationStatus.error) {
+        // print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
         _calculateRoute(currentState.destination!);
         return; // Exit because _calculateRoute will emit the next state.
       }
@@ -223,11 +230,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       destination,
     );
 
-    print("NavigationCubit: Distance to destination: ${distanceToDestination.toStringAsFixed(1)}m (threshold: ${_arrivalProximityMeters}m)");
+    // print("NavigationCubit: Distance to destination: ${distanceToDestination.toStringAsFixed(1)}m (threshold: ${_arrivalProximityMeters}m)");
 
     // Check if we've arrived
     if (distanceToDestination < _arrivalProximityMeters) {
-      print("NavigationCubit: Arrival detected! Distance: ${distanceToDestination.toStringAsFixed(1)}m");
+      // print("NavigationCubit: Arrival detected! Distance: ${distanceToDestination.toStringAsFixed(1)}m");
       ToastService.showSuccess('You have arrived at your destination!');
       emit(state.copyWith(
         status: NavigationStatus.arrived,
@@ -237,27 +244,29 @@ class NavigationCubit extends Cubit<NavigationState> {
     }
 
     // Find closest point on route and check for deviation
-    final (closestPoint, segmentIndex, distanceFromRoute) = RouteHelpers.findClosestPointOnRoute(
+    final (closestPoint, segmentIndex, distanceFromRoute) =
+        RouteHelpers.findClosestPointOnRoute(
       position,
       route.waypoints,
     );
 
     // Debug logging for off-route detection
-    print(
-        "NavigationCubit: Position: $position, Distance from route: ${distanceFromRoute.toStringAsFixed(1)}m, Tolerance: ${_offRouteTolerance}m");
+    // print(
+    //     "NavigationCubit: Position: $position, Distance from route: ${distanceFromRoute.toStringAsFixed(1)}m, Tolerance: ${_offRouteTolerance}m");
 
     // Check if we're off route
     final isOffRoute = distanceFromRoute > _offRouteTolerance;
-    print("NavigationCubit: isOffRoute: $isOffRoute, current state isOffRoute: ${state.isOffRoute}");
+    // print("NavigationCubit: isOffRoute: $isOffRoute, current state isOffRoute: ${state.isOffRoute}");
 
     // Calculate snapped position - use closest point on route when on-route, original position when off-route
     final snappedPosition = isOffRoute ? position : closestPoint;
     if (!isOffRoute) {
-      print("NavigationCubit: Snapping to route - Original: $position, Snapped: $snappedPosition");
+      // print("NavigationCubit: Snapping to route - Original: $position, Snapped: $snappedPosition");
     }
 
     // Find upcoming instructions
-    var upcomingInstructions = RouteHelpers.findUpcomingInstructions(position, route);
+    var upcomingInstructions =
+        RouteHelpers.findUpcomingInstructions(position, route);
 
     // If off-route, insert a "return to route" instruction at the beginning
     if (isOffRoute) {
@@ -268,8 +277,8 @@ class NavigationCubit extends Cubit<NavigationState> {
         instructionText: "Return to the route",
       );
       upcomingInstructions = [returnInstruction, ...upcomingInstructions];
-      print(
-          "NavigationCubit: Added return instruction. First instruction: ${upcomingInstructions.first.instructionText}, distance: ${upcomingInstructions.first.distance}");
+      // print(
+      //     "NavigationCubit: Added return instruction. First instruction: ${upcomingInstructions.first.instructionText}, distance: ${upcomingInstructions.first.distance}");
     }
 
     emit(state.copyWith(
@@ -281,7 +290,10 @@ class NavigationCubit extends Cubit<NavigationState> {
     ));
 
     // Check if we need to reroute
-    if (isOffRoute && (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
+    if (isOffRoute &&
+        (_lastReroute == null ||
+            DateTime.now().difference(_lastReroute!) >
+                const Duration(seconds: 5))) {
       ToastService.showWarning('Off route. Attempting to reroute...');
       _reroute(position, destination);
     }
@@ -293,7 +305,8 @@ class NavigationCubit extends Cubit<NavigationState> {
     emit(state.copyWith(status: NavigationStatus.rerouting));
 
     try {
-      final valhallaService = ValhallaService(serverURL: AppConfig.valhallaEndpoint);
+      final valhallaService =
+          ValhallaService(serverURL: AppConfig.valhallaEndpoint);
       final route = await valhallaService.getRoute(position, destination);
 
       if (route.waypoints.isEmpty) {

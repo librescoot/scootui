@@ -41,15 +41,19 @@ dependencies:
   google_fonts: ^6.2.1
   google_polyline_algorithm: ^3.1.0
   oktoast: ^3.4.0
+  archive: ^4.0.7
+  fixnum: ^1.1.1
+  protobuf: ^3.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  build_runner: ^2.4.15
+  build_runner: ^2.5.4
   source_gen: ^2.0.0
   analyzer: ^7.3.0
   json_serializable:
+  protoc_plugin: ^22.0.0
 
 flutter:
   uses-material-design: true
