@@ -67,34 +67,30 @@ class OtaStatusIndicator extends StatelessWidget {
     // Build the icon, with error overlay if needed
     final Widget icon;
     if (hasError) {
-      icon = SizedBox(
-        width: 24.0,
-        height: 24.0,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SvgPicture.asset(
-              'assets/icons/$iconAsset',
-              width: 24.0,
-              height: 24.0,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-            ),
-            SvgPicture.asset(
-              'assets/icons/librescoot-overlay-error.svg',
-              width: 24.0,
-              height: 24.0,
-              colorFilter: !isDark
-                  ? const ColorFilter.matrix([
-                      // Invert colors for light theme
-                      -1.0, 0.0, 0.0, 0.0, 255.0,
-                      0.0, -1.0, 0.0, 0.0, 255.0,
-                      0.0, 0.0, -1.0, 0.0, 255.0,
-                      0.0, 0.0, 0.0, 1.0, 0.0,
-                    ])
-                  : null,
-            ),
-          ],
-        ),
+      icon = Stack(
+        alignment: Alignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/icons/$iconAsset',
+            width: 24.0,
+            height: 24.0,
+            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+          ),
+          SvgPicture.asset(
+            'assets/icons/librescoot-overlay-error.svg',
+            width: 24.0,
+            height: 24.0,
+            colorFilter: !isDark
+                ? const ColorFilter.matrix([
+                    // Invert colors for light theme
+                    -1.0, 0.0, 0.0, 0.0, 255.0,
+                    0.0, -1.0, 0.0, 0.0, 255.0,
+                    0.0, 0.0, -1.0, 0.0, 255.0,
+                    0.0, 0.0, 0.0, 1.0, 0.0,
+                  ])
+                : null,
+          ),
+        ],
       );
     } else {
       icon = IndicatorLight(
