@@ -3,13 +3,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
+import '../../services/toast_service.dart';
 import '../../state/aux_battery.dart';
 import '../../state/battery.dart';
 import '../../state/cb_battery.dart';
 import '../../state/vehicle.dart';
 import '../../utils/condition_debouncer.dart';
 import '../../utils/fault_codes.dart';
-import '../../utils/toast_utils.dart';
 
 // Battery icon dimensions (scaled from 144x144)
 const double kBatteryIconWidth = 24.0;
@@ -377,16 +377,14 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
   bool _shouldShowAuxCriticalVoltageWarning(
       AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final criticalVoltage = auxBattery.voltage < 11000; // 11.0V = 11000mV
-    final mainPresent = mainBattery.present;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
     return criticalVoltage && seatboxClosed;
   }
 
-  void _showToastIfNeeded(BuildContext context, String message, bool wasShown,
-      Function(bool) setShown) {
-    if (!wasShown && mounted) {
-      ToastUtils.showWarningToast(context, message);
+  void _showToastIfNeeded(String message, bool wasShown, Function(bool) setShown) {
+    if (!wasShown) {
+      ToastService.showWarning(message);
       setShown(true);
     }
   }
@@ -423,27 +421,21 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     // Show toast notifications
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (showCbWarning) {
-        _showToastIfNeeded(context, "CB Battery not charging", _cbWarningShown,
+        _showToastIfNeeded("CB Battery not charging", _cbWarningShown,
             (shown) => _cbWarningShown = shown);
       } else {
         _cbWarningShown = false;
       }
 
       if (showAuxLowChargeWarning) {
-        _showToastIfNeeded(
-            context,
-            "AUX Battery low and not charging",
-            _auxLowChargeWarningShown,
+        _showToastIfNeeded("AUX Battery low and not charging", _auxLowChargeWarningShown,
             (shown) => _auxLowChargeWarningShown = shown);
       } else {
         _auxLowChargeWarningShown = false;
       }
 
       if (showAuxLowVoltageWarning) {
-        _showToastIfNeeded(
-            context,
-            "AUX Battery voltage low",
-            _auxLowVoltageWarningShown,
+        _showToastIfNeeded("AUX Battery voltage low", _auxLowVoltageWarningShown,
             (shown) => _auxLowVoltageWarningShown = shown);
       } else {
         _auxLowVoltageWarningShown = false;
@@ -453,7 +445,7 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
         final message = mainBattery.present
             ? "AUX Battery voltage very low - may need replacement"
             : "AUX Battery voltage very low - insert main battery to charge";
-        _showToastIfNeeded(context, message, _auxCriticalVoltageWarningShown,
+        _showToastIfNeeded(message, _auxCriticalVoltageWarningShown,
             (shown) => _auxCriticalVoltageWarningShown = shown);
       } else {
         _auxCriticalVoltageWarningShown = false;
@@ -565,8 +557,8 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
         message = "Battery low. Power reduced. Recharge battery";
       }
 
-      if (message != null && mounted) {
-        ToastUtils.showWarningToast(context, message);
+      if (message != null) {
+        ToastService.showWarning(message);
       }
     }
 
@@ -598,9 +590,9 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
             : "Battery 0";
 
         if (hasCritical) {
-          ToastUtils.showPersistentErrorToast(context, "$title: $faultMessage");
+          ToastService.showError("$title: $faultMessage");
         } else {
-          ToastUtils.showWarningToast(context, "$title: $faultMessage");
+          ToastService.showWarning("$title: $faultMessage");
         }
       }
     }
@@ -618,9 +610,9 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
             : "Battery 1";
 
         if (hasCritical) {
-          ToastUtils.showPersistentErrorToast(context, "$title: $faultMessage");
+          ToastService.showError("$title: $faultMessage");
         } else {
-          ToastUtils.showWarningToast(context, "$title: $faultMessage");
+          ToastService.showWarning("$title: $faultMessage");
         }
       }
     }
