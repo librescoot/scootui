@@ -70,7 +70,7 @@ class SavedLocationsService {
       final fields = ['latitude', 'longitude', 'label', 'created-at', 'last-used-at'];
       for (final field in fields) {
         final key = '${AppConfig.savedLocationsPrefix}.$id.$field';
-        await _mdbRepository.hdel(AppConfig.redisSettingsCluster, key);
+        await _mdbRepository.hdel(AppConfig.redisSettingsPersistentCluster, key);
       }
       
       debugPrint('📍 SavedLocationsService: Deleted location with ID $id');
@@ -86,7 +86,7 @@ class SavedLocationsService {
     try {
       final key = '${AppConfig.savedLocationsPrefix}.$id.last-used-at';
       await _mdbRepository.set(
-        AppConfig.redisSettingsCluster, 
+        AppConfig.redisSettingsPersistentCluster, 
         key, 
         DateTime.now().toIso8601String()
       );
@@ -104,7 +104,7 @@ class SavedLocationsService {
     
     for (final field in fields) {
       final key = '${AppConfig.savedLocationsPrefix}.$id.$field';
-      final value = await _mdbRepository.get(AppConfig.redisSettingsCluster, key);
+      final value = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, key);
       if (value != null) {
         data[field] = value;
       }
@@ -118,7 +118,7 @@ class SavedLocationsService {
   Future<void> _saveLocationData(int id, Map<String, String> data) async {
     for (final entry in data.entries) {
       final key = '${AppConfig.savedLocationsPrefix}.$id.${entry.key}';
-      await _mdbRepository.set(AppConfig.redisSettingsCluster, key, entry.value);
+      await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, entry.value);
     }
   }
 
