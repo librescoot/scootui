@@ -54,10 +54,28 @@ class IndicatorLight extends StatelessWidget {
     return Stack(children: [
       render(isActive && !blinking ? activeColor : inactiveColor),
       if (blinking && isActive)
-        MirrorAnimationBuilder(
-          tween: IntTween(begin: 0, end: 255),
-          curve: Curves.easeInOutExpo,
-          duration: const Duration(milliseconds: 327),
+        CustomAnimationBuilder<int>(
+          control: Control.loop,
+          tween: TweenSequence<int>([
+            // Fade up: 0ms to 250ms
+            TweenSequenceItem(
+              tween: IntTween(begin: 0, end: 255)
+                  .chain(CurveTween(curve: Curves.easeInOutExpo)),
+              weight: 250,
+            ),
+            // Fade down: 250ms to 500ms
+            TweenSequenceItem(
+              tween: IntTween(begin: 255, end: 0)
+                  .chain(CurveTween(curve: Curves.easeInOutExpo)),
+              weight: 250,
+            ),
+            // Stay dark: 500ms to 800ms
+            TweenSequenceItem(
+              tween: ConstantTween<int>(0),
+              weight: 300,
+            ),
+          ]),
+          duration: const Duration(milliseconds: 800),
           builder: (context, value, child) => render(activeColor.withAlpha(value)),
         ),
     ]);
