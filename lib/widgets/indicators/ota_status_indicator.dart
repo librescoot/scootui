@@ -35,6 +35,8 @@ class OtaStatusIndicator extends StatelessWidget {
 
     final color = isDark ? Colors.white : Colors.black;
     final updateVersion = otaData.dbcUpdateVersion;
+    final errorType = otaData.dbcError;
+    final errorMessage = otaData.dbcErrorMessage;
 
     final String actionText;
     final String iconAsset;
@@ -54,7 +56,8 @@ class OtaStatusIndicator extends StatelessWidget {
         iconAsset = _Icons.rebooting;
         break;
       case 'error':
-        actionText = 'Update error';
+        // Use new error type for more specific messaging, fall back to generic
+        actionText = _getErrorText(errorType);
         iconAsset = _Icons.rebooting;
         break;
       default:
@@ -63,6 +66,14 @@ class OtaStatusIndicator extends StatelessWidget {
     }
 
     final versionText = updateVersion.isNotEmpty ? ' Librescoot $updateVersion' : ' update';
+
+    // Build tooltip message - use detailed error message if available
+    final String tooltipMessage;
+    if (hasError && errorMessage.isNotEmpty) {
+      tooltipMessage = errorMessage;
+    } else {
+      tooltipMessage = '$actionText$versionText';
+    }
 
     // Build the icon, with error overlay if needed
     final Widget icon;
@@ -102,8 +113,25 @@ class OtaStatusIndicator extends StatelessWidget {
     }
 
     return Tooltip(
-      message: '$actionText$versionText',
+      message: tooltipMessage,
       child: icon,
     );
+  }
+
+  static String _getErrorText(String errorType) {
+    // Convert error type to user-friendly text
+    // Maintains backwards compatibility if errorType is empty
+    switch (errorType) {
+      case 'invalid-release-tag':
+        return 'Invalid release';
+      case 'download-failed':
+        return 'Download failed';
+      case 'install-failed':
+        return 'Install failed';
+      case 'reboot-failed':
+        return 'Reboot failed';
+      default:
+        return 'Update error';
+    }
   }
 }

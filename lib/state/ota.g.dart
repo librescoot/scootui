@@ -12,6 +12,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
   String get dbcStatus;
   String get mdbStatus;
   String get dbcUpdateVersion;
+  String get dbcError;
+  String get dbcErrorMessage;
   get syncSettings => SyncSettings(
       "ota",
       Duration(microseconds: 5000000),
@@ -51,6 +53,20 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             typeName: "String",
             defaultValue: "",
             interval: null),
+        SyncFieldSettings(
+            name: "dbcError",
+            variable: "error:dbc",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
+        SyncFieldSettings(
+            name: "dbcErrorMessage",
+            variable: "error-message:dbc",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
       ],
       "null",
       []);
@@ -63,6 +79,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcStatus: "status:dbc" != name ? dbcStatus : value,
       mdbStatus: "status:mdb" != name ? mdbStatus : value,
       dbcUpdateVersion: "update-version:dbc" != name ? dbcUpdateVersion : value,
+      dbcError: "error:dbc" != name ? dbcError : value,
+      dbcErrorMessage: "error-message:dbc" != name ? dbcErrorMessage : value,
     );
   }
 
@@ -74,11 +92,20 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcStatus: dbcStatus,
       mdbStatus: mdbStatus,
       dbcUpdateVersion: dbcUpdateVersion,
+      dbcError: dbcError,
+      dbcErrorMessage: dbcErrorMessage,
     );
   }
 
-  List<Object?> get props =>
-      [otaStatus, updateType, dbcStatus, mdbStatus, dbcUpdateVersion];
+  List<Object?> get props => [
+        otaStatus,
+        updateType,
+        dbcStatus,
+        mdbStatus,
+        dbcUpdateVersion,
+        dbcError,
+        dbcErrorMessage
+      ];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -89,6 +116,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
     buf.writeln("	dbcStatus = $dbcStatus");
     buf.writeln("	mdbStatus = $mdbStatus");
     buf.writeln("	dbcUpdateVersion = $dbcUpdateVersion");
+    buf.writeln("	dbcError = $dbcError");
+    buf.writeln("	dbcErrorMessage = $dbcErrorMessage");
     buf.writeln(")");
 
     return buf.toString();

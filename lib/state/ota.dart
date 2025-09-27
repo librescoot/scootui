@@ -25,11 +25,21 @@ class OtaData with $OtaData {
   @StateField(name: "update-version:dbc", defaultValue: "")
   String dbcUpdateVersion;
 
+  @override
+  @StateField(name: "error:dbc", defaultValue: "")
+  String dbcError;
+
+  @override
+  @StateField(name: "error-message:dbc", defaultValue: "")
+  String dbcErrorMessage;
+
   OtaData({
     this.otaStatus = "none",
     this.updateType = "none",
     this.dbcStatus = "",
     this.mdbStatus = "",
     this.dbcUpdateVersion = "",
+    this.dbcError = "",
+    this.dbcErrorMessage = "",
   });
 }
