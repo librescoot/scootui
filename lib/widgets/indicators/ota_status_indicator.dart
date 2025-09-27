@@ -123,9 +123,36 @@ class OtaStatusIndicator extends StatelessWidget {
       );
     }
 
+    // Build widget with optional progress text
+    Widget result = icon;
+
+    // Show download progress percentage when downloading
+    if (dbcStatus == 'downloading' && !hasError) {
+      final progress = int.tryParse(otaData.dbcDownloadProgress) ?? 0;
+      if (progress > 0) {
+        result = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(width: 2),
+            Text(
+              '$progress',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        );
+      }
+    }
+
     return Tooltip(
       message: tooltipMessage,
-      child: icon,
+      child: result,
     );
   }
 
