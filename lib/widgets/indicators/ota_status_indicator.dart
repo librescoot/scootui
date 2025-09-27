@@ -23,46 +23,55 @@ class OtaStatusIndicator extends StatelessWidget {
     
     // Check if DBC update is ongoing
     final dbcStatus = otaData.dbcStatus;
-    final isOtaOngoing = dbcStatus == 'downloading' || dbcStatus == 'installing' || dbcStatus == 'rebooting' || dbcStatus == 'error';
+    final errorType = otaData.dbcError;
+    // Treat 'reboot-failed' as 'rebooting' status (backward compatibility - show ready-to-reboot icon)
+    final isRealError = dbcStatus == 'error' && errorType != 'reboot-failed';
+    final isRebootFailed = dbcStatus == 'error' && errorType == 'reboot-failed';
+    final isOtaOngoing = dbcStatus == 'downloading' || dbcStatus == 'installing' || dbcStatus == 'rebooting' || isRealError || isRebootFailed;
     
     // Only show when scooter is unlocked and DBC update is ongoing
-    final isUnlocked = vehicleState.state == ScooterState.readyToDrive || 
+    final isUnlocked = vehicleState.state == ScooterState.readyToDrive ||
                       vehicleState.state == ScooterState.parked;
-    
+
     if (!isOtaOngoing || !isUnlocked) {
       return const SizedBox.shrink();
     }
 
     final color = isDark ? Colors.white : Colors.black;
     final updateVersion = otaData.dbcUpdateVersion;
-    final errorType = otaData.dbcError;
     final errorMessage = otaData.dbcErrorMessage;
 
     final String actionText;
     final String iconAsset;
-    final bool hasError = dbcStatus == 'error';
+    final bool hasError = dbcStatus == 'error' && !isRebootFailed;
 
-    switch (dbcStatus) {
-      case 'downloading':
-        actionText = 'Downloading';
-        iconAsset = _Icons.downloading;
-        break;
-      case 'installing':
-        actionText = 'Installing';
-        iconAsset = _Icons.installing;
-        break;
-      case 'rebooting':
-        actionText = 'Waiting for reboot';
-        iconAsset = _Icons.rebooting;
-        break;
-      case 'error':
-        // Use new error type for more specific messaging, fall back to generic
-        actionText = _getErrorText(errorType);
-        iconAsset = _Icons.rebooting;
-        break;
-      default:
-        actionText = 'Updating';
-        iconAsset = _Icons.downloading;
+    if (isRebootFailed) {
+      // Treat reboot-failed as rebooting status (backward compatibility)
+      actionText = 'Waiting for reboot';
+      iconAsset = _Icons.rebooting;
+    } else {
+      switch (dbcStatus) {
+        case 'downloading':
+          actionText = 'Downloading';
+          iconAsset = _Icons.downloading;
+          break;
+        case 'installing':
+          actionText = 'Installing';
+          iconAsset = _Icons.installing;
+          break;
+        case 'rebooting':
+          actionText = 'Waiting for reboot';
+          iconAsset = _Icons.rebooting;
+          break;
+        case 'error':
+          // Use appropriate icon based on error type
+          actionText = _getErrorText(errorType);
+          iconAsset = _getErrorIcon(errorType);
+          break;
+        default:
+          actionText = 'Updating';
+          iconAsset = _Icons.downloading;
+      }
     }
 
     final versionText = updateVersion.isNotEmpty ? ' Librescoot $updateVersion' : ' update';
@@ -81,12 +90,14 @@ class OtaStatusIndicator extends StatelessWidget {
       icon = Stack(
         alignment: Alignment.center,
         children: [
+          // Base icon (using same pattern as battery_display.dart)
           SvgPicture.asset(
             'assets/icons/$iconAsset',
             width: 24.0,
             height: 24.0,
             colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
           ),
+          // Error overlay
           SvgPicture.asset(
             'assets/icons/librescoot-overlay-error.svg',
             width: 24.0,
@@ -132,6 +143,20 @@ class OtaStatusIndicator extends StatelessWidget {
         return 'Reboot failed';
       default:
         return 'Update error';
+    }
+  }
+
+  static String _getErrorIcon(String errorType) {
+    // Select appropriate icon based on error type
+    switch (errorType) {
+      case 'download-failed':
+      case 'invalid-release-tag':
+        return _Icons.downloading;
+      case 'install-failed':
+        return _Icons.installing;
+      default:
+        // Default to rebooting icon for unknown errors
+        return _Icons.rebooting;
     }
   }
 }
