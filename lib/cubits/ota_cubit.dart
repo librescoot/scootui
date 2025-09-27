@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../cubits/mdb_cubits.dart';
+import '../services/toast_service.dart';
 import '../state/vehicle.dart';
 
 part 'ota_cubit.freezed.dart';
@@ -96,6 +97,9 @@ class OtaCubit extends Cubit<OtaState> {
   late StreamSubscription _otaSubscription;
   late StreamSubscription _vehicleSubscription;
 
+  String? _lastDbcStatus;
+  String? _lastDbcError;
+
   OtaCubit(this._otaSync, this._vehicleSync) : super(const OtaState.inactive()) {
     _initialize();
   }
@@ -121,6 +125,13 @@ class OtaCubit extends Cubit<OtaState> {
 
     // Get DBC-specific status field which is populated by the update-service
     final dbcStatus = _otaSync.state.dbcStatus;
+    final dbcError = _otaSync.state.dbcError;
+    final dbcErrorMessage = _otaSync.state.dbcErrorMessage;
+    final dbcUpdateVersion = _otaSync.state.dbcUpdateVersion;
+
+    // Show toasts for state transitions
+    _handleStatusChange(dbcStatus, dbcUpdateVersion);
+    _handleErrorChange(dbcError, dbcErrorMessage, dbcUpdateVersion);
 
     // Check if DBC updates are ongoing
     final dbcDownloading = dbcStatus == "downloading";
@@ -138,6 +149,37 @@ class OtaCubit extends Cubit<OtaState> {
 
     // For all other cases, emit inactive - let ShutdownOverlay handle display
     emit(const OtaState.inactive());
+  }
+
+  void _handleStatusChange(String status, String version) {
+    if (_lastDbcStatus == status || status.isEmpty) return;
+
+    _lastDbcStatus = status;
+    final versionText = version.isNotEmpty ? ' Librescoot $version' : '';
+
+    switch (status) {
+      case 'downloading':
+        ToastService.showInfo('Downloading$versionText update');
+        break;
+      case 'installing':
+        ToastService.showInfo('Installing$versionText update');
+        break;
+      case 'rebooting':
+        ToastService.showWarning('Update installed. Waiting for reboot');
+        break;
+    }
+  }
+
+  void _handleErrorChange(String error, String errorMessage, String version) {
+    if (_lastDbcError == error || error.isEmpty) return;
+
+    _lastDbcError = error;
+    final versionText = version.isNotEmpty ? ' Librescoot $version' : '';
+    final message = errorMessage.isNotEmpty
+        ? 'Update failed: $errorMessage'
+        : 'Update$versionText failed';
+
+    ToastService.showError(message);
   }
 
   static OtaCubit create(BuildContext context) {
