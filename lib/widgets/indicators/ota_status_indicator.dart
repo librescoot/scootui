@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/mdb_cubits.dart';
@@ -22,7 +23,7 @@ class OtaStatusIndicator extends StatelessWidget {
     
     // Check if DBC update is ongoing
     final dbcStatus = otaData.dbcStatus;
-    final isOtaOngoing = dbcStatus == 'downloading' || dbcStatus == 'installing' || dbcStatus == 'rebooting';
+    final isOtaOngoing = dbcStatus == 'downloading' || dbcStatus == 'installing' || dbcStatus == 'rebooting' || dbcStatus == 'error';
     
     // Only show when scooter is unlocked and DBC update is ongoing
     final isUnlocked = vehicleState.state == ScooterState.readyToDrive || 
@@ -37,6 +38,8 @@ class OtaStatusIndicator extends StatelessWidget {
 
     final String actionText;
     final String iconAsset;
+    final bool hasError = dbcStatus == 'error';
+
     switch (dbcStatus) {
       case 'downloading':
         actionText = 'Downloading';
@@ -50,6 +53,10 @@ class OtaStatusIndicator extends StatelessWidget {
         actionText = 'Waiting for reboot';
         iconAsset = _Icons.rebooting;
         break;
+      case 'error':
+        actionText = 'Update error';
+        iconAsset = _Icons.rebooting;
+        break;
       default:
         actionText = 'Updating';
         iconAsset = _Icons.downloading;
@@ -57,14 +64,50 @@ class OtaStatusIndicator extends StatelessWidget {
 
     final versionText = updateVersion.isNotEmpty ? ' Librescoot $updateVersion' : ' update';
 
-    return Tooltip(
-      message: '$actionText$versionText',
-      child: IndicatorLight(
+    // Build the icon, with error overlay if needed
+    final Widget icon;
+    if (hasError) {
+      icon = SizedBox(
+        width: 24.0,
+        height: 24.0,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/$iconAsset',
+              width: 24.0,
+              height: 24.0,
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+            ),
+            SvgPicture.asset(
+              'assets/icons/librescoot-overlay-error.svg',
+              width: 24.0,
+              height: 24.0,
+              colorFilter: !isDark
+                  ? const ColorFilter.matrix([
+                      // Invert colors for light theme
+                      -1.0, 0.0, 0.0, 0.0, 255.0,
+                      0.0, -1.0, 0.0, 0.0, 255.0,
+                      0.0, 0.0, -1.0, 0.0, 255.0,
+                      0.0, 0.0, 0.0, 1.0, 0.0,
+                    ])
+                  : null,
+            ),
+          ],
+        ),
+      );
+    } else {
+      icon = IndicatorLight(
         icon: IndicatorLight.svgAsset(iconAsset),
         isActive: true,
         size: 24.0,
         activeColor: color,
-      ),
+      );
+    }
+
+    return Tooltip(
+      message: '$actionText$versionText',
+      child: icon,
     );
   }
 }
