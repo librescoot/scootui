@@ -66,9 +66,8 @@ class BatteryStatusDisplay extends StatelessWidget {
         height: kBatteryIconHeight,
         colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
       );
-    } else if (battery.state == BatteryState.asleep ||
-        battery.state == BatteryState.idle) {
-      // Battery is asleep or idle - show normal charge icon with asleep mask and overlay
+    } else if (battery.state == BatteryState.asleep) {
+      // Battery is asleep - show normal charge icon with asleep mask and overlay
       final chargeWidth = (battery.charge / 100.0) * kChargeRectMaxWidth;
 
       batteryIcon = Stack(
@@ -113,6 +112,56 @@ class BatteryStatusDisplay extends StatelessWidget {
             width: kBatteryIconWidth,
             height: kBatteryIconHeight,
             colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+          ),
+        ],
+      );
+      labelText = '${battery.charge}';
+    } else if (battery.state == BatteryState.idle) {
+      // Battery is idle - show normal charge icon with idle overlay
+      final chargeWidth = (battery.charge / 100.0) * kChargeRectMaxWidth;
+
+      batteryIcon = Stack(
+        alignment: Alignment.center,
+        children: [
+          // Base battery icon with charge level
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Base battery icon
+              SvgPicture.asset(
+                'assets/icons/librescoot-main-battery-blank.svg',
+                width: kBatteryIconWidth,
+                height: kBatteryIconHeight,
+                colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+              ),
+
+              // Charge level rectangle
+              Positioned(
+                left: kChargeRectX,
+                top: kChargeRectY,
+                child: Container(
+                  width: chargeWidth,
+                  height: kChargeRectHeight,
+                  color: iconColor,
+                ),
+              ),
+            ],
+          ),
+
+          // Apply idle overlay
+          SvgPicture.asset(
+            'assets/icons/librescoot-overlay-idle.svg',
+            width: kBatteryIconWidth,
+            height: kBatteryIconHeight,
+            colorFilter: !isDark
+                ? const ColorFilter.matrix([
+                    // Invert colors for light theme
+                    -1.0, 0.0, 0.0, 0.0, 255.0,
+                    0.0, -1.0, 0.0, 0.0, 255.0,
+                    0.0, 0.0, -1.0, 0.0, 255.0,
+                    0.0, 0.0, 0.0, 1.0, 0.0,
+                  ])
+                : null,
           ),
         ],
       );
