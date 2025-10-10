@@ -19,7 +19,7 @@ class AppConfig {
   static const String redisSettingsPersistentCluster = 'settings';
 
   /// Default Valhalla endpoint URL
-  static String valhallaEndpoint = 'https://valhalla1.openstreetmap.de/';
+  static String valhallaEndpoint = 'http://localhost:8002/';
 
   /// Redis valhalla endpoint setting key
   static const String valhallaEndpointKey = 'dashboard.valhalla-url';
