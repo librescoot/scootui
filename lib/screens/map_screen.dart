@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/navigation_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../env_config.dart';
 import '../widgets/map/map_overlay_indicators.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
@@ -27,8 +28,8 @@ class MapScreen extends StatelessWidget {
     final MapCubit(:state) = context.watch<MapCubit>();
 
     return Container(
-      width: 480,
-      height: 480,
+      width: EnvConfig.resolution.width,
+      height: EnvConfig.resolution.height,
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [

@@ -8,6 +8,7 @@ import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
+import '../env_config.dart';
 import '../widgets/general/odometer_display.dart';
 import '../widgets/debug/debug_overlay.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
@@ -216,8 +217,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
     });
 
     return Container(
-      width: 480,
-      height: 480,
+      width: EnvConfig.resolution.width,
+      height: EnvConfig.resolution.height,
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [

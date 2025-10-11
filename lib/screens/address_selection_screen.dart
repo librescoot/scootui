@@ -6,6 +6,7 @@ import '../cubits/address_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../env_config.dart';
 import '../repositories/address_repository.dart';
 import '../repositories/mdb_repository.dart';
 import '../widgets/general/control_gestures_detector.dart';
@@ -79,8 +80,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     };
 
     return Container(
-      width: 480,
-      height: 480,
+      width: EnvConfig.resolution.width,
+      height: EnvConfig.resolution.height,
       color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.only(top: 40, bottom: 40),
       child: Column(

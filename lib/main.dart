@@ -41,7 +41,8 @@ void _setupPlatformConfigurations() {
       DeviceOrientation.portraitDown,
     ]);
 
-    const windowSize = Size(480.0, 480.0);
+    // Use resolution from environment configuration
+    final windowSize = EnvConfig.resolution;
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

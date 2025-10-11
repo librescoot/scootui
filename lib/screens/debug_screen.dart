@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:scooter_cluster/cubits/dashboard_cubit.dart';
 
+import '../env_config.dart';
 import '../repositories/mdb_repository.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 
@@ -85,8 +86,8 @@ class _DebugScreenState extends State<DebugScreen> {
     final dashboardData = DashboardSyncCubit.watch(context); // Watch DashboardSyncCubit
 
     return Container(
-      width: 480,
-      height: 480,
+      width: EnvConfig.resolution.width,
+      height: EnvConfig.resolution.height,
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
