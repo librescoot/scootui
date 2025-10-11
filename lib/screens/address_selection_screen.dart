@@ -79,6 +79,8 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     };
 
     return Container(
+      width: 480,
+      height: 480,
       color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.only(top: 40, bottom: 40),
       child: Column(

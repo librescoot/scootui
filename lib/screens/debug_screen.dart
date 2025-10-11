@@ -85,6 +85,8 @@ class _DebugScreenState extends State<DebugScreen> {
     final dashboardData = DashboardSyncCubit.watch(context); // Watch DashboardSyncCubit
 
     return Container(
+      width: 480,
+      height: 480,
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [

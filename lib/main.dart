@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,7 +12,7 @@ import 'repositories/all.dart';
 import 'screens/main_screen.dart';
 import 'widgets/toast_listener_wrapper.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kDebugMode) {
@@ -20,23 +22,43 @@ void main() async {
   // Initialize environment configuration
   EnvConfig.initialize();
 
-  await _setupPlatformConfigurations();
+  _setupPlatformConfigurations();
 
   runApp(const ScooterClusterApp());
 }
 
-Future<void> _setupPlatformConfigurations() async {
-  // Embedded Linux setup with DRM/GBM backend
-  // Set preferred orientations based on screen size
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+void _setupPlatformConfigurations() {
+  if (kIsWeb) {
+    // Web-specific setup
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Desktop-specific setup
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
 
-  // Hide system UI for full-screen embedded display
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+    const windowSize = Size(480.0, 480.0);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChannels.platform.invokeMethod('Window.setSize', {
+        'width': windowSize.width,
+        'height': windowSize.height,
+      });
+      SystemChannels.platform.invokeMethod('Window.center');
+    });
+  } else {
+    // Mobile/embedded setup
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+  }
 }
 
 class ScooterClusterApp extends StatelessWidget {

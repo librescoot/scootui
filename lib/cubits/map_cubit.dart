@@ -208,21 +208,17 @@ class MapCubit extends Cubit<MapState> {
       return _zoomComplexTurn; // Very close, zoom in fully
     }
 
-    // Use dynamic screen height calculation
-    // Assume we can get screen dimensions from state or pass as parameter
-    // For now, use a relative calculation based on the reference 480px height
-    const referenceScreenHeight = 480.0;
-    const topStatusBarHeightRatio = 30.0 / referenceScreenHeight; // ~6.25% of screen
-    const bottomBarHeightRatio = 60.0 / referenceScreenHeight; // ~12.5% of screen
+    const screenHeight = 480.0;
+    const topStatusBarHeight = 30.0;
+    const bottomBarHeight = 60.0;
     const vehicleVerticalOffset = 0.75;
 
-    // Calculate visible map height as percentage of total height
-    const visibleMapHeightRatio = 1.0 - topStatusBarHeightRatio - bottomBarHeightRatio;
+    const visibleMapHeight = screenHeight - topStatusBarHeight - bottomBarHeight;
 
     // The point of interest (the turn) should be visible in the upper part of the map.
     // The vehicle is not in the center, it's offset downwards.
     // This means we have more "look-ahead" distance.
-    final lookAheadHeight = referenceScreenHeight * visibleMapHeightRatio * vehicleVerticalOffset;
+    final lookAheadHeight = visibleMapHeight * vehicleVerticalOffset;
 
     // We want to fit the distanceToTurn within this lookAheadHeight.
     final targetVisibleMeters = distanceToTurn;

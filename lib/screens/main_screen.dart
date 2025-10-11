@@ -37,7 +37,9 @@ class MainScreen extends StatelessWidget {
 
     // If debug mode is set to full, show the debug screen regardless of current screen state
     if (debugMode == DebugMode.full) {
-      return SizedBox.expand(
+      return SizedBox(
+        width: 480,
+        height: 480,
         child: Stack(
           children: [
             const DebugScreen(),
@@ -50,7 +52,9 @@ class MainScreen extends StatelessWidget {
       );
     }
 
-    return SizedBox.expand(
+    return SizedBox(
+      width: 480,
+      height: 480,
       child: OKToast(
         child: Stack(
           children: [
