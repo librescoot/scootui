@@ -6,6 +6,7 @@ import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../state/engine.dart';
 import '../../state/settings.dart';
+import '../../utils/responsive_utils.dart';
 import '../indicators/speed_limit_indicator.dart';
 
 class SpeedometerDisplay extends StatefulWidget {
@@ -151,80 +152,89 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
           _isRegenerating ? Colors.red.withOpacity(0.3) : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
     }
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-          ),
-        ),
-        // Main speedometer gauge
-        CustomPaint(
-          size: const Size(300, 240), // Width: full diameter, Height: reduced to visual arc bounds
-          painter: _SpeedometerPainter(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Scale the speedometer based on available space
+        final scaleFactor = ResponsiveUtils.getScaleFactor(context);
+        final gaugeWidth = math.min(300 * scaleFactor, constraints.maxWidth * 0.8);
+        final gaugeHeight = gaugeWidth * 0.8; // Maintain aspect ratio (240/300 = 0.8)
+
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+              ),
+            ),
+            // Main speedometer gauge
+            CustomPaint(
+              size: Size(gaugeWidth, gaugeHeight),
+              painter: _SpeedometerPainter(
             progress: animatedSpeed / widget.maxSpeed,
             isDark: theme.isDark,
             isRegenerating: _isRegenerating,
             backgroundColor: backgroundColor,
             maxSpeed: widget.maxSpeed,
           ),
-        ),
-        // Speed display and indicators
-        Transform.translate(
-          offset: const Offset(0, 40), // Adjusted for new widget size: arc center (150) - widget center (120) + original offset (10)
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated speed text
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: animatedSpeed.toStringAsFixed(0),
-                  style: TextStyle(
-                    fontSize: 96,
-                    height: 1,
-                    fontWeight: FontWeight.bold,
-                    color: theme.isDark ? Colors.white : Colors.black,
-                  ),
-                ),
-              ),
-
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: 'km/h',
-                  style: TextStyle(
-                    fontSize: 24,
-                    height: 0.95,
-                    color: theme.isDark ? Colors.white70 : Colors.black54,
-                  ),
-                ),
-              ),
-
-              // Speed limit indicator
-              const SizedBox(height: 16),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+            ),
+            // Speed display and indicators
+            Transform.translate(
+              offset: Offset(0, gaugeHeight * 0.16), // Dynamic offset based on gauge height
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SpeedLimitIndicator(iconSize: 24),
-                  const SizedBox(width: 4),
-                  SizedBox(
-                    width: 140,
-                    child: RoadNameDisplay(
-                      textStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                  // Animated speed text
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      text: animatedSpeed.toStringAsFixed(0),
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.scaleFontSize(context, 96, minSize: 48, maxSize: 120),
+                        height: 1,
+                        fontWeight: FontWeight.bold,
+                        color: theme.isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ),
+
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      text: 'km/h',
+                      style: TextStyle(
+                        fontSize: ResponsiveUtils.scaleFontSize(context, 24, minSize: 16, maxSize: 32),
+                        height: 0.95,
+                        color: theme.isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ),
+
+                  // Speed limit indicator
+                  SizedBox(height: ResponsiveUtils.scale(context, 16)),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SpeedLimitIndicator(iconSize: ResponsiveUtils.scale(context, 24)),
+                      SizedBox(width: ResponsiveUtils.scale(context, 4)),
+                      SizedBox(
+                        width: ResponsiveUtils.scale(context, 140),
+                        child: RoadNameDisplay(
+                          textStyle: TextStyle(
+                            fontSize: ResponsiveUtils.scaleFontSize(context, 12, minSize: 10, maxSize: 16),
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
