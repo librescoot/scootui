@@ -146,7 +146,7 @@ BBLAYERS += "${BSPDIR}/sources/meta-virtualization"
 EOL
     echo "Overwriting local.conf..."
     cat > /yocto/build/conf/local.conf << EOL
-MACHINE ??= 'librescoot-dbc'
+MACHINE ??= 'unu-dbc'
 DISTRO ?= 'librescoot-dbc'
 MENDER_ARTIFACT_NAME = "release-1"
 INHERIT += "mender-full"
@@ -199,7 +199,7 @@ BBLAYERS = " \
 EOL
     echo "Overwriting local.conf..."
     cat > /yocto/build/conf/local.conf << EOL
-MACHINE ??= 'librescoot-mdb'
+MACHINE ??= 'unu-mdb'
 DISTRO ?= 'librescoot-mdb'
 MENDER_ARTIFACT_NAME = "release-1"
 INHERIT += "mender-full"
