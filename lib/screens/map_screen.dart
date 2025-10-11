@@ -27,8 +27,6 @@ class MapScreen extends StatelessWidget {
     final MapCubit(:state) = context.watch<MapCubit>();
 
     return Container(
-      width: 480,
-      height: 480,
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [

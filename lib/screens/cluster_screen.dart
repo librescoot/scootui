@@ -216,8 +216,6 @@ class _ClusterScreenState extends State<ClusterScreen> {
     });
 
     return Container(
-      width: 480,
-      height: 480,
       color: theme.scaffoldBackgroundColor,
       child: Column(
         children: [
