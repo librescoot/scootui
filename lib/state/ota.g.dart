@@ -14,6 +14,7 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
   String get dbcUpdateVersion;
   String get dbcError;
   String get dbcErrorMessage;
+  String get dbcDownloadProgress;
   get syncSettings => SyncSettings(
       "ota",
       Duration(microseconds: 5000000),
@@ -67,6 +68,13 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             typeName: "String",
             defaultValue: "",
             interval: null),
+        SyncFieldSettings(
+            name: "dbcDownloadProgress",
+            variable: "download-progress:dbc",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "0",
+            interval: null),
       ],
       "null",
       []);
@@ -81,6 +89,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcUpdateVersion: "update-version:dbc" != name ? dbcUpdateVersion : value,
       dbcError: "error:dbc" != name ? dbcError : value,
       dbcErrorMessage: "error-message:dbc" != name ? dbcErrorMessage : value,
+      dbcDownloadProgress:
+          "download-progress:dbc" != name ? dbcDownloadProgress : value,
     );
   }
 
@@ -94,6 +104,7 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcUpdateVersion: dbcUpdateVersion,
       dbcError: dbcError,
       dbcErrorMessage: dbcErrorMessage,
+      dbcDownloadProgress: dbcDownloadProgress,
     );
   }
 
@@ -104,7 +115,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
         mdbStatus,
         dbcUpdateVersion,
         dbcError,
-        dbcErrorMessage
+        dbcErrorMessage,
+        dbcDownloadProgress
       ];
   @override
   String toString() {
@@ -118,6 +130,7 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
     buf.writeln("	dbcUpdateVersion = $dbcUpdateVersion");
     buf.writeln("	dbcError = $dbcError");
     buf.writeln("	dbcErrorMessage = $dbcErrorMessage");
+    buf.writeln("	dbcDownloadProgress = $dbcDownloadProgress");
     buf.writeln(")");
 
     return buf.toString();

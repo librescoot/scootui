@@ -33,6 +33,10 @@ class OtaData with $OtaData {
   @StateField(name: "error-message:dbc", defaultValue: "")
   String dbcErrorMessage;
 
+  @override
+  @StateField(name: "download-progress:dbc", defaultValue: "0")
+  String dbcDownloadProgress;
+
   OtaData({
     this.otaStatus = "none",
     this.updateType = "none",
@@ -41,5 +45,6 @@ class OtaData with $OtaData {
     this.dbcUpdateVersion = "",
     this.dbcError = "",
     this.dbcErrorMessage = "",
+    this.dbcDownloadProgress = "0",
   });
 }
