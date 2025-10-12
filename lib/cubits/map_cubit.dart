@@ -37,10 +37,9 @@ class MapCubit extends Cubit<MapState> {
   final TilesRepository _tilesRepository;
 
   // Dynamic zoom constants based on navigation context
-  static const double _zoomLongStraight = 15.5; // Long straight sections (>2km)
-  static const double _zoomDefault = 17.0; // Default navigation zoom
-  static const double _zoomApproachingTurn = 18.0; // Approaching turn (<500m)
-  static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
+  static const double _zoomLongStraight = 15.0; // Long straight sections (~1000m look-ahead)
+  static const double _zoomDefault = 16.0; // Default navigation zoom (~500m look-ahead)
+  static const double _zoomMax = 17.75; // Maximum zoom for complex turns (~150m look-ahead)
 
   // Vehicle positioning - public so VehicleIndicator can use the same value
   static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
@@ -206,7 +205,7 @@ class MapCubit extends Cubit<MapState> {
     final distanceToTurn = nextInstruction.distance; // in meters
 
     if (distanceToTurn <= 1) {
-      return _zoomComplexTurn; // Very close, zoom in fully
+      return _zoomMax;
     }
 
     const screenHeight = 480.0;
@@ -232,7 +231,7 @@ class MapCubit extends Cubit<MapState> {
     double requiredZoom = 15.6 - math.log(targetVisibleMeters / lookAheadHeight) / math.ln2;
 
     // Clamp the zoom level to reasonable bounds
-    return requiredZoom.clamp(_zoomLongStraight, _zoomComplexTurn);
+    return requiredZoom.clamp(_zoomLongStraight, _zoomMax);
   }
 
   void _onGpsData(GpsData data) {
