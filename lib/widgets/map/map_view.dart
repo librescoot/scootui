@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
-    show Alignment, BuildContext, Colors, Icon, Icons, Widget, TickerProviderStateMixin;
+    show BoxDecoration, BoxShape, Brightness, BuildContext, Colors, Container, Icon, Icons, Theme, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,7 +9,7 @@ import 'package:flutter_map/flutter_map.dart'
     show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, TileLayer;
 import 'package:latlong2/latlong.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileProvider;
-import 'package:vector_tile_renderer/vector_tile_renderer.dart' show Theme;
+import 'package:vector_tile_renderer/vector_tile_renderer.dart' as vtr;
 
 import '../../cubits/map_cubit.dart';
 import '../../repositories/mdb_repository.dart';
@@ -25,6 +25,9 @@ class NorthIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
+
     return Positioned(
       bottom: 16,
       right: 16,
@@ -33,8 +36,8 @@ class NorthIndicator extends StatelessWidget {
         child: Container(
           width: 32,
           height: 32,
-          decoration: const BoxDecoration(
-            color: Colors.transparent,
+          decoration: BoxDecoration(
+            color: backgroundColor,
             shape: BoxShape.circle,
           ),
           child: const Stack(
@@ -71,8 +74,9 @@ class VehicleIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Position at center with vertical offset to match _mapCenterOffset in map_cubit
-    // The map rotates so direction of travel points "up", so vehicle icon just points up
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
+
     return Positioned(
       left: 0,
       right: 0,
@@ -81,10 +85,18 @@ class VehicleIndicator extends StatelessWidget {
       child: Center(
         child: Transform.translate(
           offset: const Offset(0, 120), // Match _mapCenterOffset from map_cubit
-          child: const Icon(
-            Icons.navigation,
-            color: Colors.blue,
-            size: 30.0,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.navigation,
+              color: Colors.blue,
+              size: 30.0,
+            ),
           ),
         ),
       ),
@@ -194,7 +206,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
 
 class OfflineMapView extends StatefulWidget {
   final MapController mapController;
-  final Theme theme;
+  final vtr.Theme theme;
   final VectorTileProvider tiles;
   final LatLng position;
   final double orientation;
