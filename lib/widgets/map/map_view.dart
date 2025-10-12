@@ -132,7 +132,7 @@ class VehicleIndicator extends StatelessWidget {
       bottom: 0,
       child: Center(
         child: Transform.translate(
-          offset: const Offset(0, 130), // Match _mapCenterOffset from map_cubit
+          offset: MapCubit.mapCenterOffset,
           child: Container(
             width: 40,
             height: 40,

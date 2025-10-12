@@ -41,7 +41,9 @@ class MapCubit extends Cubit<MapState> {
   static const double _zoomDefault = 17.0; // Default navigation zoom
   static const double _zoomApproachingTurn = 18.0; // Approaching turn (<500m)
   static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
-  static const Offset _mapCenterOffset = Offset(0, 130); // Vehicle positioned toward bottom for better look-ahead
+
+  // Vehicle positioning - public so VehicleIndicator can use the same value
+  static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
 
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
@@ -170,7 +172,7 @@ class MapCubit extends Cubit<MapState> {
 
     // When off-route, use north-up orientation and center the vehicle
     double rotation = isOffRoute ? 0.0 : -course;
-    Offset offset = isOffRoute ? Offset.zero : _mapCenterOffset;
+    Offset offset = isOffRoute ? Offset.zero : mapCenterOffset;
 
     // Create target transformation and animate to it atomically
     final targetTransform = MapTransform(
