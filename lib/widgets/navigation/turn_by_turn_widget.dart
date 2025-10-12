@@ -74,15 +74,52 @@ class TurnByTurnWidget extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        // Special handling for arrival status
-        if (state.status == NavigationStatus.arrived) {
+        // Special handling for rerouting status - just show small box
+        if (state.status == NavigationStatus.rerouting) {
           return Container(
-            padding: padding ?? const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
               borderRadius: BorderRadius.circular(8.0),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                color: Colors.orange.withOpacity(0.6),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Recalculating route...',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Special handling for arrival status
+        if (state.status == NavigationStatus.arrived) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(
+                color: Colors.green.withOpacity(0.6),
                 width: 1.5,
               ),
             ),
@@ -92,17 +129,15 @@ class TurnByTurnWidget extends StatelessWidget {
                 Icon(
                   Icons.place,
                   color: Colors.green,
-                  size: compact ? 24 : 48,
+                  size: 24,
                 ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(
-                    'You have arrived!',
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: compact ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(width: 8),
+                Text(
+                  'You have arrived!',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -110,18 +145,8 @@ class TurnByTurnWidget extends StatelessWidget {
           );
         }
 
-        return Container(
-          padding: padding ?? const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
-              width: 1.5,
-            ),
-          ),
-          child: compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark),
-        );
+        // Return the two-box layout directly, no wrapper
+        return compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark);
       },
     );
   }
@@ -134,18 +159,22 @@ class TurnByTurnWidget extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildInstructionIcon(instruction, size: 24, isDark: isDark),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            _formatDistance(instruction.distance),
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        // Compact: icon above, distance below
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildInstructionIcon(instruction, size: 24, isDark: isDark),
+            const SizedBox(height: 2),
+            Text(
+              _formatDistance(instruction.distance),
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                height: 1.0,
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
+          ],
         ),
       ],
     );
@@ -155,87 +184,95 @@ class TurnByTurnWidget extends StatelessWidget {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
+    final nextInstruction = instructions.length > 1 ? instructions[1] : null;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _buildInstructionIcon(instruction, size: 48, isDark: isDark),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _formatDistance(instruction.distance),
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 18,
-                      height: 1.1,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Background: Instruction text box (full width, behind icon box)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(left: 90, right: 12, top: 14, bottom: 14),
+            constraints: const BoxConstraints(minHeight: 80), // Ensure minimum height
+            decoration: BoxDecoration(
+            color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _getInstructionText(instruction, null),
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black87,
+                  fontSize: 15,
+                  fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (nextInstruction != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Then ${_getShortInstructionText(nextInstruction)}',
+                  style: TextStyle(
+                    color: isDark ? Colors.white38 : Colors.black45,
+                    fontSize: 13,
+                    height: 1.2,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getInstructionText(instruction, instructions.length > 1 ? instructions[1] : null),
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.black87, // Increased contrast for light theme
-                      fontSize: 14,
-                      fontWeight: isDark ? FontWeight.normal : FontWeight.w500, // Bolder for light theme
-                      height: 1.1,
-                    ),
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        ),
+        // Foreground: Icon/distance box (layered on top, jutting out)
+        Positioned(
+          left: 0,
+          top: -6,
+          child: Container(
+            width: 72, // Fixed narrow width
+            constraints: const BoxConstraints(minHeight: 92), // Taller than instruction box
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+                width: 1.5,
               ),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildInstructionIcon(instruction, size: 48, isDark: isDark),
+                const SizedBox(height: 8),
+                Text(
+                  _formatDistance(instruction.distance),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                    height: 1.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        if (state.status == NavigationStatus.rerouting) ...[
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Recalculating route...',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-        if (state.isOffRoute) ...[
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              Icon(
-                Icons.warning,
-                color: Colors.orange,
-                size: 16,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Off route',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
       ],
+      ),
     );
   }
 
