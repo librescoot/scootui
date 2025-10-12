@@ -73,7 +73,7 @@ class StatusIndicators extends StatelessWidget {
         return _Icons.gpsOff; // No timestamp data
       }
     }
-    
+
     // Use explicit state field (non-stock MDB)
     return switch (gps.state) {
       GpsState.searching => _Icons.gpsSearching,
@@ -83,39 +83,94 @@ class StatusIndicators extends StatelessWidget {
     };
   }
 
+  bool gpsIsActive(GpsData gps) {
+    if (gps.state == GpsState.off) {
+      return gps.hasRecentFix;
+    }
+    return gps.state == GpsState.fixEstablished && gps.hasRecentFix;
+  }
+
+  bool gpsHasError(GpsData gps) {
+    return gps.state == GpsState.error;
+  }
+
+  bool bluetoothIsActive(BluetoothData bluetooth) {
+    return bluetooth.status == ConnectionStatus.connected;
+  }
+
+  bool cloudIsActive(InternetData internet) {
+    return internet.unuCloud == ConnectionStatus.connected;
+  }
+
+  bool internetIsActive(InternetData internet) {
+    return internet.status == ConnectionStatus.connected;
+  }
+
+  bool shouldShowIndicator(String setting, bool isActive, bool hasError) {
+    return switch (setting) {
+      'always' => true,
+      'active-or-error' => isActive || hasError,
+      'error' => hasError,
+      'never' => false,
+      _ => true, // Default to always if unknown setting
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final internet = InternetSync.watch(context);
     final bluetooth = BluetoothSync.watch(context);
     final gps = GpsSync.watch(context);
+    final settings = SettingsSync.watch(context);
     final ThemeState(:isDark) = ThemeCubit.watch(context);
 
     final color = isDark ? Colors.white : Colors.black;
     final size = 24.0;
 
+    final children = <Widget>[
+      const OtaStatusIndicator(),
+    ];
+
+    if (shouldShowIndicator(settings.showGps ?? 'error', gpsIsActive(gps), gpsHasError(gps))) {
+      children.add(IndicatorLight(
+        icon: IndicatorLight.svgAsset(gpsIcon(gps)),
+        isActive: true,
+        size: size,
+        activeColor: color,
+      ));
+    }
+
+    if (shouldShowIndicator(settings.showBluetooth ?? 'active-or-error', bluetoothIsActive(bluetooth), false)) {
+      children.add(IndicatorLight(
+        icon: IndicatorLight.svgAsset(bluetoothIcon(bluetooth)),
+        isActive: true,
+        size: size,
+        activeColor: color,
+      ));
+    }
+
+    if (shouldShowIndicator(settings.showCloud ?? 'error', cloudIsActive(internet), false)) {
+      children.add(IndicatorLight(
+        icon: IndicatorLight.svgAsset(cloudIcon(internet)),
+        isActive: true,
+        size: size,
+        activeColor: color,
+      ));
+    }
+
+    if (shouldShowIndicator(settings.showInternet ?? 'always', internetIsActive(internet), false)) {
+      children.add(IndicatorLight(
+        icon: IndicatorLight.svgAsset(internetIcon(internet)),
+        isActive: true,
+        activeColor: color,
+        size: size,
+      ));
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       spacing: 4,
-      children: [
-        // OTA status indicator (only shows when active)
-        const OtaStatusIndicator(),
-        IndicatorLight(
-          icon: IndicatorLight.svgAsset(gpsIcon(gps)),
-          isActive: true,
-          size: size,
-          activeColor: color,
-        ),
-        IndicatorLight(
-            icon: IndicatorLight.svgAsset(bluetoothIcon(bluetooth)), isActive: true, size: size, activeColor: color),
-        IndicatorLight(
-            icon: IndicatorLight.svgAsset(cloudIcon(internet)), isActive: true, size: size, activeColor: color),
-        IndicatorLight(
-          icon: IndicatorLight.svgAsset(internetIcon(internet)),
-          isActive: true,
-          activeColor: color,
-          size: size,
-        ),
-      ],
+      children: children,
     );
   }
 }
