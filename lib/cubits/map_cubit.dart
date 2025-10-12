@@ -15,6 +15,7 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/tiles_repository.dart';
+import '../routing/models.dart';
 import '../state/gps.dart';
 import '../utils/map_transform_animator.dart';
 import 'mdb_cubits.dart';
@@ -208,6 +209,33 @@ class MapCubit extends Cubit<MapState> {
       return _zoomMax;
     }
 
+    // Look ahead up to 2 more turns (max 3 total) within 150m from current position
+    double targetDistance = distanceToTurn;
+    int significantTurnsFound = 0;
+
+    for (int i = 1; i < navState.upcomingInstructions.length && significantTurnsFound < 2; i++) {
+      final instruction = navState.upcomingInstructions[i];
+
+      // Stop if we've gone beyond 150m from current position
+      if (instruction.distance > 150) break;
+
+      // Check if this is a significant maneuver
+      final isSignificantTurn = switch (instruction) {
+        Turn(:final direction) => direction != TurnDirection.slightLeft &&
+                                   direction != TurnDirection.slightRight,
+        Exit() => true,
+        Roundabout() => true,
+        Keep() => false,
+        Other() => false,
+      };
+
+      if (isSignificantTurn) {
+        // Zoom out to show this turn too
+        targetDistance = instruction.distance;
+        significantTurnsFound++;
+      }
+    }
+
     const screenHeight = 480.0;
     const topStatusBarHeight = 30.0;
     const bottomBarHeight = 60.0;
@@ -220,8 +248,8 @@ class MapCubit extends Cubit<MapState> {
     // This means we have more "look-ahead" distance.
     final lookAheadHeight = visibleMapHeight * vehicleVerticalOffset;
 
-    // We want to fit the distanceToTurn within this lookAheadHeight.
-    final targetVisibleMeters = distanceToTurn;
+    // We want to fit the targetDistance within this lookAheadHeight.
+    final targetVisibleMeters = targetDistance;
 
     // This formula is a heuristic to convert meters to a zoom level.
     // It's derived from how map scales work (roughly doubles with each zoom level).
