@@ -195,15 +195,21 @@ class MapCubit extends Cubit<MapState> {
       print("MapCubit: Map is locked, skipping _moveAndRotate.");
       return;
     }
-    final animator = _transformAnimator;
-    if (animator == null || isClosed) {
-      if (isClosed) {
-        print("MapCubit: Cubit is closed, skipping _moveAndRotate.");
-      } else {
-        print("MapCubit: MapTransformAnimator is null in _moveAndRotate. Map not ready or not initialized yet.");
-      }
+
+    // Check if map is ready before trying to animate
+    final currentState = state;
+    final isReady = switch (currentState) {
+      MapOffline(:final isReady) => isReady,
+      MapOnline(:final isReady) => isReady,
+      _ => false,
+    };
+
+    if (!isReady || _transformAnimator == null || isClosed) {
+      // Map not ready yet, silently skip (this is normal during initialization)
       return;
     }
+
+    final animator = _transformAnimator!;
 
     final navState = _currentNavigationState;
     final isOffRoute = navState?.isOffRoute ?? false;
@@ -344,7 +350,7 @@ class MapCubit extends Cubit<MapState> {
     _transformAnimator = MapTransformAnimator(
       mapController: current.controller,
       tickerProvider: vsync,
-      duration: const Duration(milliseconds: 950), // Match GPS update rate (1Hz) for smooth continuous motion
+      duration: const Duration(milliseconds: 450), // Match typical GPS update rate (2Hz / 500ms) for smooth motion
       curve: Curves.linear, // Linear for constant velocity feel
     );
 

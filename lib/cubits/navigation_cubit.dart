@@ -213,7 +213,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     // If we have a destination but no route (which happens on startup with a pending destination),
     // and we just received a GPS position, it's time to calculate the route.
-    if (currentState.destination != null && currentState.route == null) {
+    if (currentState.destination != null && currentState.route == null && _currentPosition != null) {
       // We check for idle or error status to ensure we only trigger this
       // if we're not already in the middle of a calculation or navigation.
       if (currentState.status == NavigationStatus.idle || currentState.status == NavigationStatus.error) {
@@ -223,13 +223,13 @@ class NavigationCubit extends Cubit<NavigationState> {
           _currentPosition!,
           currentState.destination!,
         );
-        
+
         if (distanceToDestination < _arrivalProximityMeters) {
           print("NavigationCubit (_onGpsData): Already at destination (${distanceToDestination.toStringAsFixed(1)}m), clearing navigation instead of calculating route.");
           clearNavigation();
           return;
         }
-        
+
         print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
         _calculateRoute(currentState.destination!);
         return; // Exit because _calculateRoute will emit the next state.

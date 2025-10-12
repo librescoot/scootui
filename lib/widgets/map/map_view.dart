@@ -358,7 +358,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tileUrl = isDark
-        ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+        ? 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
         : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
 
     return Stack(
@@ -563,7 +563,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
                   : VectorTileLayerMode.raster,
               maximumZoom: 20,
               // Optimized cache settings for better performance
-              fileCacheTtl: const Duration(hours: 24), // Cache tiles for 24 hours
+              fileCacheTtl: const Duration(days: 7),
               memoryTileCacheMaxSize: 10 * 1024 * 1024, // 10MB memory cache (bytes)
               memoryTileDataCacheMaxSize: 99, // 99 parsed tiles in memory (max < 100)
               fileCacheMaximumSizeInBytes: 500 * 1024 * 1024, // 500MB file cache
