@@ -66,6 +66,32 @@ class NorthIndicator extends StatelessWidget {
   }
 }
 
+class VehicleIndicator extends StatelessWidget {
+  const VehicleIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Position at center with vertical offset to match _mapCenterOffset in map_cubit
+    // The map rotates so direction of travel points "up", so vehicle icon just points up
+    return Positioned(
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+      child: Center(
+        child: Transform.translate(
+          offset: const Offset(0, 120), // Match _mapCenterOffset from map_cubit
+          child: const Icon(
+            Icons.navigation,
+            color: Colors.blue,
+            size: 30.0,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class OnlineMapView extends StatefulWidget {
   final MapController mapController;
   final LatLng position;
@@ -146,32 +172,20 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
                   ),
                 ],
               ),
+            // Only show destination marker, not the vehicle (it's a fixed overlay now)
             MarkerLayer(
               markers: [
-                Marker(
-                  point: widget.position,
-                  width: 30.0,
-                  height: 30.0,
-                  alignment: Alignment.center,
-                  rotate: false, // Don't let flutter_map rotate the marker
-                  child: Transform.rotate(
-                    angle: widget.orientation * (math.pi / 180), // Convert degrees to radians
-                    child: const Icon(
-                      Icons.navigation,
-                      color: Colors.blue,
-                      size: 30.0,
-                    ),
-                  ),
-                ),
                 if (widget.destination != null)
                   Marker(
                     point: widget.destination!,
+                    rotate: false, // Keep marker upright on screen
                     child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
                   ),
               ],
             ),
           ],
         ),
+        const VehicleIndicator(),
         NorthIndicator(orientation: widget.orientation),
       ],
     );
@@ -266,6 +280,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     if (widget.destination != null) {
       markers.add(Marker(
         point: widget.destination!,
+        rotate: false, // Keep marker upright on screen
         child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
       ));
     }
@@ -317,23 +332,11 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
               cacheFolder: ThemeAwareCache.getCacheFolderProvider(widget.themeMode),
             ),
             if (routeLayer != null) routeLayer,
-            MarkerLayer(markers: [
-              Marker(
-                point: widget.position,
-                rotate: false, // Don't let flutter_map rotate the marker
-                child: Transform.rotate(
-                  angle: widget.orientation * (math.pi / 180), // Convert degrees to radians
-                  child: const Icon(
-                    Icons.navigation,
-                    color: Colors.blue,
-                    size: 30.0,
-                  ),
-                ),
-              ),
-              ..._routeMarkers()
-            ]),
+            // Only show destination markers, not the vehicle (it's a fixed overlay now)
+            MarkerLayer(markers: _routeMarkers()),
           ],
         ),
+        const VehicleIndicator(),
         NorthIndicator(orientation: widget.orientation),
       ],
     );
