@@ -7,6 +7,7 @@ import '../../state/enums.dart';
 import '../../state/gps.dart';
 import '../../state/internet.dart';
 import 'indicator_light.dart';
+import 'internet_indicator.dart';
 import 'ota_status_indicator.dart';
 
 class _Icons {
@@ -159,10 +160,10 @@ class StatusIndicators extends StatelessWidget {
     }
 
     if (shouldShowIndicator(settings.showInternet ?? 'always', internetIsActive(internet), false)) {
-      children.add(IndicatorLight(
-        icon: IndicatorLight.svgAsset(internetIcon(internet)),
-        isActive: true,
-        activeColor: color,
+      children.add(InternetIndicator(
+        iconName: internetIcon(internet),
+        internet: internet,
+        color: color,
         size: size,
       ));
     }
