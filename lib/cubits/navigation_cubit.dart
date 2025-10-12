@@ -311,8 +311,6 @@ class NavigationCubit extends Cubit<NavigationState> {
         instructionText: "Return to the route",
       );
       upcomingInstructions = [returnInstruction, ...upcomingInstructions];
-      print(
-          "NavigationCubit: Added return instruction. First instruction: ${upcomingInstructions.first.instructionText}, distance: ${upcomingInstructions.first.distance}");
     }
 
     emit(state.copyWith(

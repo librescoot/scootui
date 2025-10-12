@@ -104,6 +104,8 @@ Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
       postInstructionText: json['postInstructionText'] as String?,
+      bearingBefore: (json['bearingBefore'] as num?)?.toDouble(),
+      bearingAfter: (json['bearingAfter'] as num?)?.toDouble(),
       $type: json['runtimeType'] as String?,
     );
 
@@ -117,6 +119,8 @@ Map<String, dynamic> _$RoundaboutToJson(Roundabout instance) =>
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
       'postInstructionText': instance.postInstructionText,
+      'bearingBefore': instance.bearingBefore,
+      'bearingAfter': instance.bearingAfter,
       'runtimeType': instance.$type,
     };
 

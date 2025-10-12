@@ -124,6 +124,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    double? bearingBefore,
+    double? bearingAfter,
   }) = Roundabout;
 
   const factory RouteInstruction.other({

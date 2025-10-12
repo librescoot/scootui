@@ -339,6 +339,8 @@ class ValhallaService {
           streetName: streetName,
           instructionText: instructionText,
           postInstructionText: postInstructionText,
+          bearingBefore: maneuver.bearingBefore,
+          bearingAfter: maneuver.bearingAfter,
         );
       }
       // For other types, we need to adapt the creator to include postInstructionText

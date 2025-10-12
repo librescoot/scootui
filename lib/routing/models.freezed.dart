@@ -608,6 +608,8 @@ class Roundabout extends RouteInstruction {
       this.streetName,
       this.instructionText,
       this.postInstructionText,
+      this.bearingBefore,
+      this.bearingAfter,
       final String? $type})
       : $type = $type ?? 'roundabout',
         super._();
@@ -628,6 +630,8 @@ class Roundabout extends RouteInstruction {
   final String? instructionText;
   @override
   final String? postInstructionText;
+  final double? bearingBefore;
+  final double? bearingAfter;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -666,7 +670,11 @@ class Roundabout extends RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.bearingBefore, bearingBefore) ||
+                other.bearingBefore == bearingBefore) &&
+            (identical(other.bearingAfter, bearingAfter) ||
+                other.bearingAfter == bearingAfter));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -680,11 +688,13 @@ class Roundabout extends RouteInstruction {
       originalShapeIndex,
       streetName,
       instructionText,
-      postInstructionText);
+      postInstructionText,
+      bearingBefore,
+      bearingAfter);
 
   @override
   String toString() {
-    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter)';
   }
 }
 
@@ -704,7 +714,9 @@ abstract mixin class $RoundaboutCopyWith<$Res>
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      double? bearingBefore,
+      double? bearingAfter});
 }
 
 /// @nodoc
@@ -727,6 +739,8 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? bearingBefore = freezed,
+    Object? bearingAfter = freezed,
   }) {
     return _then(Roundabout(
       distance: null == distance
@@ -761,6 +775,14 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
               as String?,
+      bearingBefore: freezed == bearingBefore
+          ? _self.bearingBefore
+          : bearingBefore // ignore: cast_nullable_to_non_nullable
+              as double?,
+      bearingAfter: freezed == bearingAfter
+          ? _self.bearingAfter
+          : bearingAfter // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }

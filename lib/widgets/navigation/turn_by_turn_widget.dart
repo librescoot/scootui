@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../cubits/navigation_cubit.dart';
 import '../../cubits/navigation_state.dart';
 import '../../routing/models.dart';
+import 'roundabout_icon_painter.dart';
 
 class TurnByTurnWidget extends StatelessWidget {
   final bool compact;
@@ -304,9 +305,9 @@ class TurnByTurnWidget extends StatelessWidget {
           TurnDirection.rightUTurn => Icons.u_turn_right,
         };
         break;
-      case Roundabout(side: final side, exitNumber: final exitNumber):
+      case Roundabout(side: final side, exitNumber: final exitNumber, bearingBefore: final bearingBefore):
         // Handle roundabout with custom widget below
-        return _buildRoundaboutIcon(side, exitNumber, size, isDark);
+        return _buildRoundaboutIcon(side, exitNumber, bearingBefore, size, isDark);
       case Exit(side: final side):
         iconData = side == ExitSide.left ? Icons.exit_to_app : Icons.exit_to_app;
         break;
@@ -395,44 +396,17 @@ class TurnByTurnWidget extends StatelessWidget {
     };
   }
 
-  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double size, bool isDark) {
-    // Use appropriate directional icon based on side
-    final IconData roundaboutIcon = side == RoundaboutSide.left ? Icons.roundabout_left : Icons.roundabout_right;
-
-    final iconColor = isDark ? Colors.white : Colors.black87;
-    final borderColor = isDark ? Colors.white : Colors.black87;
-
+  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double? bearingBefore, double size, bool isDark) {
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            roundaboutIcon,
-            color: iconColor,
-            size: size,
-          ),
-          Container(
-            width: size * 0.35,
-            height: size * 0.35,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 1.5),
-            ),
-            child: Center(
-              child: Text(
-                exitNumber.toString(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: size * 0.2,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: CustomPaint(
+        painter: RoundaboutIconPainter(
+          exitNumber: exitNumber,
+          bearingBefore: bearingBefore,
+          isDark: isDark,
+          size: size,
+        ),
       ),
     );
   }
