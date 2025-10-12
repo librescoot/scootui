@@ -1,7 +1,8 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart'
-    show Border, BoxDecoration, BoxShape, BorderRadius, BorderSide, Brightness, BuildContext, Colors, Column, Container, CrossAxisAlignment, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, BorderRadius, BorderSide, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,6 +18,53 @@ import '../../routing/models.dart';
 import '../../utils/theme_aware_cache.dart';
 
 final distanceCalculator = Distance();
+
+class CompassNeedlePainter extends CustomPainter {
+  final Color northColor;
+  final Color southColor;
+  final Color strokeColor;
+
+  CompassNeedlePainter({
+    required this.northColor,
+    required this.southColor,
+    required this.strokeColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2;
+
+    // North-pointing triangle (red)
+    final northPath = ui.Path()
+      ..moveTo(center.dx, center.dy - radius * 0.8) // Top point
+      ..lineTo(center.dx - radius * 0.3, center.dy) // Left base
+      ..lineTo(center.dx + radius * 0.3, center.dy) // Right base
+      ..close();
+
+    final northPaint = Paint()
+      ..color = northColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(northPath, northPaint);
+
+    // South-pointing triangle (gray)
+    final southPath = ui.Path()
+      ..moveTo(center.dx, center.dy + radius * 0.8) // Bottom point
+      ..lineTo(center.dx - radius * 0.3, center.dy) // Left base
+      ..lineTo(center.dx + radius * 0.3, center.dy) // Right base
+      ..close();
+
+    final southPaint = Paint()
+      ..color = southColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(southPath, southPaint);
+  }
+
+  @override
+  bool shouldRepaint(CompassNeedlePainter oldDelegate) => false;
+}
 
 class NorthIndicator extends StatelessWidget {
   final double orientation;
@@ -36,6 +84,7 @@ class NorthIndicator extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
     final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
+    final southColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
@@ -48,35 +97,19 @@ class NorthIndicator extends StatelessWidget {
         );
       },
       child: Container(
-        width: 32,
-        height: 32,
+        width: 24,
+        height: 24,
         decoration: BoxDecoration(
           color: backgroundColor,
           shape: BoxShape.circle,
           border: Border.all(color: borderColor, width: 0.5),
         ),
-        child: const Stack(
-          children: [
-            Positioned(
-              top: -6,
-              left: 4,
-              child: Icon(
-                Icons.arrow_drop_up,
-                color: Colors.red,
-                size: 24,
-              ),
-            ),
-            Center(
-              child: Text(
-                'N',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
+        child: CustomPaint(
+          painter: CompassNeedlePainter(
+            northColor: Colors.red,
+            southColor: southColor,
+            strokeColor: Colors.transparent,
+          ),
         ),
       ),
     );
