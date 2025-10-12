@@ -37,50 +37,46 @@ class NorthIndicator extends StatelessWidget {
     final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
     final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
 
-    return Positioned(
-      bottom: 40,
-      right: 8,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        builder: (context, angle, child) {
-          return Transform.rotate(
-            angle: -angle * (math.pi / 180), // Rotate to show where north is
-            child: child,
-          );
-        },
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 0.5),
-          ),
-          child: const Stack(
-            children: [
-              Positioned(
-                top: -6,
-                left: 4,
-                child: Icon(
-                  Icons.arrow_drop_up,
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      builder: (context, angle, child) {
+        return Transform.rotate(
+          angle: -angle * (math.pi / 180), // Rotate to show where north is
+          child: child,
+        );
+      },
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        child: const Stack(
+          children: [
+            Positioned(
+              top: -6,
+              left: 4,
+              child: Icon(
+                Icons.arrow_drop_up,
+                color: Colors.red,
+                size: 24,
+              ),
+            ),
+            Center(
+              child: Text(
+                'N',
+                style: TextStyle(
                   color: Colors.red,
-                  size: 24,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
-              Center(
-                child: Text(
-                  'N',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -168,89 +164,85 @@ class ScaleBar extends StatelessWidget {
 
     final (label, width) = _calculateScale();
 
-    return Positioned(
-      bottom: 8,
-      right: 8,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          children: [
+            // Stroke/outline
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                foreground: Paint()
+                  ..style = PaintingStyle.stroke
+                  ..strokeWidth = 2
+                  ..color = strokeColor,
+              ),
+            ),
+            // Fill
+            Text(
+              label,
+              style: TextStyle(
+                color: fillColor,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        // Scale bar with vertical ticks on ends
+        SizedBox(
+          width: width,
+          height: 8,
+          child: Stack(
             children: [
-              // Stroke/outline
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  foreground: Paint()
-                    ..style = PaintingStyle.stroke
-                    ..strokeWidth = 2
-                    ..color = strokeColor,
+              // Left vertical tick
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 2,
+                  decoration: BoxDecoration(
+                    color: fillColor,
+                    border: Border.all(color: strokeColor, width: 0.5),
+                  ),
                 ),
               ),
-              // Fill
-              Text(
-                label,
-                style: TextStyle(
-                  color: fillColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+              // Horizontal bar
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: fillColor,
+                    border: Border.all(color: strokeColor, width: 0.5),
+                  ),
+                ),
+              ),
+              // Right vertical tick
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 2,
+                  decoration: BoxDecoration(
+                    color: fillColor,
+                    border: Border.all(color: strokeColor, width: 0.5),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          // Scale bar with vertical ticks on ends
-          SizedBox(
-            width: width,
-            height: 8,
-            child: Stack(
-              children: [
-                // Left vertical tick
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: fillColor,
-                      border: Border.all(color: strokeColor, width: 0.5),
-                    ),
-                  ),
-                ),
-                // Horizontal bar
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    height: 2,
-                    decoration: BoxDecoration(
-                      color: fillColor,
-                      border: Border.all(color: strokeColor, width: 0.5),
-                    ),
-                  ),
-                ),
-                // Right vertical tick
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: fillColor,
-                      border: Border.all(color: strokeColor, width: 0.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -357,11 +349,22 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
           ],
         ),
         const VehicleIndicator(),
-        ScaleBar(
-          zoom: _getZoomIfReady(),
-          latitude: widget.position.latitude,
+        Positioned(
+          bottom: 8,
+          right: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NorthIndicator(orientation: widget.orientation),
+              const SizedBox(height: 4),
+              ScaleBar(
+                zoom: _getZoomIfReady(),
+                latitude: widget.position.latitude,
+              ),
+            ],
+          ),
         ),
-        NorthIndicator(orientation: widget.orientation),
       ],
     );
   }
@@ -520,11 +523,22 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
           ],
         ),
         const VehicleIndicator(),
-        ScaleBar(
-          zoom: _getZoomIfReady(),
-          latitude: widget.position.latitude,
+        Positioned(
+          bottom: 8,
+          right: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NorthIndicator(orientation: widget.orientation),
+              const SizedBox(height: 4),
+              ScaleBar(
+                zoom: _getZoomIfReady(),
+                latitude: widget.position.latitude,
+              ),
+            ],
+          ),
         ),
-        NorthIndicator(orientation: widget.orientation),
       ],
     );
   }
