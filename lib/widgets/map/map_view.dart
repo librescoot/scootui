@@ -9,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart'
     show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, TileLayer;
 import 'package:latlong2/latlong.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileProvider;
+import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileLayerMode, VectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' as vtr;
 
 import '../../cubits/map_cubit.dart';
@@ -314,32 +314,36 @@ class OnlineMapView extends StatefulWidget {
 
 class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateMixin {
   bool _isDisposing = false;
+  MapCubit? _mapCubit;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store MapCubit reference early while context is still valid
+    _mapCubit ??= context.read<MapCubit>();
+  }
 
   @override
   Ticker createTicker(TickerCallback onTick) {
     if (_isDisposing) {
-      // Return a fake ticker that does nothing if we're disposing
-      return Ticker((elapsed) {}, debugLabel: 'disposed-ticker');
+      // Create a ticker and immediately dispose it to prevent tracking
+      final ticker = Ticker((elapsed) {}, debugLabel: 'disposed-ticker');
+      ticker.dispose();
+      return ticker;
     }
     return super.createTicker(onTick);
   }
 
   @override
   void dispose() {
+    // Set flag FIRST to prevent new tickers from being created
     _isDisposing = true;
-    print("OnlineMapView: Starting disposal");
 
-    // Stop any ongoing animations in MapCubit before disposing the ticker provider
-    try {
-      final mapCubit = context.read<MapCubit>();
-      mapCubit.stopAnimations();
-    } catch (e) {
-      print("OnlineMapView: Error stopping animations: $e");
-    }
+    // Don't dispose the animator - it's shared state in MapCubit
+    // Just stop creating new tickers via createTicker override
 
-    // Ensure any remaining tickers are properly disposed
+    // Always call super.dispose() to clean up tickers
     super.dispose();
-    print("OnlineMapView: Disposal completed");
   }
 
   double? _getZoomIfReady() {
@@ -352,6 +356,11 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tileUrl = isDark
+        ? 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+        : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
+
     return Stack(
       children: [
         FlutterMap(
@@ -365,7 +374,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
           mapController: widget.mapController,
           children: [
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: tileUrl,
               userAgentPackageName: 'github.com/librescoot/scootui',
             ),
             if (widget.route != null && widget.route!.waypoints.isNotEmpty)
@@ -420,10 +429,9 @@ class OfflineMapView extends StatefulWidget {
   final LatLng position;
   final double orientation;
   final String themeMode;
+  final String renderMode;
   final void Function(TickerProvider)? mapReady;
-  // final FutureOr<void> Function(LatLng)? setDestination; // Removed, handled by MDBRepository
   final Route? route;
-  // final RouteInstruction? nextInstruction; // Removed, handled by TurnByTurnWidget
   final LatLng? destination;
 
   const OfflineMapView({
@@ -434,10 +442,9 @@ class OfflineMapView extends StatefulWidget {
     required this.position,
     required this.orientation,
     required this.themeMode,
-    // this.setDestination, // Removed
+    required this.renderMode,
     this.route,
     this.mapReady,
-    // this.nextInstruction, // Removed
     this.destination,
   });
 
@@ -447,36 +454,36 @@ class OfflineMapView extends StatefulWidget {
 
 class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStateMixin {
   bool _isDisposing = false;
+  MapCubit? _mapCubit;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store MapCubit reference early while context is still valid
+    _mapCubit ??= context.read<MapCubit>();
+  }
 
   @override
   Ticker createTicker(TickerCallback onTick) {
     if (_isDisposing) {
-      // Return a fake ticker that does nothing if we're disposing
-      return Ticker((elapsed) {}, debugLabel: 'disposed-ticker');
+      // Create a ticker and immediately dispose it to prevent tracking
+      final ticker = Ticker((elapsed) {}, debugLabel: 'disposed-ticker');
+      ticker.dispose();
+      return ticker;
     }
     return super.createTicker(onTick);
   }
 
   @override
   void dispose() {
+    // Set flag FIRST to prevent new tickers from being created
     _isDisposing = true;
-    print("OfflineMapView: Starting disposal");
 
-    // Stop any ongoing animations in MapCubit before disposing the ticker provider
-    try {
-      final mapCubit = context.read<MapCubit>();
-      mapCubit.stopAnimations();
-    } catch (e) {
-      print("OfflineMapView: Error stopping animations: $e");
-    }
+    // Don't dispose the animator - it's shared state in MapCubit
+    // Just stop creating new tickers via createTicker override
 
-    try {
-      // Ensure any remaining tickers are properly disposed
-      super.dispose();
-      print("OfflineMapView: Disposal completed");
-    } catch (e) {
-      print("OfflineMapView: Error during dispose: $e");
-    }
+    // Always call super.dispose() to clean up tickers
+    super.dispose();
   }
 
   Widget? _routeLayer() {
@@ -551,6 +558,9 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
               tileProviders: TileProviders({
                 'versatiles-shortbread': widget.tiles,
               }),
+              layerMode: widget.renderMode == 'vector'
+                  ? VectorTileLayerMode.vector
+                  : VectorTileLayerMode.raster,
               maximumZoom: 20,
               // Optimized cache settings for better performance
               fileCacheTtl: const Duration(hours: 24), // Cache tiles for 24 hours

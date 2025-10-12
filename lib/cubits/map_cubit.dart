@@ -16,7 +16,9 @@ import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/tiles_repository.dart';
 import '../routing/models.dart';
+import '../state/enums.dart';
 import '../state/gps.dart';
+import '../state/settings.dart';
 import '../utils/map_transform_animator.dart';
 import 'mdb_cubits.dart';
 import 'navigation_cubit.dart';
@@ -34,7 +36,8 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
   late final StreamSubscription<ShutdownState> _shutdownSub;
-  late final StreamSubscription<NavigationState> _navigationStateSub; // Added
+  late final StreamSubscription<NavigationState> _navigationStateSub;
+  late final StreamSubscription<SettingsData> _settingsSub;
   final TilesRepository _tilesRepository;
 
   // Dynamic zoom constants based on navigation context
@@ -48,23 +51,31 @@ class MapCubit extends Cubit<MapState> {
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
+  SettingsData? _currentSettings; // Store current settings for map type and render mode
+  ThemeState? _currentTheme; // Store current theme state
 
-  static MapCubit create(BuildContext context) => MapCubit(
-        gpsStream: context.read<GpsSync>().stream,
-        themeUpdates: context.read<ThemeCubit>().stream,
-        shutdownStream: context.read<ShutdownCubit>().stream,
-        navigationStateStream: context.read<NavigationCubit>().stream, // Added
-        tilesRepository: context.read<TilesRepository>(),
-        mdbRepository: RepositoryProvider.of<MDBRepository>(context),
-      )
-        .._onGpsData(context.read<GpsSync>().state)
-        .._loadMap(context.read<ThemeCubit>().state);
+  static MapCubit create(BuildContext context) {
+    final cubit = MapCubit(
+      gpsStream: context.read<GpsSync>().stream,
+      themeUpdates: context.read<ThemeCubit>().stream,
+      shutdownStream: context.read<ShutdownCubit>().stream,
+      navigationStateStream: context.read<NavigationCubit>().stream,
+      settingsStream: context.read<SettingsSync>().stream,
+      tilesRepository: context.read<TilesRepository>(),
+      mdbRepository: RepositoryProvider.of<MDBRepository>(context),
+    );
+    cubit._currentTheme = context.read<ThemeCubit>().state;
+    cubit._onGpsData(context.read<GpsSync>().state);
+    cubit._loadMap(context.read<ThemeCubit>().state, context.read<SettingsSync>().state);
+    return cubit;
+  }
 
   MapCubit({
     required Stream<GpsData> gpsStream,
     required Stream<ThemeState> themeUpdates,
     required Stream<ShutdownState> shutdownStream,
-    required Stream<NavigationState> navigationStateStream, // Added
+    required Stream<NavigationState> navigationStateStream,
+    required Stream<SettingsData> settingsStream,
     required TilesRepository tilesRepository,
     required MDBRepository mdbRepository,
   })  : _tilesRepository = tilesRepository,
@@ -72,7 +83,8 @@ class MapCubit extends Cubit<MapState> {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
     _shutdownSub = shutdownStream.listen(_onShutdownStateChange);
-    _navigationStateSub = navigationStateStream.listen(_onNavigationStateChanged); // Added
+    _navigationStateSub = navigationStateStream.listen(_onNavigationStateChanged);
+    _settingsSub = settingsStream.listen(_onSettingsChanged);
   }
 
   @override
@@ -114,7 +126,8 @@ class MapCubit extends Cubit<MapState> {
     _gpsSub.cancel();
     _shutdownSub.cancel();
     _navigationStateSub.cancel();
-    
+    _settingsSub.cancel();
+
     return super.close();
   }
 
@@ -124,6 +137,17 @@ class MapCubit extends Cubit<MapState> {
       _transformAnimator?.stopAnimations();
     } catch (e) {
       print("MapCubit: Error stopping animations: $e");
+    }
+  }
+
+  /// Disposes the current animator - called when map view is being disposed
+  void disposeAnimator() {
+    try {
+      _transformAnimator?.stopAnimations();
+      _transformAnimator?.dispose();
+      _transformAnimator = null;
+    } catch (e) {
+      print("MapCubit: Error disposing animator: $e");
     }
   }
 
@@ -146,6 +170,23 @@ class MapCubit extends Cubit<MapState> {
     if (navState.isNavigating && state.position != defaultCoordinates) {
       final positionToUse = navState.snappedPosition ?? state.position;
       _moveAndRotate(positionToUse, state.orientation);
+    }
+  }
+
+  void _onSettingsChanged(SettingsData settings) {
+    final previous = _currentSettings;
+    _currentSettings = settings;
+
+    // Reload map if map type or render mode changed
+    if (previous != null &&
+        _currentTheme != null &&
+        (previous.mapType != settings.mapType ||
+         previous.mapRenderMode != settings.mapRenderMode)) {
+      // Dispose old animator before reloading to clean up active tickers
+      _transformAnimator?.stopAnimations();
+      _transformAnimator?.dispose();
+      _transformAnimator = null;
+      _loadMap(_currentTheme!, settings);
     }
   }
 
@@ -289,6 +330,7 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onThemeUpdate(ThemeState event) {
+    _currentTheme = event;
     final current = state;
     emit(MapState.loading(controller: state.controller, position: state.position));
     _getTheme(event.isDark).then((theme) => emit(switch (current) {
@@ -317,6 +359,7 @@ class MapCubit extends Cubit<MapState> {
           tiles: AsyncMbTilesProvider(_tilesRepository), // Re-init or ensure it's available
           theme: await _getTheme(true), // Default theme
           themeMode: 'dark', // Default to dark
+          renderMode: _currentSettings?.mapRenderMode == MapRenderMode.vector ? 'vector' : 'raster',
           onReady: _onMapReady,
           isReady: true,
         ),
@@ -350,28 +393,45 @@ class MapCubit extends Cubit<MapState> {
     return state.position;
   }
 
-  Future<void> _loadMap(ThemeState themeState) async {
+  Future<void> _loadMap(ThemeState themeState, SettingsData settings) async {
+    // Dispose old animator before creating new map to clean up active tickers
+    _transformAnimator?.stopAnimations();
+    _transformAnimator?.dispose();
     _transformAnimator = null;
+    _currentSettings = settings;
     emit(MapState.loading(controller: state.controller, position: state.position));
-    final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    final provider = AsyncMbTilesProvider(_tilesRepository);
-    final tilesInit = await provider.init();
+    // Check map type setting
+    if (settings.mapType == MapType.online) {
+      // Load online map
+      emit(MapState.online(
+        position: state.position,
+        orientation: 0,
+        controller: ctrl,
+        onReady: _onMapReady,
+      ));
+    } else {
+      // Load offline map
+      final theme = await _getTheme(themeState.isDark);
+      final provider = AsyncMbTilesProvider(_tilesRepository);
+      final tilesInit = await provider.init();
 
-    switch (tilesInit) {
-      case InitSuccess(:final metadata):
-        emit(MapState.offline(
-          tiles: provider,
-          position: _getInitialCoordinates(metadata),
-          orientation: 0,
-          controller: ctrl,
-          theme: theme,
-          themeMode: themeState.isDark ? 'dark' : 'light',
-          onReady: _onMapReady,
-        ));
-      case InitError(:final message):
-        emit(MapState.unavailable(message, controller: ctrl, position: state.position));
+      switch (tilesInit) {
+        case InitSuccess(:final metadata):
+          emit(MapState.offline(
+            tiles: provider,
+            position: _getInitialCoordinates(metadata),
+            orientation: 0,
+            controller: ctrl,
+            theme: theme,
+            themeMode: themeState.isDark ? 'dark' : 'light',
+            renderMode: settings.mapRenderMode == MapRenderMode.vector ? 'vector' : 'raster',
+            onReady: _onMapReady,
+          ));
+        case InitError(:final message):
+          emit(MapState.unavailable(message, controller: ctrl, position: state.position));
+      }
     }
   }
 }

@@ -147,6 +147,7 @@ class MapScreen extends StatelessWidget {
         :final controller,
         :final theme,
         :final themeMode,
+        :final renderMode,
         :final onReady,
         :final orientation,
       ) =>
@@ -155,16 +156,12 @@ class MapScreen extends StatelessWidget {
           mapController: controller,
           theme: theme,
           themeMode: themeMode,
+          renderMode: renderMode,
           position: position,
           mapReady: onReady,
           orientation: orientation,
           route: navState.route, // Pass route from NavigationCubit
           destination: navState.destination, // Pass destination from NavigationCubit
-          // setDestination is now handled by tapping on map, which should trigger Redis update
-          // The MapCubit no longer handles setDestination directly.
-          // The OfflineMapView's onSecondaryTap will need to be updated
-          // to interact with MDBRepository directly if that's the desired behavior.
-          // For now, removing direct setDestination from MapCubit.
         ),
     };
   }
