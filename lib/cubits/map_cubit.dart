@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -17,6 +16,7 @@ import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/tiles_repository.dart';
 import '../state/gps.dart';
+import '../utils/map_transform_animator.dart';
 import 'mdb_cubits.dart';
 import 'navigation_cubit.dart';
 import 'navigation_state.dart';
@@ -43,9 +43,8 @@ class MapCubit extends Cubit<MapState> {
   static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
   static const Offset _mapCenterOffset = Offset(0, 120); // Restored original offset Y value
 
-  AnimatedMapController? _animatedController;
+  MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
-  Timer? _updateTimer; // For throttling GPS updates
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
 
   static MapCubit create(BuildContext context) => MapCubit(
@@ -77,19 +76,16 @@ class MapCubit extends Cubit<MapState> {
   @override
   Future<void> close() {
     final current = state;
-    
-    // Cancel timer first to prevent any pending updates
-    _updateTimer?.cancel();
-    
-    // Stop any ongoing animations and dispose AnimatedMapController
+
+    // Stop any ongoing animations and dispose MapTransformAnimator
     try {
-      _animatedController?.stopAnimations();
-      _animatedController?.dispose();
-      _animatedController = null;
+      _transformAnimator?.stopAnimations();
+      _transformAnimator?.dispose();
+      _transformAnimator = null;
     } catch (e) {
-      print("MapCubit: Error disposing AnimatedMapController: $e");
+      print("MapCubit: Error disposing MapTransformAnimator: $e");
     }
-    
+
     // Then dispose the base map controller
     try {
       current.controller.dispose();
@@ -123,7 +119,7 @@ class MapCubit extends Cubit<MapState> {
   /// Stops any ongoing map animations - called when map view is being disposed
   void stopAnimations() {
     try {
-      _animatedController?.stopAnimations();
+      _transformAnimator?.stopAnimations();
     } catch (e) {
       print("MapCubit: Error stopping animations: $e");
     }
@@ -156,12 +152,12 @@ class MapCubit extends Cubit<MapState> {
       print("MapCubit: Map is locked, skipping _moveAndRotate.");
       return;
     }
-    final ctrl = _animatedController;
-    if (ctrl == null || isClosed) {
+    final animator = _transformAnimator;
+    if (animator == null || isClosed) {
       if (isClosed) {
         print("MapCubit: Cubit is closed, skipping _moveAndRotate.");
       } else {
-        print("MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
+        print("MapCubit: MapTransformAnimator is null in _moveAndRotate. Map not ready or not initialized yet.");
       }
       return;
     }
@@ -176,14 +172,17 @@ class MapCubit extends Cubit<MapState> {
     double rotation = isOffRoute ? 0.0 : -course;
     Offset offset = isOffRoute ? Offset.zero : _mapCenterOffset;
 
-    // Use animated controller for smooth transitions
+    // Create target transformation and animate to it atomically
+    final targetTransform = MapTransform(
+      center: center,
+      zoom: zoom,
+      rotation: rotation,
+      offset: offset,
+    );
+
+    // Use animator for smooth transitions with all parameters synchronized
     try {
-      ctrl.animateTo(
-        dest: center,
-        zoom: zoom,
-        rotation: rotation,
-        offset: offset,
-      );
+      animator.animateTo(targetTransform);
     } catch (e) {
       // Widget disposed during animation, ignore the error
       print("MapCubit: Animation error (likely disposed): $e");
@@ -256,13 +255,8 @@ class MapCubit extends Cubit<MapState> {
       orientation: orientationForMarker,
     ));
 
-    // Throttle map updates to reduce performance impact
-    _updateTimer?.cancel();
-    _updateTimer = Timer(const Duration(milliseconds: 100), () {
-      if (!isClosed) {
-        _moveAndRotate(positionForDisplay, courseForMapRotation);
-      }
-    });
+    // Update map immediately to keep marker and map synchronized
+    _moveAndRotate(positionForDisplay, courseForMapRotation);
   }
 
   void _onThemeUpdate(ThemeState event) {
@@ -276,11 +270,12 @@ class MapCubit extends Cubit<MapState> {
 
   Future<void> _onMapReady(TickerProvider vsync) async {
     final current = state;
-    _animatedController = AnimatedMapController(
-        vsync: vsync,
-        mapController: current.controller,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut);
+    _transformAnimator = MapTransformAnimator(
+      mapController: current.controller,
+      tickerProvider: vsync,
+      duration: const Duration(milliseconds: 950), // Match GPS update rate (1Hz) for smooth continuous motion
+      curve: Curves.linear, // Linear for constant velocity feel
+    );
 
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
@@ -327,7 +322,7 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<void> _loadMap(ThemeState themeState) async {
-    _animatedController = null;
+    _transformAnimator = null;
     emit(MapState.loading(controller: state.controller, position: state.position));
     final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
