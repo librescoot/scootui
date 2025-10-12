@@ -139,7 +139,7 @@ class VehicleIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               color: backgroundColor,
               shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 1.5),
+              border: Border.all(color: borderColor, width: 1.0),
             ),
             child: const Icon(
               Icons.navigation,
@@ -151,6 +151,45 @@ class VehicleIndicator extends StatelessWidget {
       ),
     );
   }
+}
+
+class ScaleBarPainter extends CustomPainter {
+  final double width;
+  final Color fillColor;
+  final Color strokeColor;
+
+  ScaleBarPainter({
+    required this.width,
+    required this.fillColor,
+    required this.strokeColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Create path for the entire scale bar shape (⊥──⊥)
+    final path = ui.Path()
+      // Left vertical tick
+      ..moveTo(1, 0)
+      ..lineTo(1, size.height - 1)
+      // Bottom horizontal bar
+      ..lineTo(width - 1, size.height - 1)
+      // Right vertical tick
+      ..lineTo(width - 1, 0);
+
+    final paint = Paint()
+      ..color = fillColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.square;
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(ScaleBarPainter oldDelegate) =>
+      oldDelegate.width != width ||
+      oldDelegate.fillColor != fillColor ||
+      oldDelegate.strokeColor != strokeColor;
 }
 
 class ScaleBar extends StatelessWidget {
@@ -192,90 +231,61 @@ class ScaleBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fillColor = isDark ? Colors.white : Colors.black;
-    final strokeColor = isDark ? Colors.black : Colors.white;
+    final barColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
 
     final (label, width) = _calculateScale();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          children: [
-            // Stroke/outline
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                foreground: Paint()
-                  ..style = PaintingStyle.stroke
-                  ..strokeWidth = 2
-                  ..color = strokeColor,
+    return SizedBox(
+      width: width,
+      height: 14,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Scale bar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: CustomPaint(
+              size: Size(width, 8),
+              painter: ScaleBarPainter(
+                width: width,
+                fillColor: barColor,
+                strokeColor: Colors.transparent,
               ),
             ),
-            // Fill
-            Text(
-              label,
-              style: TextStyle(
-                color: fillColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        // Scale bar with vertical ticks on ends
-        SizedBox(
-          width: width,
-          height: 8,
-          child: Stack(
-            children: [
-              // Left vertical tick
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  width: 2,
-                  decoration: BoxDecoration(
-                    color: fillColor,
-                    border: Border.all(color: strokeColor, width: 0.5),
-                  ),
-                ),
-              ),
-              // Horizontal bar
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: fillColor,
-                    border: Border.all(color: strokeColor, width: 0.5),
-                  ),
-                ),
-              ),
-              // Right vertical tick
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  width: 2,
-                  decoration: BoxDecoration(
-                    color: fillColor,
-                    border: Border.all(color: strokeColor, width: 0.5),
-                  ),
-                ),
-              ),
-            ],
           ),
-        ),
-      ],
+          // Text centered above the bar
+          Positioned(
+            bottom: 3,
+            child: Stack(
+              children: [
+                // Stroke/outline
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    foreground: Paint()
+                      ..style = PaintingStyle.stroke
+                      ..strokeWidth = 2
+                      ..color = isDark ? Colors.black : Colors.white,
+                  ),
+                ),
+                // Fill
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: barColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
