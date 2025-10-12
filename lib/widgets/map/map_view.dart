@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
-    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Colors, Container, Curves, Icon, Icons, State, StatefulWidget, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, BorderRadius, BorderSide, Brightness, BuildContext, Colors, Column, Container, CrossAxisAlignment, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,8 +38,8 @@ class NorthIndicator extends StatelessWidget {
     final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
 
     return Positioned(
-      bottom: 16,
-      right: 16,
+      bottom: 40,
+      right: 8,
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
         duration: const Duration(milliseconds: 300),
@@ -124,6 +124,137 @@ class VehicleIndicator extends StatelessWidget {
   }
 }
 
+class ScaleBar extends StatelessWidget {
+  final double? zoom;
+  final double latitude;
+
+  const ScaleBar({super.key, this.zoom, required this.latitude});
+
+  // Calculate appropriate scale bar distance and width
+  (String, double) _calculateScale() {
+    final currentZoom = zoom ?? 17.0; // Default to zoom 17 if camera not ready
+    // Calculate meters per pixel at this zoom level and latitude
+    const earthCircumference = 40075000.0; // meters at equator
+    final metersPerPixel = (earthCircumference * math.cos(latitude * math.pi / 180)) / (256 * math.pow(2, currentZoom));
+
+    // Target scale bar width in pixels (max 1/3 of 480px screen = 160px)
+    const maxWidth = 160.0;
+    final targetMeters = metersPerPixel * maxWidth;
+
+    // Round to nice numbers
+    final scales = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+    int scaleMeters = scales.firstWhere((s) => s >= targetMeters * 0.6, orElse: () => 20);
+
+    // Calculate actual pixel width for this scale
+    final actualWidth = scaleMeters / metersPerPixel;
+
+    // Format label
+    String label;
+    if (scaleMeters >= 1000) {
+      final km = scaleMeters / 1000;
+      label = km % 1 == 0 ? '${km.toInt()} km' : '$km km';
+    } else {
+      label = '$scaleMeters m';
+    }
+
+    return (label, actualWidth.clamp(40.0, maxWidth));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fillColor = isDark ? Colors.white : Colors.black;
+    final strokeColor = isDark ? Colors.black : Colors.white;
+
+    final (label, width) = _calculateScale();
+
+    return Positioned(
+      bottom: 8,
+      right: 8,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            children: [
+              // Stroke/outline
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  foreground: Paint()
+                    ..style = PaintingStyle.stroke
+                    ..strokeWidth = 2
+                    ..color = strokeColor,
+                ),
+              ),
+              // Fill
+              Text(
+                label,
+                style: TextStyle(
+                  color: fillColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          // Scale bar with vertical ticks on ends
+          SizedBox(
+            width: width,
+            height: 8,
+            child: Stack(
+              children: [
+                // Left vertical tick
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 2,
+                    decoration: BoxDecoration(
+                      color: fillColor,
+                      border: Border.all(color: strokeColor, width: 0.5),
+                    ),
+                  ),
+                ),
+                // Horizontal bar
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: fillColor,
+                      border: Border.all(color: strokeColor, width: 0.5),
+                    ),
+                  ),
+                ),
+                // Right vertical tick
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 2,
+                    decoration: BoxDecoration(
+                      color: fillColor,
+                      border: Border.all(color: strokeColor, width: 0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class OnlineMapView extends StatefulWidget {
   final MapController mapController;
   final LatLng position;
@@ -176,6 +307,14 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
     print("OnlineMapView: Disposal completed");
   }
 
+  double? _getZoomIfReady() {
+    try {
+      return widget.mapController.camera.zoom;
+    } catch (_) {
+      return null; // Camera not ready yet
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -218,6 +357,10 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
           ],
         ),
         const VehicleIndicator(),
+        ScaleBar(
+          zoom: _getZoomIfReady(),
+          latitude: widget.position.latitude,
+        ),
         NorthIndicator(orientation: widget.orientation),
       ],
     );
@@ -319,6 +462,14 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     return markers;
   }
 
+  double? _getZoomIfReady() {
+    try {
+      return widget.mapController.camera.zoom;
+    } catch (_) {
+      return null; // Camera not ready yet
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final routeLayer = _routeLayer();
@@ -369,6 +520,10 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
           ],
         ),
         const VehicleIndicator(),
+        ScaleBar(
+          zoom: _getZoomIfReady(),
+          latitude: widget.position.latitude,
+        ),
         NorthIndicator(orientation: widget.orientation),
       ],
     );
