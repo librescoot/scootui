@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart'
-    show BoxDecoration, BoxShape, Brightness, BuildContext, Colors, Container, Icon, Icons, Theme, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Colors, Container, Curves, Icon, Icons, State, StatefulWidget, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,22 +23,40 @@ class NorthIndicator extends StatelessWidget {
 
   const NorthIndicator({super.key, required this.orientation});
 
+  // Normalize angle to [-180, 180] range for shortest-path interpolation
+  double _normalizeAngle(double angle) {
+    double normalized = angle % 360;
+    if (normalized > 180) normalized -= 360;
+    if (normalized < -180) normalized += 360;
+    return normalized;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
+    final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
 
     return Positioned(
       bottom: 16,
       right: 16,
-      child: Transform.rotate(
-        angle: -orientation * (math.pi / 180), // Rotate to show where north is
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        builder: (context, angle, child) {
+          return Transform.rotate(
+            angle: -angle * (math.pi / 180), // Rotate to show where north is
+            child: child,
+          );
+        },
         child: Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
             color: backgroundColor,
             shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 0.5),
           ),
           child: const Stack(
             children: [
@@ -76,6 +94,7 @@ class VehicleIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
+    final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
 
     return Positioned(
       left: 0,
@@ -91,6 +110,7 @@ class VehicleIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               color: backgroundColor,
               shape: BoxShape.circle,
+              border: Border.all(color: borderColor, width: 1.5),
             ),
             child: const Icon(
               Icons.navigation,
