@@ -14,65 +14,79 @@ class ValhallaService {
   static const int _receiveTimeoutSeconds = 5;
 
   // Valhalla maneuver types that map to our instruction types
-  static final Map<int, RouteInstruction Function(double, Duration, LatLng, int, String?, String?)> _maneuverMap = {
+  static final Map<int, RouteInstruction Function(double, Duration, LatLng, int, String?, String?, String?, String?)> _maneuverMap = {
     // Start/Destination types (0-6) - map to Other
-    0: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    0: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    1: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    1: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    2: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    2: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    3: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    3: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    4: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    4: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    5: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    5: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    6: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    6: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    7: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.keep(
+    7: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           duration: duration,
@@ -80,8 +94,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    8: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.keep(
+    8: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           duration: duration,
@@ -89,8 +105,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    9: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    9: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.slightRight,
           duration: duration,
@@ -98,8 +116,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    10: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    10: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
           duration: duration,
@@ -107,8 +127,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    11: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    11: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.sharpRight,
           duration: duration,
@@ -116,8 +138,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    12: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    12: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.rightUTurn,
           duration: duration,
@@ -125,8 +149,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    13: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    13: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.uTurn,
           duration: duration,
@@ -134,8 +160,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    14: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    14: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.sharpLeft,
           duration: duration,
@@ -143,8 +171,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    15: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    15: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.left,
           duration: duration,
@@ -152,8 +182,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    16: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    16: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.slightLeft,
           duration: duration,
@@ -161,8 +193,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    17: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.keep(
+    17: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           duration: duration,
@@ -170,8 +204,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    18: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    18: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.right,
           duration: duration,
@@ -179,8 +215,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    19: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.turn(
+    19: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.turn(
           distance: distance,
           direction: TurnDirection.left,
           duration: duration,
@@ -188,8 +226,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    20: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.exit(
+    20: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.exit(
           distance: distance,
           side: ExitSide.right,
           duration: duration,
@@ -197,8 +237,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    21: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.exit(
+    21: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.exit(
           distance: distance,
           side: ExitSide.left,
           duration: duration,
@@ -206,8 +248,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    22: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.keep(
+    22: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.straight,
           duration: duration,
@@ -215,8 +259,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    23: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.keep(
+    23: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.right,
           duration: duration,
@@ -224,8 +270,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    24: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.keep(
+    24: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.keep(
           distance: distance,
           direction: KeepDirection.left,
           duration: duration,
@@ -233,9 +281,11 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
     // Merge types (25, 37, 38)
-    25: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.merge(
+    25: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.merge(
           distance: distance,
           direction: MergeDirection.straight,
           duration: duration,
@@ -243,9 +293,11 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
     // Roundabout types (26, 27) - Type 26 handled specially in _createInstruction
-    26: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.roundabout(
+    26: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.roundabout(
           distance: distance,
           side: RoundaboutSide.right,
           exitNumber: 1, // Placeholder - overridden in _createInstruction
@@ -254,34 +306,42 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    27: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    27: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
     // Ferry types (28, 29)
-    28: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    28: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    29: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.other(
+    29: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
           distance: distance,
           duration: duration,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
     // Merge directional types (37, 38)
-    37: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.merge(
+    37: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.merge(
           distance: distance,
           direction: MergeDirection.right,
           duration: duration,
@@ -289,8 +349,10 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
-    38: (distance, duration, location, index, streetName, instructionText) => RouteInstruction.merge(
+    38: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.merge(
           distance: distance,
           direction: MergeDirection.left,
           duration: duration,
@@ -298,6 +360,8 @@ class ValhallaService {
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
+          verbalAlertInstruction: verbalAlert,
+          verbalInstruction: verbal,
         ),
   };
 
@@ -366,10 +430,6 @@ class ValhallaService {
       // Special handling for roundabout exit number if needed
       int exitCountForRoundabout = maneuver.roundaboutExitCount ?? 1; // Default to 1 if null
 
-      // Extract street name and instruction text from maneuver
-      final streetName = _extractStreetName(maneuver);
-      final instructionText = _extractInstructionText(maneuver);
-
       final instruction = _createInstruction(maneuver, distance, duration, location, exitCountForRoundabout);
       if (instruction != null) {
         instructions.add(instruction);
@@ -413,8 +473,10 @@ class ValhallaService {
   RouteInstruction? _createInstruction(Maneuver maneuver, double distance, Duration duration, LatLng location, int roundaboutExitCount) {
     final type = maneuver.type;
     final streetName = _extractStreetName(maneuver);
-    final instructionText = _extractInstructionText(maneuver);
+    final instructionText = maneuver.instruction;
     final postInstructionText = maneuver.verbalPostTransitionInstruction;
+    final verbalAlertInstruction = maneuver.verbalTransitionAlertInstruction;
+    final verbalInstruction = maneuver.verbalPreTransitionInstruction;
 
     final instructionCreator = _maneuverMap[type];
     if (instructionCreator != null) {
@@ -432,12 +494,12 @@ class ValhallaService {
           postInstructionText: postInstructionText,
           bearingBefore: maneuver.bearingBefore,
           bearingAfter: maneuver.bearingAfter,
+          verbalAlertInstruction: verbalAlertInstruction,
+          verbalInstruction: verbalInstruction,
         );
       }
-      // For other types, we need to adapt the creator to include postInstructionText
-      // A better approach is to pass the whole maneuver object to the creators.
-      // For now, let's just add it to the 'other' type as a proof of concept.
-      return instructionCreator(distance, duration, location, maneuver.beginShapeIndex, streetName, instructionText);
+      // Pass all the extracted instruction fields to the creator
+      return instructionCreator(distance, duration, location, maneuver.beginShapeIndex, streetName, instructionText, verbalAlertInstruction, verbalInstruction);
     }
     return RouteInstruction.other(
       distance: distance,
@@ -447,6 +509,8 @@ class ValhallaService {
       streetName: streetName,
       instructionText: instructionText,
       postInstructionText: postInstructionText,
+      verbalAlertInstruction: verbalAlertInstruction,
+      verbalInstruction: verbalInstruction,
     );
   }
 
@@ -461,10 +525,4 @@ class ValhallaService {
     return null;
   }
 
-  String? _extractInstructionText(Maneuver maneuver) {
-    // Use verbal pre-transition instruction for turn-by-turn display, fallback to other options
-    return maneuver.verbalPreTransitionInstruction ??
-        maneuver.verbalTransitionAlertInstruction ?? // Added alert as a secondary fallback
-        maneuver.instruction;
-  }
 }

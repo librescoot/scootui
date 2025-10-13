@@ -343,7 +343,8 @@ class TurnByTurnWidget extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (nextInstruction != null) ...[
+                // Only show next instruction if it follows shortly after current one (< 300m between them)
+                if (nextInstruction != null && nextInstruction.distance < 300) ...[
                   const SizedBox(height: 4),
                   Text(
                     'Then ${_getShortInstructionText(nextInstruction)}',
@@ -488,10 +489,37 @@ class TurnByTurnWidget extends StatelessWidget {
       return 'Continue for $distanceKm km';
     }
 
-    // Use Valhalla's instruction text if available.
-    String baseText = instruction.instructionText ?? '';
+    String baseText = '';
 
-    // If Valhalla's text is empty, generate a fallback.
+    // Use distance-based verbal instructions from Valhalla
+    if (instruction.distance > 150) {
+      // Use alert instruction for distances > 150m (e.g., "In 200m, take the 3rd exit")
+      baseText = switch (instruction) {
+        Keep(verbalAlertInstruction: final alert) => alert ?? '',
+        Turn(verbalAlertInstruction: final alert) => alert ?? '',
+        Exit(verbalAlertInstruction: final alert) => alert ?? '',
+        Merge(verbalAlertInstruction: final alert) => alert ?? '',
+        Roundabout(verbalAlertInstruction: final alert) => alert ?? '',
+        Other(verbalAlertInstruction: final alert) => alert ?? '',
+      };
+    } else {
+      // Use immediate verbal instruction for close distances (e.g., "Take the 3rd exit")
+      baseText = switch (instruction) {
+        Keep(verbalInstruction: final verbal) => verbal ?? '',
+        Turn(verbalInstruction: final verbal) => verbal ?? '',
+        Exit(verbalInstruction: final verbal) => verbal ?? '',
+        Merge(verbalInstruction: final verbal) => verbal ?? '',
+        Roundabout(verbalInstruction: final verbal) => verbal ?? '',
+        Other(verbalInstruction: final verbal) => verbal ?? '',
+      };
+    }
+
+    // Fall back to regular instruction text if verbal instructions aren't available
+    if (baseText.isEmpty) {
+      baseText = instruction.instructionText ?? '';
+    }
+
+    // If still empty, generate a fallback.
     if (baseText.isEmpty) {
       baseText = switch (instruction) {
         Keep(direction: final direction, streetName: final streetName) =>

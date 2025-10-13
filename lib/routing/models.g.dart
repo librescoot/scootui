@@ -17,6 +17,8 @@ Keep _$KeepFromJson(Map<String, dynamic> json) => Keep(
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
       postInstructionText: json['postInstructionText'] as String?,
+      verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
+      verbalInstruction: json['verbalInstruction'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -29,6 +31,8 @@ Map<String, dynamic> _$KeepToJson(Keep instance) => <String, dynamic>{
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
       'postInstructionText': instance.postInstructionText,
+      'verbalAlertInstruction': instance.verbalAlertInstruction,
+      'verbalInstruction': instance.verbalInstruction,
       'runtimeType': instance.$type,
     };
 
@@ -49,6 +53,8 @@ Turn _$TurnFromJson(Map<String, dynamic> json) => Turn(
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
       postInstructionText: json['postInstructionText'] as String?,
+      verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
+      verbalInstruction: json['verbalInstruction'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -61,6 +67,8 @@ Map<String, dynamic> _$TurnToJson(Turn instance) => <String, dynamic>{
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
       'postInstructionText': instance.postInstructionText,
+      'verbalAlertInstruction': instance.verbalAlertInstruction,
+      'verbalInstruction': instance.verbalInstruction,
       'runtimeType': instance.$type,
     };
 
@@ -87,6 +95,8 @@ Exit _$ExitFromJson(Map<String, dynamic> json) => Exit(
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
       postInstructionText: json['postInstructionText'] as String?,
+      verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
+      verbalInstruction: json['verbalInstruction'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -99,6 +109,8 @@ Map<String, dynamic> _$ExitToJson(Exit instance) => <String, dynamic>{
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
       'postInstructionText': instance.postInstructionText,
+      'verbalAlertInstruction': instance.verbalAlertInstruction,
+      'verbalInstruction': instance.verbalInstruction,
       'runtimeType': instance.$type,
     };
 
@@ -118,6 +130,8 @@ Merge _$MergeFromJson(Map<String, dynamic> json) => Merge(
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
       postInstructionText: json['postInstructionText'] as String?,
+      verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
+      verbalInstruction: json['verbalInstruction'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -130,6 +144,8 @@ Map<String, dynamic> _$MergeToJson(Merge instance) => <String, dynamic>{
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
       'postInstructionText': instance.postInstructionText,
+      'verbalAlertInstruction': instance.verbalAlertInstruction,
+      'verbalInstruction': instance.verbalInstruction,
       'runtimeType': instance.$type,
     };
 
@@ -153,6 +169,8 @@ Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       postInstructionText: json['postInstructionText'] as String?,
       bearingBefore: (json['bearingBefore'] as num?)?.toDouble(),
       bearingAfter: (json['bearingAfter'] as num?)?.toDouble(),
+      verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
+      verbalInstruction: json['verbalInstruction'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -169,6 +187,8 @@ Map<String, dynamic> _$RoundaboutToJson(Roundabout instance) =>
       'postInstructionText': instance.postInstructionText,
       'bearingBefore': instance.bearingBefore,
       'bearingAfter': instance.bearingAfter,
+      'verbalAlertInstruction': instance.verbalAlertInstruction,
+      'verbalInstruction': instance.verbalInstruction,
       'runtimeType': instance.$type,
     };
 
@@ -187,6 +207,8 @@ Other _$OtherFromJson(Map<String, dynamic> json) => Other(
       streetName: json['streetName'] as String?,
       instructionText: json['instructionText'] as String?,
       postInstructionText: json['postInstructionText'] as String?,
+      verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
+      verbalInstruction: json['verbalInstruction'] as String?,
       $type: json['runtimeType'] as String?,
     );
 
@@ -198,6 +220,8 @@ Map<String, dynamic> _$OtherToJson(Other instance) => <String, dynamic>{
       'streetName': instance.streetName,
       'instructionText': instance.instructionText,
       'postInstructionText': instance.postInstructionText,
+      'verbalAlertInstruction': instance.verbalAlertInstruction,
+      'verbalInstruction': instance.verbalInstruction,
       'runtimeType': instance.$type,
     };
 

@@ -42,6 +42,8 @@ mixin _$RouteInstruction {
   String? get streetName;
   String? get instructionText;
   String? get postInstructionText;
+  String? get verbalAlertInstruction;
+  String? get verbalInstruction;
 
   /// Create a copy of RouteInstruction
   /// with the given fields replaced by the non-null parameter values.
@@ -72,17 +74,30 @@ mixin _$RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, duration, location,
-      originalShapeIndex, streetName, instructionText, postInstructionText);
+  int get hashCode => Object.hash(
+      runtimeType,
+      distance,
+      duration,
+      location,
+      originalShapeIndex,
+      streetName,
+      instructionText,
+      postInstructionText,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -99,7 +114,9 @@ abstract mixin class $RouteInstructionCopyWith<$Res> {
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -122,6 +139,8 @@ class _$RouteInstructionCopyWithImpl<$Res>
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(_self.copyWith(
       distance: null == distance
@@ -152,6 +171,14 @@ class _$RouteInstructionCopyWithImpl<$Res>
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -168,6 +195,8 @@ class Keep extends RouteInstruction {
       this.streetName,
       this.instructionText,
       this.postInstructionText,
+      this.verbalAlertInstruction,
+      this.verbalInstruction,
       final String? $type})
       : $type = $type ?? 'keep',
         super._();
@@ -189,6 +218,10 @@ class Keep extends RouteInstruction {
   final String? instructionText;
   @override
   final String? postInstructionText;
+  @override
+  final String? verbalAlertInstruction;
+  @override
+  final String? verbalInstruction;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -228,7 +261,11 @@ class Keep extends RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -242,11 +279,13 @@ class Keep extends RouteInstruction {
       originalShapeIndex,
       streetName,
       instructionText,
-      postInstructionText);
+      postInstructionText,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction.keep(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.keep(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -265,7 +304,9 @@ abstract mixin class $KeepCopyWith<$Res>
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -288,6 +329,8 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(Keep(
       distance: null == distance
@@ -322,6 +365,14 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -338,6 +389,8 @@ class Turn extends RouteInstruction {
       this.streetName,
       this.instructionText,
       this.postInstructionText,
+      this.verbalAlertInstruction,
+      this.verbalInstruction,
       final String? $type})
       : $type = $type ?? 'turn',
         super._();
@@ -359,6 +412,10 @@ class Turn extends RouteInstruction {
   final String? instructionText;
   @override
   final String? postInstructionText;
+  @override
+  final String? verbalAlertInstruction;
+  @override
+  final String? verbalInstruction;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -398,7 +455,11 @@ class Turn extends RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -412,11 +473,13 @@ class Turn extends RouteInstruction {
       originalShapeIndex,
       streetName,
       instructionText,
-      postInstructionText);
+      postInstructionText,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction.turn(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.turn(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -435,7 +498,9 @@ abstract mixin class $TurnCopyWith<$Res>
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -458,6 +523,8 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(Turn(
       distance: null == distance
@@ -492,6 +559,14 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -508,6 +583,8 @@ class Exit extends RouteInstruction {
       this.streetName,
       this.instructionText,
       this.postInstructionText,
+      this.verbalAlertInstruction,
+      this.verbalInstruction,
       final String? $type})
       : $type = $type ?? 'exit',
         super._();
@@ -529,6 +606,10 @@ class Exit extends RouteInstruction {
   final String? instructionText;
   @override
   final String? postInstructionText;
+  @override
+  final String? verbalAlertInstruction;
+  @override
+  final String? verbalInstruction;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -567,7 +648,11 @@ class Exit extends RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -581,11 +666,13 @@ class Exit extends RouteInstruction {
       originalShapeIndex,
       streetName,
       instructionText,
-      postInstructionText);
+      postInstructionText,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction.exit(distance: $distance, side: $side, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.exit(distance: $distance, side: $side, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -604,7 +691,9 @@ abstract mixin class $ExitCopyWith<$Res>
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -627,6 +716,8 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(Exit(
       distance: null == distance
@@ -661,6 +752,14 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -677,6 +776,8 @@ class Merge extends RouteInstruction {
       this.streetName,
       this.instructionText,
       this.postInstructionText,
+      this.verbalAlertInstruction,
+      this.verbalInstruction,
       final String? $type})
       : $type = $type ?? 'merge',
         super._();
@@ -698,6 +799,10 @@ class Merge extends RouteInstruction {
   final String? instructionText;
   @override
   final String? postInstructionText;
+  @override
+  final String? verbalAlertInstruction;
+  @override
+  final String? verbalInstruction;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -737,7 +842,11 @@ class Merge extends RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -751,11 +860,13 @@ class Merge extends RouteInstruction {
       originalShapeIndex,
       streetName,
       instructionText,
-      postInstructionText);
+      postInstructionText,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction.merge(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.merge(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -774,7 +885,9 @@ abstract mixin class $MergeCopyWith<$Res>
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -797,6 +910,8 @@ class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(Merge(
       distance: null == distance
@@ -831,6 +946,14 @@ class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -850,6 +973,8 @@ class Roundabout extends RouteInstruction {
       this.postInstructionText,
       this.bearingBefore,
       this.bearingAfter,
+      this.verbalAlertInstruction,
+      this.verbalInstruction,
       final String? $type})
       : $type = $type ?? 'roundabout',
         super._();
@@ -875,6 +1000,10 @@ class Roundabout extends RouteInstruction {
   final String? postInstructionText;
   final double? bearingBefore;
   final double? bearingAfter;
+  @override
+  final String? verbalAlertInstruction;
+  @override
+  final String? verbalInstruction;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -919,7 +1048,11 @@ class Roundabout extends RouteInstruction {
             (identical(other.bearingBefore, bearingBefore) ||
                 other.bearingBefore == bearingBefore) &&
             (identical(other.bearingAfter, bearingAfter) ||
-                other.bearingAfter == bearingAfter));
+                other.bearingAfter == bearingAfter) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -936,11 +1069,13 @@ class Roundabout extends RouteInstruction {
       instructionText,
       postInstructionText,
       bearingBefore,
-      bearingAfter);
+      bearingAfter,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter)';
+    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -963,7 +1098,9 @@ abstract mixin class $RoundaboutCopyWith<$Res>
       String? instructionText,
       String? postInstructionText,
       double? bearingBefore,
-      double? bearingAfter});
+      double? bearingAfter,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -989,6 +1126,8 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
     Object? postInstructionText = freezed,
     Object? bearingBefore = freezed,
     Object? bearingAfter = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(Roundabout(
       distance: null == distance
@@ -1035,6 +1174,14 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
           ? _self.bearingAfter
           : bearingAfter // ignore: cast_nullable_to_non_nullable
               as double?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -1050,6 +1197,8 @@ class Other extends RouteInstruction {
       this.streetName,
       this.instructionText,
       this.postInstructionText,
+      this.verbalAlertInstruction,
+      this.verbalInstruction,
       final String? $type})
       : $type = $type ?? 'other',
         super._();
@@ -1070,6 +1219,10 @@ class Other extends RouteInstruction {
   final String? instructionText;
   @override
   final String? postInstructionText;
+  @override
+  final String? verbalAlertInstruction;
+  @override
+  final String? verbalInstruction;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -1107,17 +1260,30 @@ class Other extends RouteInstruction {
             (identical(other.instructionText, instructionText) ||
                 other.instructionText == instructionText) &&
             (identical(other.postInstructionText, postInstructionText) ||
-                other.postInstructionText == postInstructionText));
+                other.postInstructionText == postInstructionText) &&
+            (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
+                other.verbalAlertInstruction == verbalAlertInstruction) &&
+            (identical(other.verbalInstruction, verbalInstruction) ||
+                other.verbalInstruction == verbalInstruction));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, duration, location,
-      originalShapeIndex, streetName, instructionText, postInstructionText);
+  int get hashCode => Object.hash(
+      runtimeType,
+      distance,
+      duration,
+      location,
+      originalShapeIndex,
+      streetName,
+      instructionText,
+      postInstructionText,
+      verbalAlertInstruction,
+      verbalInstruction);
 
   @override
   String toString() {
-    return 'RouteInstruction.other(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.other(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
   }
 }
 
@@ -1135,7 +1301,9 @@ abstract mixin class $OtherCopyWith<$Res>
       int originalShapeIndex,
       String? streetName,
       String? instructionText,
-      String? postInstructionText});
+      String? postInstructionText,
+      String? verbalAlertInstruction,
+      String? verbalInstruction});
 }
 
 /// @nodoc
@@ -1157,6 +1325,8 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
     Object? streetName = freezed,
     Object? instructionText = freezed,
     Object? postInstructionText = freezed,
+    Object? verbalAlertInstruction = freezed,
+    Object? verbalInstruction = freezed,
   }) {
     return _then(Other(
       distance: null == distance
@@ -1186,6 +1356,14 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
       postInstructionText: freezed == postInstructionText
           ? _self.postInstructionText
           : postInstructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalAlertInstruction: freezed == verbalAlertInstruction
+          ? _self.verbalAlertInstruction
+          : verbalAlertInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalInstruction: freezed == verbalInstruction
+          ? _self.verbalInstruction
+          : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
     ));
   }

@@ -98,6 +98,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Keep;
 
   const factory RouteInstruction.turn({
@@ -109,6 +111,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Turn;
 
   const factory RouteInstruction.exit({
@@ -120,6 +124,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Exit;
 
   const factory RouteInstruction.merge({
@@ -131,6 +137,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Merge;
 
   const factory RouteInstruction.roundabout({
@@ -145,6 +153,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? postInstructionText,
     double? bearingBefore,
     double? bearingAfter,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Roundabout;
 
   const factory RouteInstruction.other({
@@ -155,6 +165,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Other;
 
   factory RouteInstruction.fromHint(List<int> hint, List<LatLng> polyline) {
