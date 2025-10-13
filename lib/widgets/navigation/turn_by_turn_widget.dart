@@ -447,8 +447,8 @@ class TurnByTurnWidget extends StatelessWidget {
           // Handle roundabout with custom widget below
           return _buildRoundaboutIcon(side, exitNumber, bearingBefore, size, isDark);
         case Exit(side: final side):
-          // Use different icons for left vs right exits
-          iconData = side == ExitSide.left ? Icons.subdirectory_arrow_left : Icons.subdirectory_arrow_right;
+          // Use turn icons for exits (primarily roundabout exits)
+          iconData = side == ExitSide.left ? Icons.turn_slight_left : Icons.turn_slight_right;
           break;
         case Merge(direction: final direction):
           // Use merge icon, can rotate for directional merge if needed
