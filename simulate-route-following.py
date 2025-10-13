@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "requests",
+#     "polyline",
+# ]
+# ///
 
 import math
 import random
@@ -35,7 +42,7 @@ def get_redis_value(hash_name, field, default=None):
 
 def get_route(start, end):
     """Get a route from Valhalla"""
-    valhalla_url = "https://valhalla1.openstreetmap.de//route"
+    valhalla_url = "https://valhalla1.openstreetmap.de/route"
 
     request_data = {
         "locations": [
