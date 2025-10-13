@@ -74,6 +74,12 @@ enum ExitSide {
   right,
 }
 
+enum MergeDirection {
+  straight,
+  left,
+  right,
+}
+
 enum RoundaboutSide {
   left,
   right,
@@ -114,6 +120,16 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? instructionText,
     String? postInstructionText,
   }) = Exit;
+
+  const factory RouteInstruction.merge({
+    required double distance,
+    required MergeDirection direction,
+    required LatLng location,
+    required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
+    String? postInstructionText,
+  }) = Merge;
 
   const factory RouteInstruction.roundabout({
     required double distance,

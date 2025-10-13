@@ -272,6 +272,7 @@ class MapCubit extends Cubit<MapState> {
                                    direction != TurnDirection.slightRight,
         Exit() => true,
         Roundabout() => true,
+        Merge() => false, // Merges are like "keep" instructions
         Keep() => false,
         Other() => false,
       };

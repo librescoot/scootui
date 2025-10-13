@@ -15,33 +15,51 @@ class ValhallaService {
 
   // Valhalla maneuver types that map to our instruction types
   static final Map<int, RouteInstruction Function(double, LatLng, int, String?, String?)> _maneuverMap = {
-    2: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
+    // Start/Destination types (0-6) - map to Other
+    0: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
           distance: distance,
-          direction: TurnDirection.right,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
         ),
-    3: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
+    1: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
           distance: distance,
-          direction: TurnDirection.left,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
         ),
-    5: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
+    2: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
           distance: distance,
-          direction: TurnDirection.right,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
           instructionText: instructionText,
         ),
-    6: (distance, location, index, streetName, instructionText) => RouteInstruction.turn(
+    3: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
           distance: distance,
-          direction: TurnDirection.left,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    4: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
+          distance: distance,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    5: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
+          distance: distance,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    6: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
+          distance: distance,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,
@@ -191,20 +209,59 @@ class ValhallaService {
           streetName: streetName,
           instructionText: instructionText,
         ),
-    // Note: Valhalla maneuver type 26 (RoundaboutEnter) has roundabout_exit_count.
-    // Our RouteInstruction.roundabout expects exitNumber.
-    // Type 25 is RoundaboutExit in OSRM, Valhalla uses type 27 for ExitRoundabout.
-    // The example route.json has type 26 with roundabout_exit_count.
-    // This mapping might need adjustment based on how exitNumber is derived for Valhalla.
-    // For now, passing maneuver.beginShapeIndex as originalShapeIndex.
-    // The example JSON for type 26 does not have an explicit exit number, but `roundabout_exit_count`.
-    // This might be a slight mismatch or requires interpretation.
-    // For type 26, Valhalla docs say "The number of exits to take from the roundabout."
-    // The example JSON has "roundabout_exit_count": 2 for type 26. This should be the exit number.
+    // Merge types (25, 37, 38)
+    25: (distance, location, index, streetName, instructionText) => RouteInstruction.merge(
+          distance: distance,
+          direction: MergeDirection.straight,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    // Roundabout types (26, 27) - Type 26 handled specially in _createInstruction
     26: (distance, location, index, streetName, instructionText) => RouteInstruction.roundabout(
           distance: distance,
-          side: RoundaboutSide.right, // Assuming right-hand traffic default for roundabout side
-          exitNumber: 1, // Placeholder - this needs to come from maneuver.roundabout_exit_count if available
+          side: RoundaboutSide.right,
+          exitNumber: 1, // Placeholder - overridden in _createInstruction
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    27: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
+          distance: distance,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    // Ferry types (28, 29)
+    28: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
+          distance: distance,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    29: (distance, location, index, streetName, instructionText) => RouteInstruction.other(
+          distance: distance,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    // Merge directional types (37, 38)
+    37: (distance, location, index, streetName, instructionText) => RouteInstruction.merge(
+          distance: distance,
+          direction: MergeDirection.right,
+          location: location,
+          originalShapeIndex: index,
+          streetName: streetName,
+          instructionText: instructionText,
+        ),
+    38: (distance, location, index, streetName, instructionText) => RouteInstruction.merge(
+          distance: distance,
+          direction: MergeDirection.left,
           location: location,
           originalShapeIndex: index,
           streetName: streetName,

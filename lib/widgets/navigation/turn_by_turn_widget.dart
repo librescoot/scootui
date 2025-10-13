@@ -309,7 +309,16 @@ class TurnByTurnWidget extends StatelessWidget {
         // Handle roundabout with custom widget below
         return _buildRoundaboutIcon(side, exitNumber, bearingBefore, size, isDark);
       case Exit(side: final side):
-        iconData = side == ExitSide.left ? Icons.exit_to_app : Icons.exit_to_app;
+        // Use different icons for left vs right exits
+        iconData = side == ExitSide.left ? Icons.subdirectory_arrow_left : Icons.subdirectory_arrow_right;
+        break;
+      case Merge(direction: final direction):
+        // Use merge icon, can rotate for directional merge if needed
+        iconData = switch (direction) {
+          MergeDirection.straight => Icons.merge,
+          MergeDirection.left => Icons.merge, // Could add rotation if needed
+          MergeDirection.right => Icons.merge,
+        };
         break;
       case Other():
         iconData = Icons.navigation;
@@ -357,6 +366,8 @@ class TurnByTurnWidget extends StatelessWidget {
           streetName != null ? 'Take exit ${exitNumber} onto $streetName' : 'Take exit $exitNumber',
         Exit(side: final side, streetName: final streetName) =>
           streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
+        Merge(direction: final direction, streetName: final streetName) =>
+          streetName != null ? 'Merge ${direction.name} onto $streetName' : 'Merge ${direction.name}',
         Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
       };
     }
@@ -389,11 +400,26 @@ class TurnByTurnWidget extends StatelessWidget {
           TurnDirection.rightUTurn => 'make a right U-turn',
           TurnDirection.uTurn => 'make a U-turn',
         },
-      Roundabout(exitNumber: final exitNumber) =>
-        'take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit',
+      Roundabout(exitNumber: final exitNumber) => _getOrdinalExitText(exitNumber),
+      Merge(direction: final direction) => switch (direction) {
+          MergeDirection.straight => 'merge',
+          MergeDirection.left => 'merge left',
+          MergeDirection.right => 'merge right',
+        },
       Other() => 'continue',
       Exit(side: final side) => 'take the ${side.name} exit',
     };
+  }
+
+  String _getOrdinalExitText(int exitNumber) {
+    // Handle ordinal suffixes for any exit number
+    final suffix = switch (exitNumber % 10) {
+      1 when exitNumber % 100 != 11 => 'st',
+      2 when exitNumber % 100 != 12 => 'nd',
+      3 when exitNumber % 100 != 13 => 'rd',
+      _ => 'th',
+    };
+    return 'take the $exitNumber$suffix exit';
   }
 
   Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double? bearingBefore, double size, bool isDark) {

@@ -95,6 +95,34 @@ const _$ExitSideEnumMap = {
   ExitSide.right: 'right',
 };
 
+Merge _$MergeFromJson(Map<String, dynamic> json) => Merge(
+      distance: (json['distance'] as num).toDouble(),
+      direction: $enumDecode(_$MergeDirectionEnumMap, json['direction']),
+      location: LatLng.fromJson(json['location'] as Map<String, dynamic>),
+      originalShapeIndex: (json['originalShapeIndex'] as num).toInt(),
+      streetName: json['streetName'] as String?,
+      instructionText: json['instructionText'] as String?,
+      postInstructionText: json['postInstructionText'] as String?,
+      $type: json['runtimeType'] as String?,
+    );
+
+Map<String, dynamic> _$MergeToJson(Merge instance) => <String, dynamic>{
+      'distance': instance.distance,
+      'direction': _$MergeDirectionEnumMap[instance.direction]!,
+      'location': instance.location,
+      'originalShapeIndex': instance.originalShapeIndex,
+      'streetName': instance.streetName,
+      'instructionText': instance.instructionText,
+      'postInstructionText': instance.postInstructionText,
+      'runtimeType': instance.$type,
+    };
+
+const _$MergeDirectionEnumMap = {
+  MergeDirection.straight: 'straight',
+  MergeDirection.left: 'left',
+  MergeDirection.right: 'right',
+};
+
 Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       distance: (json['distance'] as num).toDouble(),
       side: $enumDecode(_$RoundaboutSideEnumMap, json['side']),

@@ -20,6 +20,8 @@ RouteInstruction _$RouteInstructionFromJson(Map<String, dynamic> json) {
       return Turn.fromJson(json);
     case 'exit':
       return Exit.fromJson(json);
+    case 'merge':
+      return Merge.fromJson(json);
     case 'roundabout':
       return Roundabout.fromJson(json);
     case 'other':
@@ -572,6 +574,156 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
           ? _self.side
           : side // ignore: cast_nullable_to_non_nullable
               as ExitSide,
+      location: null == location
+          ? _self.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as LatLng,
+      originalShapeIndex: null == originalShapeIndex
+          ? _self.originalShapeIndex
+          : originalShapeIndex // ignore: cast_nullable_to_non_nullable
+              as int,
+      streetName: freezed == streetName
+          ? _self.streetName
+          : streetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instructionText: freezed == instructionText
+          ? _self.instructionText
+          : instructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
+      postInstructionText: freezed == postInstructionText
+          ? _self.postInstructionText
+          : postInstructionText // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class Merge extends RouteInstruction {
+  const Merge(
+      {required this.distance,
+      required this.direction,
+      required this.location,
+      required this.originalShapeIndex,
+      this.streetName,
+      this.instructionText,
+      this.postInstructionText,
+      final String? $type})
+      : $type = $type ?? 'merge',
+        super._();
+  factory Merge.fromJson(Map<String, dynamic> json) => _$MergeFromJson(json);
+
+  @override
+  final double distance;
+  final MergeDirection direction;
+  @override
+  final LatLng location;
+  @override
+  final int originalShapeIndex;
+  @override
+  final String? streetName;
+  @override
+  final String? instructionText;
+  @override
+  final String? postInstructionText;
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $MergeCopyWith<Merge> get copyWith =>
+      _$MergeCopyWithImpl<Merge>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$MergeToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Merge &&
+            (identical(other.distance, distance) ||
+                other.distance == distance) &&
+            (identical(other.direction, direction) ||
+                other.direction == direction) &&
+            (identical(other.location, location) ||
+                other.location == location) &&
+            (identical(other.originalShapeIndex, originalShapeIndex) ||
+                other.originalShapeIndex == originalShapeIndex) &&
+            (identical(other.streetName, streetName) ||
+                other.streetName == streetName) &&
+            (identical(other.instructionText, instructionText) ||
+                other.instructionText == instructionText) &&
+            (identical(other.postInstructionText, postInstructionText) ||
+                other.postInstructionText == postInstructionText));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, distance, direction, location,
+      originalShapeIndex, streetName, instructionText, postInstructionText);
+
+  @override
+  String toString() {
+    return 'RouteInstruction.merge(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $MergeCopyWith<$Res>
+    implements $RouteInstructionCopyWith<$Res> {
+  factory $MergeCopyWith(Merge value, $Res Function(Merge) _then) =
+      _$MergeCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {double distance,
+      MergeDirection direction,
+      LatLng location,
+      int originalShapeIndex,
+      String? streetName,
+      String? instructionText,
+      String? postInstructionText});
+}
+
+/// @nodoc
+class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
+  _$MergeCopyWithImpl(this._self, this._then);
+
+  final Merge _self;
+  final $Res Function(Merge) _then;
+
+  /// Create a copy of RouteInstruction
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? distance = null,
+    Object? direction = null,
+    Object? location = null,
+    Object? originalShapeIndex = null,
+    Object? streetName = freezed,
+    Object? instructionText = freezed,
+    Object? postInstructionText = freezed,
+  }) {
+    return _then(Merge(
+      distance: null == distance
+          ? _self.distance
+          : distance // ignore: cast_nullable_to_non_nullable
+              as double,
+      direction: null == direction
+          ? _self.direction
+          : direction // ignore: cast_nullable_to_non_nullable
+              as MergeDirection,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
