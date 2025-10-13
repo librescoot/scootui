@@ -203,27 +203,25 @@ class MapTransformAnimator {
       // x' = 0*cos(R) + 120*sin(R) = 120*sin(R)
       // y' = -0*sin(R) + 120*cos(R) = 120*cos(R)
       final centerPixel = Point(
-        gpsPixel.x - transform.offset.dy * sin(rotationRad),  // offset.dy = 120
+        gpsPixel.x - transform.offset.dy * sin(rotationRad),  // offset.dy = 140
         gpsPixel.y - transform.offset.dy * cos(rotationRad),
       );
 
       centerPosition = camera.unproject(centerPixel, transform.zoom);
     }
 
-    // Create new camera with all properties updated atomically
-    // This ensures GPS position never moves on screen during rotation
-    final newCamera = MapCamera(
-      crs: camera.crs,
-      center: centerPosition,
-      zoom: camera.clampZoom(transform.zoom),
-      rotation: transform.rotation,
-      nonRotatedSize: camera.nonRotatedSize,
-      minZoom: camera.minZoom,
-      maxZoom: camera.maxZoom,
+    // Use moveAndRotateRaw to update camera and emit events to all layers
+    // This ensures VectorTileLayer receives camera change notifications and loads new tiles
+    // We calculate the final center ourselves (above) accounting for target rotation,
+    // then pass offset: Offset.zero since moveRaw's offset uses current rotation
+    impl.moveAndRotateRaw(
+      centerPosition,
+      camera.clampZoom(transform.zoom),
+      transform.rotation,
+      offset: Offset.zero,
+      hasGesture: false,
+      source: MapEventSource.mapController,
     );
-
-    // Directly update the camera state
-    impl.value = impl.value.withMapCamera(newCamera);
   }
 
   /// Stops any ongoing animations.
