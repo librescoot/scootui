@@ -380,10 +380,17 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
             if (widget.route != null && widget.route!.waypoints.isNotEmpty)
               PolylineLayer(
                 polylines: [
+                  // Border/outline
+                  Polyline(
+                    points: widget.route!.waypoints,
+                    strokeWidth: 6.0,
+                    color: isDark ? Colors.grey.shade800 : Colors.white,
+                  ),
+                  // Main route line
                   Polyline(
                     points: widget.route!.waypoints,
                     strokeWidth: 4.0,
-                    color: Colors.lightBlue,
+                    color: Colors.blue.shade400,
                   ),
                 ],
               ),
@@ -486,18 +493,27 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     super.dispose();
   }
 
-  Widget? _routeLayer() {
+  Widget? _routeLayer(BuildContext context) {
     final waypoints = widget.route?.waypoints;
     if (waypoints == null || waypoints.isEmpty) {
       return null;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return PolylineLayer(
       polylines: [
+        // Border/outline
+        Polyline(
+          points: waypoints,
+          strokeWidth: 6.0,
+          color: isDark ? Colors.grey.shade800 : Colors.white,
+        ),
+        // Main route line
         Polyline(
           points: waypoints,
           strokeWidth: 4.0,
-          color: Colors.lightBlue,
+          color: Colors.blue.shade400,
         ),
       ],
     );
@@ -525,7 +541,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final routeLayer = _routeLayer();
+    final routeLayer = _routeLayer(context);
 
     return Stack(
       children: [
