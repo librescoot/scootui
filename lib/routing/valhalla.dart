@@ -296,7 +296,7 @@ class ValhallaService {
           verbalAlertInstruction: verbalAlert,
           verbalInstruction: verbal,
         ),
-    // Roundabout types (26, 27) - Type 26 handled specially in _createInstruction
+    // Roundabout types (26, 27) - Both handled specially in _createInstruction
     26: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.roundabout(
           distance: distance,
           side: RoundaboutSide.right,
@@ -309,8 +309,10 @@ class ValhallaService {
           verbalAlertInstruction: verbalAlert,
           verbalInstruction: verbal,
         ),
-    27: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.other(
+    27: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.roundabout(
           distance: distance,
+          side: RoundaboutSide.right,
+          exitNumber: 1, // Placeholder - overridden in _createInstruction
           duration: duration,
           location: location,
           originalShapeIndex: index,
@@ -480,8 +482,8 @@ class ValhallaService {
 
     final instructionCreator = _maneuverMap[type];
     if (instructionCreator != null) {
-      if (type == 26) {
-        // ManeuverType.kRoundaboutEnter
+      if (type == 26 || type == 27) {
+        // ManeuverType.kRoundaboutEnter (26) and kRoundaboutExit (27)
         return RouteInstruction.roundabout(
           distance: distance,
           side: RoundaboutSide.right, // Default, Valhalla might not specify side for enter
