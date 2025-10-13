@@ -92,7 +92,7 @@ sealed class RouteInstruction with _$RouteInstruction {
   const factory RouteInstruction.keep({
     required double distance,
     required KeepDirection direction,
-    // required Duration duration,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
@@ -103,7 +103,7 @@ sealed class RouteInstruction with _$RouteInstruction {
   const factory RouteInstruction.turn({
     required double distance,
     required TurnDirection direction,
-    // required Duration duration,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
@@ -114,6 +114,7 @@ sealed class RouteInstruction with _$RouteInstruction {
   const factory RouteInstruction.exit({
     required double distance,
     required ExitSide side,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
@@ -124,6 +125,7 @@ sealed class RouteInstruction with _$RouteInstruction {
   const factory RouteInstruction.merge({
     required double distance,
     required MergeDirection direction,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
@@ -135,6 +137,7 @@ sealed class RouteInstruction with _$RouteInstruction {
     required double distance,
     required RoundaboutSide side,
     required int exitNumber,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
@@ -146,6 +149,7 @@ sealed class RouteInstruction with _$RouteInstruction {
 
   const factory RouteInstruction.other({
     required double distance,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
@@ -190,6 +194,7 @@ sealed class RouteInstruction with _$RouteInstruction {
             VoiceHint.uTurn => TurnDirection.uTurn,
             _ => throw UnimplementedError(),
           },
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
@@ -201,6 +206,7 @@ sealed class RouteInstruction with _$RouteInstruction {
             VoiceHint.keepRight => KeepDirection.right,
             _ => throw UnimplementedError(),
           },
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
@@ -212,11 +218,13 @@ sealed class RouteInstruction with _$RouteInstruction {
             _ => throw UnimplementedError(),
           },
           exitNumber: exitNumber,
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
       VoiceHint.beelineRouting || VoiceHint.offRoute => RouteInstruction.other(
           distance: distanceToNext.toDouble(),
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
@@ -227,6 +235,7 @@ sealed class RouteInstruction with _$RouteInstruction {
             VoiceHint.exitRight => ExitSide.right,
             _ => throw UnimplementedError(),
           },
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         )

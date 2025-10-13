@@ -237,7 +237,7 @@ class ScaleBar extends StatelessWidget {
 
     return SizedBox(
       width: width,
-      height: 14,
+      height: 16,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -257,7 +257,7 @@ class ScaleBar extends StatelessWidget {
           ),
           // Text centered above the bar
           Positioned(
-            bottom: 3,
+            bottom: 4,
             child: Stack(
               children: [
                 // Stroke/outline
@@ -400,7 +400,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
                 if (widget.destination != null)
                   Marker(
                     point: widget.destination!,
-                    rotate: false, // Keep marker upright on screen
+                    rotate: true,
                     child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
                   ),
               ],
@@ -524,7 +524,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     if (widget.destination != null) {
       markers.add(Marker(
         point: widget.destination!,
-        rotate: false, // Keep marker upright on screen
+        rotate: true,
         child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
       ));
     }

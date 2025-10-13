@@ -309,6 +309,7 @@ class NavigationCubit extends Cubit<NavigationState> {
     if (isOffRoute) {
       final returnInstruction = RouteInstruction.other(
         distance: distanceFromRoute,
+        duration: Duration.zero,
         location: closestPoint,
         originalShapeIndex: 0,
         instructionText: "Return to the route",

@@ -35,7 +35,8 @@ RouteInstruction _$RouteInstructionFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$RouteInstruction {
-  double get distance; // required Duration duration,
+  double get distance;
+  Duration get duration;
   LatLng get location;
   int get originalShapeIndex;
   String? get streetName;
@@ -60,6 +61,8 @@ mixin _$RouteInstruction {
             other is RouteInstruction &&
             (identical(other.distance, distance) ||
                 other.distance == distance) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -74,12 +77,12 @@ mixin _$RouteInstruction {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, location,
+  int get hashCode => Object.hash(runtimeType, distance, duration, location,
       originalShapeIndex, streetName, instructionText, postInstructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction(distance: $distance, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
   }
 }
 
@@ -91,6 +94,7 @@ abstract mixin class $RouteInstructionCopyWith<$Res> {
   @useResult
   $Res call(
       {double distance,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -112,6 +116,7 @@ class _$RouteInstructionCopyWithImpl<$Res>
   @override
   $Res call({
     Object? distance = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -123,6 +128,10 @@ class _$RouteInstructionCopyWithImpl<$Res>
           ? _self.distance
           : distance // ignore: cast_nullable_to_non_nullable
               as double,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -153,6 +162,7 @@ class Keep extends RouteInstruction {
   const Keep(
       {required this.distance,
       required this.direction,
+      this.duration = Duration.zero,
       required this.location,
       required this.originalShapeIndex,
       this.streetName,
@@ -166,7 +176,9 @@ class Keep extends RouteInstruction {
   @override
   final double distance;
   final KeepDirection direction;
-// required Duration duration,
+  @override
+  @JsonKey()
+  final Duration duration;
   @override
   final LatLng location;
   @override
@@ -205,6 +217,8 @@ class Keep extends RouteInstruction {
                 other.distance == distance) &&
             (identical(other.direction, direction) ||
                 other.direction == direction) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -219,12 +233,20 @@ class Keep extends RouteInstruction {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, direction, location,
-      originalShapeIndex, streetName, instructionText, postInstructionText);
+  int get hashCode => Object.hash(
+      runtimeType,
+      distance,
+      direction,
+      duration,
+      location,
+      originalShapeIndex,
+      streetName,
+      instructionText,
+      postInstructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.keep(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.keep(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
   }
 }
 
@@ -238,6 +260,7 @@ abstract mixin class $KeepCopyWith<$Res>
   $Res call(
       {double distance,
       KeepDirection direction,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -259,6 +282,7 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
   $Res call({
     Object? distance = null,
     Object? direction = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -274,6 +298,10 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
           ? _self.direction
           : direction // ignore: cast_nullable_to_non_nullable
               as KeepDirection,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -304,6 +332,7 @@ class Turn extends RouteInstruction {
   const Turn(
       {required this.distance,
       required this.direction,
+      this.duration = Duration.zero,
       required this.location,
       required this.originalShapeIndex,
       this.streetName,
@@ -317,7 +346,9 @@ class Turn extends RouteInstruction {
   @override
   final double distance;
   final TurnDirection direction;
-// required Duration duration,
+  @override
+  @JsonKey()
+  final Duration duration;
   @override
   final LatLng location;
   @override
@@ -356,6 +387,8 @@ class Turn extends RouteInstruction {
                 other.distance == distance) &&
             (identical(other.direction, direction) ||
                 other.direction == direction) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -370,12 +403,20 @@ class Turn extends RouteInstruction {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, direction, location,
-      originalShapeIndex, streetName, instructionText, postInstructionText);
+  int get hashCode => Object.hash(
+      runtimeType,
+      distance,
+      direction,
+      duration,
+      location,
+      originalShapeIndex,
+      streetName,
+      instructionText,
+      postInstructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.turn(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.turn(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
   }
 }
 
@@ -389,6 +430,7 @@ abstract mixin class $TurnCopyWith<$Res>
   $Res call(
       {double distance,
       TurnDirection direction,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -410,6 +452,7 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
   $Res call({
     Object? distance = null,
     Object? direction = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -425,6 +468,10 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
           ? _self.direction
           : direction // ignore: cast_nullable_to_non_nullable
               as TurnDirection,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -455,6 +502,7 @@ class Exit extends RouteInstruction {
   const Exit(
       {required this.distance,
       required this.side,
+      this.duration = Duration.zero,
       required this.location,
       required this.originalShapeIndex,
       this.streetName,
@@ -468,6 +516,9 @@ class Exit extends RouteInstruction {
   @override
   final double distance;
   final ExitSide side;
+  @override
+  @JsonKey()
+  final Duration duration;
   @override
   final LatLng location;
   @override
@@ -505,6 +556,8 @@ class Exit extends RouteInstruction {
             (identical(other.distance, distance) ||
                 other.distance == distance) &&
             (identical(other.side, side) || other.side == side) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -519,12 +572,20 @@ class Exit extends RouteInstruction {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, side, location,
-      originalShapeIndex, streetName, instructionText, postInstructionText);
+  int get hashCode => Object.hash(
+      runtimeType,
+      distance,
+      side,
+      duration,
+      location,
+      originalShapeIndex,
+      streetName,
+      instructionText,
+      postInstructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.exit(distance: $distance, side: $side, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.exit(distance: $distance, side: $side, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
   }
 }
 
@@ -538,6 +599,7 @@ abstract mixin class $ExitCopyWith<$Res>
   $Res call(
       {double distance,
       ExitSide side,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -559,6 +621,7 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
   $Res call({
     Object? distance = null,
     Object? side = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -574,6 +637,10 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
           ? _self.side
           : side // ignore: cast_nullable_to_non_nullable
               as ExitSide,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -604,6 +671,7 @@ class Merge extends RouteInstruction {
   const Merge(
       {required this.distance,
       required this.direction,
+      this.duration = Duration.zero,
       required this.location,
       required this.originalShapeIndex,
       this.streetName,
@@ -617,6 +685,9 @@ class Merge extends RouteInstruction {
   @override
   final double distance;
   final MergeDirection direction;
+  @override
+  @JsonKey()
+  final Duration duration;
   @override
   final LatLng location;
   @override
@@ -655,6 +726,8 @@ class Merge extends RouteInstruction {
                 other.distance == distance) &&
             (identical(other.direction, direction) ||
                 other.direction == direction) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -669,12 +742,20 @@ class Merge extends RouteInstruction {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, direction, location,
-      originalShapeIndex, streetName, instructionText, postInstructionText);
+  int get hashCode => Object.hash(
+      runtimeType,
+      distance,
+      direction,
+      duration,
+      location,
+      originalShapeIndex,
+      streetName,
+      instructionText,
+      postInstructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.merge(distance: $distance, direction: $direction, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.merge(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
   }
 }
 
@@ -688,6 +769,7 @@ abstract mixin class $MergeCopyWith<$Res>
   $Res call(
       {double distance,
       MergeDirection direction,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -709,6 +791,7 @@ class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
   $Res call({
     Object? distance = null,
     Object? direction = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -724,6 +807,10 @@ class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
           ? _self.direction
           : direction // ignore: cast_nullable_to_non_nullable
               as MergeDirection,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -755,6 +842,7 @@ class Roundabout extends RouteInstruction {
       {required this.distance,
       required this.side,
       required this.exitNumber,
+      this.duration = Duration.zero,
       required this.location,
       required this.originalShapeIndex,
       this.streetName,
@@ -772,6 +860,9 @@ class Roundabout extends RouteInstruction {
   final double distance;
   final RoundaboutSide side;
   final int exitNumber;
+  @override
+  @JsonKey()
+  final Duration duration;
   @override
   final LatLng location;
   @override
@@ -813,6 +904,8 @@ class Roundabout extends RouteInstruction {
             (identical(other.side, side) || other.side == side) &&
             (identical(other.exitNumber, exitNumber) ||
                 other.exitNumber == exitNumber) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -836,6 +929,7 @@ class Roundabout extends RouteInstruction {
       distance,
       side,
       exitNumber,
+      duration,
       location,
       originalShapeIndex,
       streetName,
@@ -846,7 +940,7 @@ class Roundabout extends RouteInstruction {
 
   @override
   String toString() {
-    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter)';
+    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter)';
   }
 }
 
@@ -862,6 +956,7 @@ abstract mixin class $RoundaboutCopyWith<$Res>
       {double distance,
       RoundaboutSide side,
       int exitNumber,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -886,6 +981,7 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
     Object? distance = null,
     Object? side = null,
     Object? exitNumber = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -907,6 +1003,10 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
           ? _self.exitNumber
           : exitNumber // ignore: cast_nullable_to_non_nullable
               as int,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable
@@ -944,6 +1044,7 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
 class Other extends RouteInstruction {
   const Other(
       {required this.distance,
+      this.duration = Duration.zero,
       required this.location,
       required this.originalShapeIndex,
       this.streetName,
@@ -956,6 +1057,9 @@ class Other extends RouteInstruction {
 
   @override
   final double distance;
+  @override
+  @JsonKey()
+  final Duration duration;
   @override
   final LatLng location;
   @override
@@ -992,6 +1096,8 @@ class Other extends RouteInstruction {
             other is Other &&
             (identical(other.distance, distance) ||
                 other.distance == distance) &&
+            (identical(other.duration, duration) ||
+                other.duration == duration) &&
             (identical(other.location, location) ||
                 other.location == location) &&
             (identical(other.originalShapeIndex, originalShapeIndex) ||
@@ -1006,12 +1112,12 @@ class Other extends RouteInstruction {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, distance, location,
+  int get hashCode => Object.hash(runtimeType, distance, duration, location,
       originalShapeIndex, streetName, instructionText, postInstructionText);
 
   @override
   String toString() {
-    return 'RouteInstruction.other(distance: $distance, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
+    return 'RouteInstruction.other(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText)';
   }
 }
 
@@ -1024,6 +1130,7 @@ abstract mixin class $OtherCopyWith<$Res>
   @useResult
   $Res call(
       {double distance,
+      Duration duration,
       LatLng location,
       int originalShapeIndex,
       String? streetName,
@@ -1044,6 +1151,7 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   $Res call({
     Object? distance = null,
+    Object? duration = null,
     Object? location = null,
     Object? originalShapeIndex = null,
     Object? streetName = freezed,
@@ -1055,6 +1163,10 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
           ? _self.distance
           : distance // ignore: cast_nullable_to_non_nullable
               as double,
+      duration: null == duration
+          ? _self.duration
+          : duration // ignore: cast_nullable_to_non_nullable
+              as Duration,
       location: null == location
           ? _self.location
           : location // ignore: cast_nullable_to_non_nullable

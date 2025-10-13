@@ -58,11 +58,11 @@ class TurnByTurnWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       ...state.pendingConditions.map((condition) => Text(
-                        "• $condition",
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isDark ? Colors.white70 : Colors.black87,
-                        ),
-                      )),
+                            "• $condition",
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                          )),
                     ],
                   ),
                 ),
@@ -70,7 +70,7 @@ class TurnByTurnWidget extends StatelessWidget {
             ),
           );
         }
-        
+
         if (!state.hasInstructions || state.status == NavigationStatus.idle) {
           return const SizedBox.shrink();
         }
@@ -152,6 +152,117 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildTimeInfoBar(NavigationState state, bool isDark) {
+    final route = state.route;
+    if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
+
+    // Calculate remaining time by summing durations of all remaining instructions
+    // We need to find which instruction we're currently on and sum all durations after that
+    final upcomingInstructions = state.upcomingInstructions;
+    final firstUpcomingIndex = route.instructions.indexWhere(
+      (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
+    );
+
+    Duration timeRemaining = Duration.zero;
+
+    if (firstUpcomingIndex >= 0) {
+      // Sum all durations from the current instruction onwards
+      for (int i = firstUpcomingIndex; i < route.instructions.length; i++) {
+        timeRemaining += route.instructions[i].duration;
+      }
+
+      // Adjust first instruction's time based on actual distance remaining vs original distance
+      final firstInstruction = upcomingInstructions.first;
+      final originalFirstInstruction = route.instructions[firstUpcomingIndex];
+      if (originalFirstInstruction.distance > 0) {
+        // Calculate the proportion of this instruction that remains
+        final distanceRatio = firstInstruction.distance / originalFirstInstruction.distance;
+        // Subtract the passed portion of the first instruction's time
+        final passedTime = originalFirstInstruction.duration * (1 - distanceRatio);
+        timeRemaining -= passedTime;
+      }
+    }
+
+    // Calculate ETA
+    final now = DateTime.now();
+    final eta = now.add(timeRemaining);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTimeInfoItem(
+            icon: Icons.timer,
+            label: 'Remaining',
+            value: _formatDuration(timeRemaining),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.flag,
+            label: 'ETA',
+            value: _formatTime(eta),
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDark,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: isDark ? Colors.white54 : Colors.black54,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: isDark ? Colors.white70 : Colors.black87,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else {
+      return '${minutes}m';
+    }
+  }
+
+  String _formatTime(DateTime time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+
+    return '$hour:$minute';
+  }
+
   Widget _buildCompactView(NavigationState state, bool isDark) {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
@@ -198,81 +309,87 @@ class TurnByTurnWidget extends StatelessWidget {
             padding: const EdgeInsets.only(left: 90, right: 12, top: 14, bottom: 14),
             constraints: const BoxConstraints(minHeight: 80), // Ensure minimum height
             decoration: BoxDecoration(
-            color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                _getInstructionText(instruction, null),
-                style: TextStyle(
-                  color: isDark ? Colors.white70 : Colors.black87,
-                  fontSize: 15,
-                  fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
-                  height: 1.2,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (nextInstruction != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Then ${_getShortInstructionText(nextInstruction)}',
-                  style: TextStyle(
-                    color: isDark ? Colors.white38 : Colors.black45,
-                    fontSize: 13,
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
-        ),
-        // Foreground: Icon/distance box (layered on top, jutting out)
-        Positioned(
-          left: 0,
-          top: -6,
-          child: Container(
-            width: 72, // Fixed narrow width
-            constraints: const BoxConstraints(minHeight: 92), // Taller than instruction box
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+              color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
-                width: 1.5,
+                color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                width: 1,
               ),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildInstructionIcon(instruction, size: 48, isDark: isDark),
-                const SizedBox(height: 8),
                 Text(
-                  _formatDistance(instruction.distance),
+                  _getInstructionText(instruction, null),
                   style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
+                    color: isDark ? Colors.white70 : Colors.black87,
                     fontSize: 15,
-                    height: 1.0,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
+                    height: 1.2,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                if (nextInstruction != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Then ${_getShortInstructionText(nextInstruction)}',
+                    style: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black45,
+                      fontSize: 13,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
             ),
           ),
-        ),
-      ],
+          // Foreground: Icon/distance box (layered on top, jutting out)
+          Positioned(
+            left: 0,
+            top: -6,
+            child: Container(
+              width: 72, // Fixed narrow width
+              constraints: const BoxConstraints(minHeight: 92), // Taller than instruction box
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildInstructionIcon(instruction, size: 48, isDark: isDark),
+                  const SizedBox(height: 8),
+                  Text(
+                    _formatDistance(instruction.distance),
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 15,
+                      height: 1.0,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Time info bar (overlapping on bottom right)
+          Positioned(
+            right: -6,
+            top: -6,
+            child: _buildTimeInfoBar(state, isDark),
+          ),
+        ],
       ),
     );
   }
@@ -286,43 +403,43 @@ class TurnByTurnWidget extends StatelessWidget {
       iconData = Icons.straight;
     } else {
       switch (instruction) {
-      case Keep(direction: final direction):
-        iconData = switch (direction) {
-          KeepDirection.straight => Icons.straight,
-          KeepDirection.left => Icons.turn_slight_left,
-          KeepDirection.right => Icons.turn_slight_right,
-        };
-        break;
-      case Turn(direction: final direction):
-        iconData = switch (direction) {
-          TurnDirection.left => Icons.turn_left,
-          TurnDirection.right => Icons.turn_right,
-          TurnDirection.slightLeft => Icons.turn_slight_left,
-          TurnDirection.slightRight => Icons.turn_slight_right,
-          TurnDirection.sharpLeft => Icons.turn_sharp_left,
-          TurnDirection.sharpRight => Icons.turn_sharp_right,
-          TurnDirection.uTurn180 || TurnDirection.uTurn => Icons.u_turn_left,
-          TurnDirection.rightUTurn => Icons.u_turn_right,
-        };
-        break;
-      case Roundabout(side: final side, exitNumber: final exitNumber, bearingBefore: final bearingBefore):
-        // Handle roundabout with custom widget below
-        return _buildRoundaboutIcon(side, exitNumber, bearingBefore, size, isDark);
-      case Exit(side: final side):
-        // Use different icons for left vs right exits
-        iconData = side == ExitSide.left ? Icons.subdirectory_arrow_left : Icons.subdirectory_arrow_right;
-        break;
-      case Merge(direction: final direction):
-        // Use merge icon, can rotate for directional merge if needed
-        iconData = switch (direction) {
-          MergeDirection.straight => Icons.merge,
-          MergeDirection.left => Icons.merge, // Could add rotation if needed
-          MergeDirection.right => Icons.merge,
-        };
-        break;
-      case Other():
-        iconData = Icons.navigation;
-        break;
+        case Keep(direction: final direction):
+          iconData = switch (direction) {
+            KeepDirection.straight => Icons.straight,
+            KeepDirection.left => Icons.turn_slight_left,
+            KeepDirection.right => Icons.turn_slight_right,
+          };
+          break;
+        case Turn(direction: final direction):
+          iconData = switch (direction) {
+            TurnDirection.left => Icons.turn_left,
+            TurnDirection.right => Icons.turn_right,
+            TurnDirection.slightLeft => Icons.turn_slight_left,
+            TurnDirection.slightRight => Icons.turn_slight_right,
+            TurnDirection.sharpLeft => Icons.turn_sharp_left,
+            TurnDirection.sharpRight => Icons.turn_sharp_right,
+            TurnDirection.uTurn180 || TurnDirection.uTurn => Icons.u_turn_left,
+            TurnDirection.rightUTurn => Icons.u_turn_right,
+          };
+          break;
+        case Roundabout(side: final side, exitNumber: final exitNumber, bearingBefore: final bearingBefore):
+          // Handle roundabout with custom widget below
+          return _buildRoundaboutIcon(side, exitNumber, bearingBefore, size, isDark);
+        case Exit(side: final side):
+          // Use different icons for left vs right exits
+          iconData = side == ExitSide.left ? Icons.subdirectory_arrow_left : Icons.subdirectory_arrow_right;
+          break;
+        case Merge(direction: final direction):
+          // Use merge icon, can rotate for directional merge if needed
+          iconData = switch (direction) {
+            MergeDirection.straight => Icons.merge,
+            MergeDirection.left => Icons.merge, // Could add rotation if needed
+            MergeDirection.right => Icons.merge,
+          };
+          break;
+        case Other():
+          iconData = Icons.navigation;
+          break;
       }
     }
 
