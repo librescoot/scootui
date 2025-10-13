@@ -156,29 +156,33 @@ class TurnByTurnWidget extends StatelessWidget {
     final route = state.route;
     if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
 
-    // Calculate remaining time by summing durations of all remaining instructions
-    // We need to find which instruction we're currently on and sum all durations after that
+    // Find the current instruction in the full route to calculate totals
     final upcomingInstructions = state.upcomingInstructions;
     final firstUpcomingIndex = route.instructions.indexWhere(
       (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
     );
 
+    double remainingDistance = 0.0;
     Duration timeRemaining = Duration.zero;
 
     if (firstUpcomingIndex >= 0) {
-      // Sum all durations from the current instruction onwards
+      // Sum all distances and durations from the current instruction onwards
       for (int i = firstUpcomingIndex; i < route.instructions.length; i++) {
+        remainingDistance += route.instructions[i].distance;
         timeRemaining += route.instructions[i].duration;
       }
 
-      // Adjust first instruction's time based on actual distance remaining vs original distance
+      // Adjust first instruction's distance and time based on actual progress
       final firstInstruction = upcomingInstructions.first;
       final originalFirstInstruction = route.instructions[firstUpcomingIndex];
       if (originalFirstInstruction.distance > 0) {
-        // Calculate the proportion of this instruction that remains
-        final distanceRatio = firstInstruction.distance / originalFirstInstruction.distance;
-        // Subtract the passed portion of the first instruction's time
-        final passedTime = originalFirstInstruction.duration * (1 - distanceRatio);
+        // Calculate how much of the first instruction has been completed
+        final completedDistance = originalFirstInstruction.distance - firstInstruction.distance;
+        final completedRatio = completedDistance / originalFirstInstruction.distance;
+
+        // Subtract the completed portions from totals
+        remainingDistance -= completedDistance;
+        final passedTime = originalFirstInstruction.duration * completedRatio;
         timeRemaining -= passedTime;
       }
     }
@@ -188,18 +192,25 @@ class TurnByTurnWidget extends StatelessWidget {
     final eta = now.add(timeRemaining);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
-          width: 1.5,
+          width: 1.0,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          _buildTimeInfoItem(
+            icon: Icons.straighten,
+            label: 'Distance',
+            value: _formatDistanceKm(remainingDistance),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
           _buildTimeInfoItem(
             icon: Icons.timer,
             label: 'Remaining',
@@ -238,7 +249,7 @@ class TurnByTurnWidget extends StatelessWidget {
           style: TextStyle(
             color: isDark ? Colors.white70 : Colors.black87,
             fontSize: 12,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.normal,
           ),
         ),
       ],
@@ -462,6 +473,14 @@ class TurnByTurnWidget extends StatelessWidget {
     }
   }
 
+  String _formatDistanceKm(double distance) {
+    if (distance >= 1000) {
+      return '${(distance / 1000).toStringAsFixed(1)} km';
+    } else {
+      return '${distance.toInt()} m';
+    }
+  }
+
   String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
     // For long distances (>1km), show "Continue for X.X km" message
     if (instruction.distance > 1000) {
@@ -480,7 +499,7 @@ class TurnByTurnWidget extends StatelessWidget {
         Turn(direction: final direction, streetName: final streetName) =>
           streetName != null ? 'Turn ${direction.name} onto $streetName' : 'Turn ${direction.name}',
         Roundabout(exitNumber: final exitNumber, streetName: final streetName) =>
-          streetName != null ? 'Take exit ${exitNumber} onto $streetName' : 'Take exit $exitNumber',
+          streetName != null ? 'Take exit $exitNumber onto $streetName' : 'Take exit $exitNumber',
         Exit(side: final side, streetName: final streetName) =>
           streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
         Merge(direction: final direction, streetName: final streetName) =>
