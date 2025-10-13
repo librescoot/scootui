@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -7,6 +8,7 @@ import 'package:mbtiles/mbtiles.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 import '../repositories/tiles_repository.dart';
+import '../services/tile_preload_queue.dart';
 
 part 'mbtiles_provider.freezed.dart';
 
@@ -35,6 +37,7 @@ class AsyncMbTilesProvider implements VectorTileProvider {
   late final SendPort _sendPort;
   final Map<String, Completer<Uint8List>> _pendingRequests = {};
   final TilesRepository tilesRepository;
+  final TilePreloadQueue _preloadQueue = TilePreloadQueue();
 
   Completer<InitResult>? _initCompleter;
   MbTilesMetadata? _metadata;
@@ -55,7 +58,14 @@ class AsyncMbTilesProvider implements VectorTileProvider {
     final completer = Completer<InitResult>();
     _initCompleter = completer;
 
-    return completer.future;
+    final result = await completer.future;
+
+    // Initialize the preload queue's fetch callback after successful init
+    if (result is InitSuccess) {
+      _preloadQueue.setFetchCallback(_fetchTileFromIsolate);
+    }
+
+    return result;
   }
 
   void _handleResponse(dynamic message) {
@@ -88,6 +98,13 @@ class AsyncMbTilesProvider implements VectorTileProvider {
 
   @override
   Future<Uint8List> provide(TileIdentity tile) {
+    // Urgent request from visible map - push to front of queue
+    _preloadQueue.pushFront(tile);
+    return _fetchTileFromIsolate(tile);
+  }
+
+  /// Internal method to fetch a tile from the isolate
+  Future<Uint8List> _fetchTileFromIsolate(TileIdentity tile) {
     final requestId = '${tile.z}/${tile.x}/${tile.y}';
     final completer = Completer<Uint8List>();
     _pendingRequests[requestId] = completer;
@@ -96,10 +113,93 @@ class AsyncMbTilesProvider implements VectorTileProvider {
     return completer.future;
   }
 
+  /// Check if a tile is within the bounds of the mbtiles file
+  bool _isTileInBounds(TileIdentity tile) {
+    final bounds = _metadata?.bounds;
+    if (bounds == null) {
+      print('AsyncMbTilesProvider: No bounds metadata available, allowing all tiles');
+      return true; // If no bounds, assume all tiles are valid
+    }
+
+    // Convert tile coordinates to lat/lng center point for simple check
+    final n = 1 << tile.z;
+    final lon = ((tile.x + 0.5) / n) * 360.0 - 180.0;
+
+    // Use sinh approximation for Web Mercator: sinh(x) ≈ (e^x - e^-x) / 2
+    final y = tile.y + 0.5;
+    final latRad = math.atan(_sinh(math.pi * (1 - 2 * y / n)));
+    final lat = latRad * 180.0 / math.pi;
+
+    // Check if tile center is within map bounds (with small margin for edge tiles)
+    final margin = 0.1; // degrees
+    final inBounds = lon >= (bounds.left - margin) &&
+                     lon <= (bounds.right + margin) &&
+                     lat >= (bounds.bottom - margin) &&
+                     lat <= (bounds.top + margin);
+
+    return inBounds;
+  }
+
+  /// Hyperbolic sine approximation
+  double _sinh(double x) {
+    return (math.exp(x) - math.exp(-x)) / 2;
+  }
+
+  /// Preload tiles along a route at the specified zoom level
+  /// Automatically clamps zoom to available range and filters by bounds
+  void preloadTilesAtZoom(List<TileIdentity> tiles, int requestedZoom) {
+    if (tiles.isEmpty) return;
+
+    final bounds = _metadata?.bounds;
+    final minZoom = _metadata?.minZoom?.toInt() ?? 0;
+    final maxZoom = _metadata?.maxZoom?.toInt() ?? 20;
+
+    // Clamp requested zoom to available range
+    final actualZoom = requestedZoom.clamp(minZoom, maxZoom);
+
+    print('AsyncMbTilesProvider: Map zoom range: $minZoom-$maxZoom');
+    print('AsyncMbTilesProvider: Requested zoom $requestedZoom, using zoom $actualZoom');
+
+    // If zoom was clamped, we need to recalculate tile coordinates
+    if (actualZoom != tiles.first.z) {
+      print('AsyncMbTilesProvider: Zoom adjusted - tiles need to be recalculated at correct zoom level');
+      return; // Caller needs to recalculate with correct zoom
+    }
+
+    // Filter tiles to only those within bounds
+    final validTiles = tiles.where(_isTileInBounds).toList();
+
+    final filteredCount = tiles.length - validTiles.length;
+    if (filteredCount > 0) {
+      print('AsyncMbTilesProvider: Filtered out $filteredCount/${tiles.length} tiles outside map bounds');
+    }
+
+    if (validTiles.isEmpty) {
+      print('AsyncMbTilesProvider: WARNING - No valid tiles to preload! Route may be outside map coverage.');
+      return;
+    }
+
+    print('AsyncMbTilesProvider: Preloading ${validTiles.length} tiles at zoom $actualZoom');
+    _preloadQueue.pushBackBatch(validTiles);
+  }
+
+  /// Preload tiles along a route (pushes to back of queue)
+  /// Deprecated - use preloadTilesAtZoom instead
+  void preloadTiles(List<TileIdentity> tiles) {
+    if (tiles.isEmpty) return;
+    preloadTilesAtZoom(tiles, tiles.first.z);
+  }
+
+  /// Clear preload queue (useful when route changes)
+  void clearPreload() {
+    _preloadQueue.clearPreload();
+  }
+
   @override
   TileProviderType get type => TileProviderType.vector;
 
   void dispose() {
+    _preloadQueue.dispose();
     _sendPort.send(const _Request.dispose());
     _receivePort.close();
   }
