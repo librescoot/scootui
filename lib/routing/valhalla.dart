@@ -296,7 +296,7 @@ class ValhallaService {
           verbalAlertInstruction: verbalAlert,
           verbalInstruction: verbal,
         ),
-    // Roundabout types (26, 27) - Both handled specially in _createInstruction
+    // Roundabout types (26, 27) - Type 26 handled specially in _createInstruction
     26: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.roundabout(
           distance: distance,
           side: RoundaboutSide.right,
@@ -309,10 +309,9 @@ class ValhallaService {
           verbalAlertInstruction: verbalAlert,
           verbalInstruction: verbal,
         ),
-    27: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.roundabout(
+    27: (distance, duration, location, index, streetName, instructionText, verbalAlert, verbal) => RouteInstruction.exit(
           distance: distance,
-          side: RoundaboutSide.right,
-          exitNumber: 1, // Placeholder - overridden in _createInstruction
+          side: ExitSide.right, // Placeholder - will be determined from bearings
           duration: duration,
           location: location,
           originalShapeIndex: index,
@@ -482,8 +481,8 @@ class ValhallaService {
 
     final instructionCreator = _maneuverMap[type];
     if (instructionCreator != null) {
-      if (type == 26 || type == 27) {
-        // ManeuverType.kRoundaboutEnter (26) and kRoundaboutExit (27)
+      if (type == 26) {
+        // ManeuverType.kRoundaboutEnter - use special roundabout icon with exit number
         return RouteInstruction.roundabout(
           distance: distance,
           side: RoundaboutSide.right, // Default, Valhalla might not specify side for enter
@@ -496,6 +495,29 @@ class ValhallaService {
           postInstructionText: postInstructionText,
           bearingBefore: maneuver.bearingBefore,
           bearingAfter: maneuver.bearingAfter,
+          verbalAlertInstruction: verbalAlertInstruction,
+          verbalInstruction: verbalInstruction,
+        );
+      }
+      if (type == 27) {
+        // ManeuverType.kRoundaboutExit - use simple exit icon
+        // Determine exit side from bearing change if available
+        ExitSide exitSide = ExitSide.right; // Default
+        if (maneuver.bearingBefore != null && maneuver.bearingAfter != null) {
+          final bearingChange = maneuver.bearingAfter! - maneuver.bearingBefore!;
+          // Normalize to -180 to 180
+          final normalized = (bearingChange + 180) % 360 - 180;
+          exitSide = normalized < 0 ? ExitSide.left : ExitSide.right;
+        }
+        return RouteInstruction.exit(
+          distance: distance,
+          side: exitSide,
+          duration: duration,
+          location: location,
+          originalShapeIndex: maneuver.beginShapeIndex,
+          streetName: streetName,
+          instructionText: instructionText,
+          postInstructionText: postInstructionText,
           verbalAlertInstruction: verbalAlertInstruction,
           verbalInstruction: verbalInstruction,
         );

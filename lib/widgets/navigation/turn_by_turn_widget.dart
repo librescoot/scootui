@@ -307,7 +307,16 @@ class TurnByTurnWidget extends StatelessWidget {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
-    final nextInstruction = instructions.length > 1 ? instructions[1] : null;
+    // Find next instruction that's not an exit (roundabout exits are confusing in preview)
+    RouteInstruction? nextInstruction;
+    if (instructions.length > 1) {
+      try {
+        nextInstruction = instructions.skip(1).firstWhere((inst) => inst is! Exit);
+      } catch (e) {
+        // All remaining instructions are exits, don't show preview
+        nextInstruction = null;
+      }
+    }
 
     return SizedBox(
       width: double.infinity,
