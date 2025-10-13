@@ -236,8 +236,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       }
     }
 
-    // If we're not actively navigating or have no route, do nothing further.
-    if (!currentState.isNavigating || currentState.route == null) {
+    // If we're not actively navigating (or arrived) and have no route, do nothing further.
+    // We need to process GPS updates when arrived so we can detect leaving the arrival zone.
+    if ((currentState.status != NavigationStatus.navigating &&
+         currentState.status != NavigationStatus.arrived) ||
+        currentState.route == null) {
       return;
     }
 
