@@ -74,6 +74,12 @@ enum ExitSide {
   right,
 }
 
+enum MergeDirection {
+  straight,
+  left,
+  right,
+}
+
 enum RoundaboutSide {
   left,
   right,
@@ -86,53 +92,81 @@ sealed class RouteInstruction with _$RouteInstruction {
   const factory RouteInstruction.keep({
     required double distance,
     required KeepDirection direction,
-    // required Duration duration,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Keep;
 
   const factory RouteInstruction.turn({
     required double distance,
     required TurnDirection direction,
-    // required Duration duration,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Turn;
 
   const factory RouteInstruction.exit({
     required double distance,
     required ExitSide side,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Exit;
+
+  const factory RouteInstruction.merge({
+    required double distance,
+    required MergeDirection direction,
+    @Default(Duration.zero) Duration duration,
+    required LatLng location,
+    required int originalShapeIndex,
+    String? streetName,
+    String? instructionText,
+    String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
+  }) = Merge;
 
   const factory RouteInstruction.roundabout({
     required double distance,
     required RoundaboutSide side,
     required int exitNumber,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    double? bearingBefore,
+    double? bearingAfter,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Roundabout;
 
   const factory RouteInstruction.other({
     required double distance,
+    @Default(Duration.zero) Duration duration,
     required LatLng location,
     required int originalShapeIndex,
     String? streetName,
     String? instructionText,
     String? postInstructionText,
+    String? verbalAlertInstruction,
+    String? verbalInstruction,
   }) = Other;
 
   factory RouteInstruction.fromHint(List<int> hint, List<LatLng> polyline) {
@@ -172,6 +206,7 @@ sealed class RouteInstruction with _$RouteInstruction {
             VoiceHint.uTurn => TurnDirection.uTurn,
             _ => throw UnimplementedError(),
           },
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
@@ -183,6 +218,7 @@ sealed class RouteInstruction with _$RouteInstruction {
             VoiceHint.keepRight => KeepDirection.right,
             _ => throw UnimplementedError(),
           },
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
@@ -194,11 +230,13 @@ sealed class RouteInstruction with _$RouteInstruction {
             _ => throw UnimplementedError(),
           },
           exitNumber: exitNumber,
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
       VoiceHint.beelineRouting || VoiceHint.offRoute => RouteInstruction.other(
           distance: distanceToNext.toDouble(),
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         ),
@@ -209,6 +247,7 @@ sealed class RouteInstruction with _$RouteInstruction {
             VoiceHint.exitRight => ExitSide.right,
             _ => throw UnimplementedError(),
           },
+          duration: Duration.zero,
           location: location,
           originalShapeIndex: indexInTrack,
         )

@@ -44,7 +44,7 @@
 			"source": "versatiles-shortbread",
 			"source-layer": "water_polygons",
 			"paint": {
-				"fill-color": "#beddf3"
+				"fill-color": "hsl(205,50%,75%)"
 			}
 		},
 		{
@@ -57,30 +57,268 @@
 			}
 		},
 		{
-			"id": "streets",
+			"id": "landuse-residential",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "residential", "garages"],
+			"paint": {
+				"fill-color": "hsl(0,0%,88%)",
+				"fill-opacity": 0.5
+			},
+			"minzoom": 11
+		},
+		{
+			"id": "landuse-commercial",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "commercial", "retail"],
+			"paint": {
+				"fill-color": "hsl(330,25%,92%)",
+				"fill-opacity": 0.5
+			},
+			"minzoom": 11
+		},
+		{
+			"id": "landuse-industrial",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "industrial", "quarry", "railway"],
+			"paint": {
+				"fill-color": "hsl(48,30%,88%)",
+				"fill-opacity": 0.5
+			},
+			"minzoom": 11
+		},
+		{
+			"id": "landuse-agriculture",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "farmland", "farmyard", "orchard", "vineyard", "greenhouse_horticulture", "plant_nursery"],
+			"paint": {
+				"fill-color": "hsl(40,30%,90%)"
+			},
+			"minzoom": 10
+		},
+		{
+			"id": "landuse-cemetery",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "cemetery", "grave_yard"],
+			"paint": {
+				"fill-color": "hsl(100,20%,87%)"
+			},
+			"minzoom": 13
+		},
+		{
+			"id": "landuse-beach",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "beach", "sand"],
+			"paint": {
+				"fill-color": "hsl(45,40%,92%)"
+			},
+			"minzoom": 10
+		},
+		{
+			"id": "landuse-rock",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "bare_rock", "scree", "shingle"],
+			"paint": {
+				"fill-color": "hsl(0,0%,85%)"
+			},
+			"minzoom": 12
+		},
+		{
+			"id": "landuse-wetland",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "bog", "marsh", "swamp"],
+			"paint": {
+				"fill-color": "hsl(190,30%,85%)"
+			},
+			"minzoom": 10
+		},
+		{
+			"id": "landuse-forest",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["==", "kind", "forest"],
+			"paint": {
+				"fill-color": "hsl(110,40%,70%)"
+			},
+			"minzoom": 7
+		},
+		{
+			"id": "landuse-scrub",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "scrub", "heath"],
+			"paint": {
+				"fill-color": "hsl(90,30%,78%)"
+			},
+			"minzoom": 11
+		},
+		{
+			"id": "landuse-grass",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "grass", "grassland", "meadow"],
+			"paint": {
+				"fill-color": "hsl(95,35%,82%)"
+			},
+			"minzoom": 11
+		},
+		{
+			"id": "landuse-park",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "park", "village_green", "recreation_ground", "playground", "golf_course"],
+			"paint": {
+				"fill-color": "hsl(100,35%,80%)"
+			},
+			"minzoom": 11
+		},
+		{
+			"id": "landuse-garden",
+			"type": "fill",
+			"source": "versatiles-shortbread",
+			"source-layer": "land",
+			"filter": ["in", "kind", "allotments", "garden"],
+			"paint": {
+				"fill-color": "hsl(95,30%,78%)"
+			},
+			"minzoom": 12
+		},
+		{
+			"id": "railways",
 			"type": "line",
 			"source": "versatiles-shortbread",
 			"source-layer": "streets",
+			"filter": ["==", "kind", "rail"],
+			"paint": {
+				"line-color": "#999999",
+				"line-width": 1,
+				"line-dasharray": [3, 3]
+			},
+			"minzoom": 13
+		},
+		{
+			"id": "local-roads-casing",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "streets",
+			"filter": ["in", "kind", "tertiary", "unclassified", "residential", "living_street"],
+			"paint": {
+				"line-color": "#d0d0d0",
+				"line-width": {
+					"stops": [
+						[12, 3],
+						[14, 5],
+						[16, 8],
+						[18, 12]
+					]
+				}
+			}
+		},
+		{
+			"id": "local-roads",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "streets",
+			"filter": ["in", "kind", "tertiary", "unclassified", "residential", "living_street"],
 			"paint": {
 				"line-color": "#ffffff",
 				"line-width": {
 					"stops": [
-						[
-							12,
-							2
-						],
-						[
-							14,
-							4
-						],
-						[
-							16,
-							6
-						],
-						[
-							18,
-							12
-						]
+						[12, 1.5],
+						[14, 3],
+						[16, 5.5],
+						[18, 9]
+					]
+				}
+			}
+		},
+		{
+			"id": "main-roads-casing",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "streets",
+			"filter": ["in", "kind", "primary", "secondary"],
+			"paint": {
+				"line-color": "#bbb",
+				"line-width": {
+					"stops": [
+						[12, 5],
+						[14, 8],
+						[16, 13],
+						[18, 20]
+					]
+				}
+			}
+		},
+		{
+			"id": "main-roads",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "streets",
+			"filter": ["in", "kind", "primary", "secondary"],
+			"paint": {
+				"line-color": "#fafafa",
+				"line-width": {
+					"stops": [
+						[12, 3],
+						[14, 5.5],
+						[16, 9.5],
+						[18, 16]
+					]
+				}
+			}
+		},
+		{
+			"id": "major-roads-casing",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "streets",
+			"filter": ["in", "kind", "motorway", "trunk"],
+			"paint": {
+				"line-color": "#aaa",
+				"line-width": {
+					"stops": [
+						[12, 6],
+						[14, 10],
+						[16, 16],
+						[18, 24]
+					]
+				}
+			}
+		},
+		{
+			"id": "major-roads",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "streets",
+			"filter": ["in", "kind", "motorway", "trunk"],
+			"paint": {
+				"line-color": "#f5f5f5",
+				"line-width": {
+					"stops": [
+						[12, 4],
+						[14, 7],
+						[16, 12],
+						[18, 19]
 					]
 				}
 			}

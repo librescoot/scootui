@@ -1,9 +1,6 @@
 <svg width="144" height="144" viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_400_400)">
-        <mask id="mask0_400_400" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="144" height="144">
-            <rect width="144" height="144" fill="#D9D9D9"/>
-        </mask>
-        <g mask="url(#mask0_400_400)">
+        <g>
             <path d="M33.6 123H110.1L71.85 84.75L33.6 123ZM126.75 139.65L119.1 132H12L65.55 78.45L16.35 29.25L22.8 22.8L133.2 133.2L126.75 139.65ZM132 119.1L123 110.1V33.6L84.75 71.85L78.45 65.55L132 12V119.1Z" fill="white"/>
         </g>
     </g>

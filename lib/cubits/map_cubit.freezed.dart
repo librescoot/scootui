@@ -306,6 +306,7 @@ class MapOffline implements MapState {
       required this.tiles,
       required this.theme,
       required this.themeMode,
+      required this.renderMode,
       this.onReady,
       this.isReady = false});
 
@@ -318,6 +319,7 @@ class MapOffline implements MapState {
   final VectorTileProvider tiles;
   final Theme theme;
   final String themeMode;
+  final String renderMode;
   final void Function(TickerProvider)? onReady;
   @JsonKey()
   final bool isReady;
@@ -345,17 +347,19 @@ class MapOffline implements MapState {
             (identical(other.theme, theme) || other.theme == theme) &&
             (identical(other.themeMode, themeMode) ||
                 other.themeMode == themeMode) &&
+            (identical(other.renderMode, renderMode) ||
+                other.renderMode == renderMode) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
             (identical(other.isReady, isReady) || other.isReady == isReady));
   }
 
   @override
   int get hashCode => Object.hash(runtimeType, controller, position,
-      orientation, tiles, theme, themeMode, onReady, isReady);
+      orientation, tiles, theme, themeMode, renderMode, onReady, isReady);
 
   @override
   String toString() {
-    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, tiles: $tiles, theme: $theme, themeMode: $themeMode, onReady: $onReady, isReady: $isReady)';
+    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, tiles: $tiles, theme: $theme, themeMode: $themeMode, renderMode: $renderMode, onReady: $onReady, isReady: $isReady)';
   }
 }
 
@@ -374,6 +378,7 @@ abstract mixin class $MapOfflineCopyWith<$Res>
       VectorTileProvider tiles,
       Theme theme,
       String themeMode,
+      String renderMode,
       void Function(TickerProvider)? onReady,
       bool isReady});
 }
@@ -396,6 +401,7 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
     Object? tiles = null,
     Object? theme = null,
     Object? themeMode = null,
+    Object? renderMode = null,
     Object? onReady = freezed,
     Object? isReady = null,
   }) {
@@ -423,6 +429,10 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
       themeMode: null == themeMode
           ? _self.themeMode
           : themeMode // ignore: cast_nullable_to_non_nullable
+              as String,
+      renderMode: null == renderMode
+          ? _self.renderMode
+          : renderMode // ignore: cast_nullable_to_non_nullable
               as String,
       onReady: freezed == onReady
           ? _self.onReady

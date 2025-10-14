@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "requests",
+#     "polyline",
+# ]
+# ///
 
 import math
 import random
@@ -35,7 +42,7 @@ def get_redis_value(hash_name, field, default=None):
 
 def get_route(start, end):
     """Get a route from Valhalla"""
-    valhalla_url = "https://valhalla1.openstreetmap.de//route"
+    valhalla_url = "https://valhalla1.openstreetmap.de/route"
 
     request_data = {
         "locations": [
@@ -73,6 +80,110 @@ def haversine(lat1, lon1, lat2, lon2):
     return R * c
 
 
+def calculate_bearing(lat1, lon1, lat2, lon2):
+    """Calculate bearing from point 1 to point 2 in degrees."""
+    lat1_rad = math.radians(lat1)
+    lat2_rad = math.radians(lat2)
+    dLon = math.radians(lon2 - lon1)
+
+    y = math.sin(dLon) * math.cos(lat2_rad)
+    x = math.cos(lat1_rad) * math.sin(lat2_rad) - \
+        math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dLon)
+
+    bearing = math.degrees(math.atan2(y, x))
+    return (bearing + 360) % 360
+
+
+def calculate_turn_angle(bearing1, bearing2):
+    """Calculate the turn angle between two bearings (absolute value)."""
+    diff = abs(bearing2 - bearing1)
+    if diff > 180:
+        diff = 360 - diff
+    return diff
+
+
+def get_target_speed_for_upcoming_turns(current_pos, waypoints, waypoint_index, max_speed, look_ahead_distance=50):
+    """Calculate appropriate speed based on upcoming turns within look_ahead_distance meters.
+
+    Returns: (target_speed, max_turn_angle, turn_description)
+    """
+    if waypoint_index >= len(waypoints) - 2:
+        return max_speed, 0, "straight"
+
+    # Look ahead through waypoints
+    accumulated_distance = 0
+    prev_bearing = None
+    max_turn_angle = 0
+
+    for i in range(waypoint_index, min(waypoint_index + 10, len(waypoints) - 1)):
+        wp1 = waypoints[i]
+        wp2 = waypoints[i + 1]
+
+        segment_distance = haversine(wp1[0], wp1[1], wp2[0], wp2[1])
+
+        # Calculate bearing for this segment
+        bearing = calculate_bearing(wp1[0], wp1[1], wp2[0], wp2[1])
+
+        # If we have a previous bearing, calculate turn angle
+        if prev_bearing is not None:
+            turn_angle = calculate_turn_angle(prev_bearing, bearing)
+            max_turn_angle = max(max_turn_angle, turn_angle)
+
+        prev_bearing = bearing
+        accumulated_distance += segment_distance
+
+        if accumulated_distance > look_ahead_distance:
+            break
+
+    # Adjust speed based on sharpest turn ahead (more conservative for city riding)
+    if max_turn_angle < 15:  # Gentle turn or straight
+        return max_speed, max_turn_angle, "straight"
+    elif max_turn_angle < 30:  # Moderate turn
+        return max_speed * 0.65, max_turn_angle, "gentle turn"  # ~37 km/h
+    elif max_turn_angle < 60:  # Sharp turn
+        return max_speed * 0.45, max_turn_angle, "sharp turn"  # ~26 km/h
+    elif max_turn_angle < 90:  # Very sharp turn
+        return max_speed * 0.35, max_turn_angle, "very sharp"  # ~20 km/h
+    else:  # Hairpin (90+ degrees)
+        return max_speed * 0.25, max_turn_angle, "hairpin"  # ~14 km/h
+
+
+class TrafficEvent:
+    """Represents a traffic event that affects speed."""
+    def __init__(self, event_type, duration, speed_limit):
+        self.type = event_type  # 'stop', 'slow', 'traffic_light'
+        self.duration = duration  # How many updates this event lasts
+        self.speed_limit = speed_limit  # Max speed during this event
+        self.remaining = duration
+
+
+def generate_traffic_event(at_intersection=False):
+    """Randomly generate a traffic event.
+
+    Args:
+        at_intersection: True if approaching a turn, increases chance of traffic light
+    """
+    rand = random.random()
+
+    # Low chance of stops at intersections (traffic lights)
+    stop_chance = 0.03 if at_intersection else 0.005
+
+    if rand < stop_chance:  # Full stop (traffic light, stop sign, pedestrian)
+        duration = random.randint(4, 12)  # 2-6 seconds at 2Hz
+        event_type = 'traffic_light' if at_intersection else 'stop'
+        return TrafficEvent(event_type, duration, 0)
+    elif rand < 0.05:  # 4.5% chance: Slow traffic (congestion, yielding)
+        duration = random.randint(6, 16)  # 3-8 seconds
+        speed_limit = random.uniform(20, 35)  # 20-35 km/h
+        return TrafficEvent('slow', duration, speed_limit)
+    elif rand < 0.10:  # 5% chance: Moderate slowdown (following another vehicle)
+        duration = random.randint(8, 24)  # 4-12 seconds
+        speed_limit = random.uniform(35, 48)  # 35-48 km/h
+        return TrafficEvent('following', duration, speed_limit)
+
+    return None
+
+
 def main():
     # Simulation timing - easily adjustable
     updates_per_second = 2.0  # Change this to adjust update frequency
@@ -89,8 +200,8 @@ def main():
 
     course = 0
     max_speed = 57                   # Maximum speed in km/h
-    # Maximum speed change per second (km/h) - more realistic acceleration
-    max_speed_delta = 8
+    max_acceleration = 11.5          # Maximum acceleration (km/h per second) - 0 to 57 km/h in ~5s
+    max_deceleration = 30            # Maximum deceleration (km/h per second) - can stop from 57 km/h in ~1.9s
     earth_radius = 6371.0            # Earth radius in km
     target_speed = max_speed * 0.7   # Initial target speed
 
@@ -113,6 +224,9 @@ def main():
 
     route_waypoints = []
     waypoint_index = 0
+
+    # Traffic simulation state
+    current_traffic_event = None
 
     try:
         # Main loop
@@ -146,17 +260,42 @@ def main():
             # Store previous speed for calculating delta
             prev_speed = current_speed
 
-            # Update target speed more gradually and independently
-            if random.random() < 0.4:
-                target_speed_change = random.uniform(-4, 5)
-                new_target = target_speed + target_speed_change
-                target_speed = max(30, min(max_speed, new_target))
+            # Calculate target speed based on upcoming turns
+            turn_based_target, turn_angle, turn_desc = get_target_speed_for_upcoming_turns(
+                (lat, lon), route_waypoints, waypoint_index, max_speed, look_ahead_distance=50
+            )
 
-            # Limit speed change to max_speed_delta per second
-            if target_speed > prev_speed:
-                current_speed = min(target_speed, prev_speed + max_speed_delta)
+            # Detect if we're approaching an intersection (turn > 30 degrees)
+            at_intersection = turn_angle > 30
+
+            # Update or generate traffic events
+            if current_traffic_event is not None:
+                current_traffic_event.remaining -= 1
+                if current_traffic_event.remaining <= 0:
+                    current_traffic_event = None
             else:
-                current_speed = max(target_speed, prev_speed - max_speed_delta)
+                # No active event, maybe generate a new one
+                current_traffic_event = generate_traffic_event(at_intersection=at_intersection)
+
+            # Apply traffic limitations
+            traffic_desc = "clear"
+            if current_traffic_event is not None:
+                turn_based_target = min(turn_based_target, current_traffic_event.speed_limit)
+                traffic_desc = current_traffic_event.type
+
+            # Add some random variation (±3 km/h) to make it more realistic
+            speed_variation = random.uniform(-3, 3)
+            target_speed = max(0, min(max_speed, turn_based_target + speed_variation))
+
+            # Apply acceleration or deceleration limits, scaled by update interval
+            if target_speed > prev_speed:
+                # Accelerating - use slower acceleration rate
+                speed_delta_per_update = max_acceleration * update_interval
+                current_speed = min(target_speed, prev_speed + speed_delta_per_update)
+            else:
+                # Decelerating - use faster deceleration rate (strong braking)
+                speed_delta_per_update = max_deceleration * update_interval
+                current_speed = max(target_speed, prev_speed - speed_delta_per_update)
 
             # Calculate distance traveled in this update interval (km)
             distance_km = (current_speed / 3600) * update_interval
@@ -214,8 +353,9 @@ def main():
 
             redis_commands = [
                 f"HSET gps latitude {lat_formatted}",
+                f"PUBLISH gps latitude",
                 f"HSET gps longitude {lon_formatted}",
-                f"PUBLISH gps location-updated",
+                f"PUBLISH gps longitude",
                 f"HSET gps course {course}",
                 f"PUBLISH gps course",
                 f"HSET engine-ecu speed {engine_speed}",
@@ -228,7 +368,10 @@ def main():
                 f"GPS: lat={lat_formatted}, lon={lon_formatted}, course={course:.1f}°")
             print(
                 f"Engine: speed={engine_speed}km/h (target: {int(round(target_speed))}km/h)")
+            print(f"Road: {turn_desc} ahead (turn angle: {turn_angle:.1f}°)")
+            print(f"Traffic: {traffic_desc}")
             print(f"Odometer: {int(rounded_odometer)}m")
+            print()
 
             time.sleep(update_interval)
 

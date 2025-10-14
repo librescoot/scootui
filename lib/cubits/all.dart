@@ -37,9 +37,10 @@ final List<SingleChildWidget> allCubits = [
             vehicleStream: context.read<VehicleSync>().stream,
           )),
   BlocProvider(create: SpeedLimitSync.create),
+  BlocProvider(create: SettingsSync.create),
   BlocProvider(create: SystemCubit.create),
   BlocProvider(create: TripCubit.create),
-  BlocProvider(create: ShutdownCubit.create), // Moved up
+  BlocProvider(create: ShutdownCubit.create),
   BlocProvider(create: MapCubit.create),
   BlocProvider(create: OtaSync.create),
   BlocProvider(create: OtaCubit.create),
@@ -51,5 +52,4 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ShortcutMenuCubit.create),
   BlocProvider(create: VersionOverlayCubit.create),
   BlocProvider(create: DashboardSyncCubit.create),
-  BlocProvider(create: SettingsSync.create),
 ];

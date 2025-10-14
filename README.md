@@ -54,6 +54,26 @@ ScootUI includes a simulator mode for development and testing without physical s
 - **state/** - Vehicle state data models
 - **widgets/** - Reusable UI components
 
+## ⚙️ Configuration
+
+ScootUI uses Redis for dynamic configuration. Settings are stored in the `settings` hash and can be modified at runtime.
+
+### Map Settings
+
+| Key | Values | Default | Description |
+|-----|--------|---------|-------------|
+| `dashboard.map.type` | `online`, `offline` | `offline` | Map source: online uses CartoDB tiles, offline uses MBTiles |
+| `dashboard.map.render-mode` | `vector`, `raster` | `raster` | Rendering mode for offline maps |
+
+**Example:**
+```bash
+# Switch to online maps
+redis-cli hset settings dashboard.map.type online
+
+# Use vector rendering for offline maps
+redis-cli hset settings dashboard.map.render-mode vector
+```
+
 ## 📱 Screens
 
 - **Cluster Screen** - Main dashboard with speedometer and vehicle status

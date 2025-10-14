@@ -55,7 +55,8 @@ def main():
     # Direction bias - tends to continue in similar direction
     direction_bias = 0
     max_speed = 57                   # Maximum speed in km/h
-    max_speed_delta = 8              # Maximum speed change per second (km/h) - more realistic acceleration
+    max_acceleration = 11.5          # Maximum acceleration (km/h per second) - 0 to 57 km/h in ~5s
+    max_deceleration = 30            # Maximum deceleration (km/h per second) - can stop from 57 km/h in ~1.9s
     earth_radius = 6371.0            # Earth radius in km
     target_speed = max_speed * 0.7   # Initial target speed
 
@@ -110,13 +111,15 @@ def main():
                 turn_speed_reduction = min(5, abs(course_change))
                 target_speed = max(target_speed - turn_speed_reduction, 20)
 
-            # Limit speed change to max_speed_delta per second
+            # Apply acceleration or deceleration limits, scaled by update interval
             if target_speed > prev_speed:
-                # Accelerating
-                current_speed = min(target_speed, prev_speed + max_speed_delta)
+                # Accelerating - use slower acceleration rate
+                speed_delta_per_update = max_acceleration * update_interval
+                current_speed = min(target_speed, prev_speed + speed_delta_per_update)
             else:
-                # Decelerating
-                current_speed = max(target_speed, prev_speed - max_speed_delta)
+                # Decelerating - use faster deceleration rate (strong braking)
+                speed_delta_per_update = max_deceleration * update_interval
+                current_speed = max(target_speed, prev_speed - speed_delta_per_update)
 
             # Calculate actual speed delta (change in speed)
             speed_delta = current_speed - prev_speed
@@ -124,13 +127,13 @@ def main():
             # Calculate engine power based on speed delta
             if speed_delta < 0:  # Slowing down
                 # Map from [min_delta..0] to [-10..0]
-                # Using max_speed_delta as the reference for mapping
-                power = (speed_delta / max_speed_delta) * 10.0
+                # Using max_deceleration as the reference for mapping
+                power = (speed_delta / (max_deceleration * update_interval)) * 10.0
                 power = max(-10.0, min(0.0, power))
             else:  # Speeding up or maintaining speed
                 # Map from [0..max_delta] to [0..70]
-                # Using max_speed_delta as the reference for mapping
-                power = (speed_delta / max_speed_delta) * 70.0
+                # Using max_acceleration as the reference for mapping
+                power = (speed_delta / (max_acceleration * update_interval)) * 70.0
                 power = max(0.0, min(70.0, power))
 
             # Calculate motor voltage based on power, speed, and battery state
@@ -207,7 +210,9 @@ def main():
             
             redis_commands = [
                 f"HSET gps latitude {lat_formatted}",
+                f"PUBLISH gps latitude",
                 f"HSET gps longitude {lon_formatted}",
+                f"PUBLISH gps longitude",
                 f"HSET gps course {course}",
                 f"PUBLISH gps course",
                 f"HSET engine-ecu speed {engine_speed}",

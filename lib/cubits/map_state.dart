@@ -23,6 +23,7 @@ sealed class MapState with _$MapState {
     required VectorTileProvider tiles,
     required Theme theme,
     required String themeMode,
+    required String renderMode,
     void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,
   }) = MapOffline;

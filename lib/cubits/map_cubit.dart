@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -16,7 +15,11 @@ import 'package:vector_tile_renderer/vector_tile_renderer.dart';
 import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/tiles_repository.dart';
+import '../routing/models.dart';
+import '../state/enums.dart';
 import '../state/gps.dart';
+import '../state/settings.dart';
+import '../utils/map_transform_animator.dart';
 import 'mdb_cubits.dart';
 import 'navigation_cubit.dart';
 import 'navigation_state.dart';
@@ -33,37 +36,46 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<GpsData> _gpsSub;
   late final StreamSubscription<ThemeState> _themeSub;
   late final StreamSubscription<ShutdownState> _shutdownSub;
-  late final StreamSubscription<NavigationState> _navigationStateSub; // Added
+  late final StreamSubscription<NavigationState> _navigationStateSub;
+  late final StreamSubscription<SettingsData> _settingsSub;
   final TilesRepository _tilesRepository;
 
   // Dynamic zoom constants based on navigation context
-  static const double _zoomLongStraight = 15.5; // Long straight sections (>2km)
-  static const double _zoomDefault = 17.0; // Default navigation zoom
-  static const double _zoomApproachingTurn = 18.0; // Approaching turn (<500m)
-  static const double _zoomComplexTurn = 19.0; // Complex intersections/roundabouts
-  static const Offset _mapCenterOffset = Offset(0, 120); // Restored original offset Y value
+  static const double _zoomLongStraight = 15.0; // Long straight sections (~1000m look-ahead)
+  static const double _zoomDefault = 16.0; // Default navigation zoom (~500m look-ahead)
+  static const double _zoomMax = 17.5; // Maximum zoom for complex turns (~150m look-ahead)
 
-  AnimatedMapController? _animatedController;
+  // Vehicle positioning - public so VehicleIndicator can use the same value
+  static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
+
+  MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
-  Timer? _updateTimer; // For throttling GPS updates
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
+  SettingsData? _currentSettings; // Store current settings for map type and render mode
+  ThemeState? _currentTheme; // Store current theme state
 
-  static MapCubit create(BuildContext context) => MapCubit(
-        gpsStream: context.read<GpsSync>().stream,
-        themeUpdates: context.read<ThemeCubit>().stream,
-        shutdownStream: context.read<ShutdownCubit>().stream,
-        navigationStateStream: context.read<NavigationCubit>().stream, // Added
-        tilesRepository: context.read<TilesRepository>(),
-        mdbRepository: RepositoryProvider.of<MDBRepository>(context),
-      )
-        .._onGpsData(context.read<GpsSync>().state)
-        .._loadMap(context.read<ThemeCubit>().state);
+  static MapCubit create(BuildContext context) {
+    final cubit = MapCubit(
+      gpsStream: context.read<GpsSync>().stream,
+      themeUpdates: context.read<ThemeCubit>().stream,
+      shutdownStream: context.read<ShutdownCubit>().stream,
+      navigationStateStream: context.read<NavigationCubit>().stream,
+      settingsStream: context.read<SettingsSync>().stream,
+      tilesRepository: context.read<TilesRepository>(),
+      mdbRepository: RepositoryProvider.of<MDBRepository>(context),
+    );
+    cubit._currentTheme = context.read<ThemeCubit>().state;
+    cubit._onGpsData(context.read<GpsSync>().state);
+    cubit._loadMap(context.read<ThemeCubit>().state, context.read<SettingsSync>().state);
+    return cubit;
+  }
 
   MapCubit({
     required Stream<GpsData> gpsStream,
     required Stream<ThemeState> themeUpdates,
     required Stream<ShutdownState> shutdownStream,
-    required Stream<NavigationState> navigationStateStream, // Added
+    required Stream<NavigationState> navigationStateStream,
+    required Stream<SettingsData> settingsStream,
     required TilesRepository tilesRepository,
     required MDBRepository mdbRepository,
   })  : _tilesRepository = tilesRepository,
@@ -71,32 +83,30 @@ class MapCubit extends Cubit<MapState> {
     _gpsSub = gpsStream.listen(_onGpsData);
     _themeSub = themeUpdates.listen(_onThemeUpdate);
     _shutdownSub = shutdownStream.listen(_onShutdownStateChange);
-    _navigationStateSub = navigationStateStream.listen(_onNavigationStateChanged); // Added
+    _navigationStateSub = navigationStateStream.listen(_onNavigationStateChanged);
+    _settingsSub = settingsStream.listen(_onSettingsChanged);
   }
 
   @override
   Future<void> close() {
     final current = state;
-    
-    // Cancel timer first to prevent any pending updates
-    _updateTimer?.cancel();
-    
-    // Stop any ongoing animations and dispose AnimatedMapController
+
+    // Stop any ongoing animations and dispose MapTransformAnimator
     try {
-      _animatedController?.stopAnimations();
-      _animatedController?.dispose();
-      _animatedController = null;
+      _transformAnimator?.stopAnimations();
+      _transformAnimator?.dispose();
+      _transformAnimator = null;
     } catch (e) {
-      print("MapCubit: Error disposing AnimatedMapController: $e");
+      print("MapCubit: Error disposing MapTransformAnimator: $e");
     }
-    
+
     // Then dispose the base map controller
     try {
       current.controller.dispose();
     } catch (e) {
       print("MapCubit: Error disposing MapController: $e");
     }
-    
+
     switch (current) {
       case MapOffline():
         final tiles = current.tiles;
@@ -110,22 +120,34 @@ class MapCubit extends Cubit<MapState> {
         break;
       default:
     }
-    
+
     // Cancel all streams
     _themeSub.cancel();
     _gpsSub.cancel();
     _shutdownSub.cancel();
     _navigationStateSub.cancel();
-    
+    _settingsSub.cancel();
+
     return super.close();
   }
 
   /// Stops any ongoing map animations - called when map view is being disposed
   void stopAnimations() {
     try {
-      _animatedController?.stopAnimations();
+      _transformAnimator?.stopAnimations();
     } catch (e) {
       print("MapCubit: Error stopping animations: $e");
+    }
+  }
+
+  /// Disposes the current animator - called when map view is being disposed
+  void disposeAnimator() {
+    try {
+      _transformAnimator?.stopAnimations();
+      _transformAnimator?.dispose();
+      _transformAnimator = null;
+    } catch (e) {
+      print("MapCubit: Error disposing animator: $e");
     }
   }
 
@@ -151,20 +173,42 @@ class MapCubit extends Cubit<MapState> {
     }
   }
 
+  void _onSettingsChanged(SettingsData settings) {
+    final previous = _currentSettings;
+    _currentSettings = settings;
+
+    // Reload map if map type or render mode changed
+    if (previous != null &&
+        _currentTheme != null &&
+        (previous.mapType != settings.mapType || previous.mapRenderMode != settings.mapRenderMode)) {
+      // Dispose old animator before reloading to clean up active tickers
+      _transformAnimator?.stopAnimations();
+      _transformAnimator?.dispose();
+      _transformAnimator = null;
+      _loadMap(_currentTheme!, settings);
+    }
+  }
+
   void _moveAndRotate(LatLng center, double course, {Duration? duration}) {
     if (_mapLocked) {
       print("MapCubit: Map is locked, skipping _moveAndRotate.");
       return;
     }
-    final ctrl = _animatedController;
-    if (ctrl == null || isClosed) {
-      if (isClosed) {
-        print("MapCubit: Cubit is closed, skipping _moveAndRotate.");
-      } else {
-        print("MapCubit: AnimatedMapController is null in _moveAndRotate. Map not ready or not initialized yet.");
-      }
+
+    // Check if map is ready before trying to animate
+    final currentState = state;
+    final isReady = switch (currentState) {
+      MapOffline(:final isReady) => isReady,
+      MapOnline(:final isReady) => isReady,
+      _ => false,
+    };
+
+    if (!isReady || _transformAnimator == null || isClosed) {
+      // Map not ready yet, silently skip (this is normal during initialization)
       return;
     }
+
+    final animator = _transformAnimator!;
 
     final navState = _currentNavigationState;
     final isOffRoute = navState?.isOffRoute ?? false;
@@ -174,16 +218,19 @@ class MapCubit extends Cubit<MapState> {
 
     // When off-route, use north-up orientation and center the vehicle
     double rotation = isOffRoute ? 0.0 : -course;
-    Offset offset = isOffRoute ? Offset.zero : _mapCenterOffset;
+    Offset offset = isOffRoute ? Offset.zero : mapCenterOffset;
 
-    // Use animated controller for smooth transitions
+    // Create target transformation and animate to it atomically
+    final targetTransform = MapTransform(
+      center: center,
+      zoom: zoom,
+      rotation: rotation,
+      offset: offset,
+    );
+
+    // Use animator for smooth transitions with all parameters synchronized
     try {
-      ctrl.animateTo(
-        dest: center,
-        zoom: zoom,
-        rotation: rotation,
-        offset: offset,
-      );
+      animator.animateTo(targetTransform);
     } catch (e) {
       // Widget disposed during animation, ignore the error
       print("MapCubit: Animation error (likely disposed): $e");
@@ -205,7 +252,40 @@ class MapCubit extends Cubit<MapState> {
     final distanceToTurn = nextInstruction.distance; // in meters
 
     if (distanceToTurn <= 1) {
-      return _zoomComplexTurn; // Very close, zoom in fully
+      return _zoomMax;
+    }
+
+    // Don't start zooming in until we're within 300m of the maneuver
+    // This prevents premature zoom-in during long straights
+    if (distanceToTurn > 300) {
+      return _zoomDefault;
+    }
+
+    // Look ahead up to 2 more turns (max 3 total) within 150m from current position
+    double targetDistance = distanceToTurn;
+    int significantTurnsFound = 0;
+
+    for (int i = 1; i < navState.upcomingInstructions.length && significantTurnsFound < 2; i++) {
+      final instruction = navState.upcomingInstructions[i];
+
+      // Stop if we've gone beyond 150m from current position
+      if (instruction.distance > 150) break;
+
+      // Check if this is a significant maneuver
+      final isSignificantTurn = switch (instruction) {
+        Turn(:final direction) => direction != TurnDirection.slightLeft && direction != TurnDirection.slightRight,
+        Exit() => true,
+        Roundabout() => true,
+        Merge() => false, // Merges are like "keep" instructions
+        Keep() => false,
+        Other() => false,
+      };
+
+      if (isSignificantTurn) {
+        // Zoom out to show this turn too
+        targetDistance = instruction.distance;
+        significantTurnsFound++;
+      }
     }
 
     const screenHeight = 480.0;
@@ -220,8 +300,8 @@ class MapCubit extends Cubit<MapState> {
     // This means we have more "look-ahead" distance.
     final lookAheadHeight = visibleMapHeight * vehicleVerticalOffset;
 
-    // We want to fit the distanceToTurn within this lookAheadHeight.
-    final targetVisibleMeters = distanceToTurn;
+    // We want to fit the targetDistance within this lookAheadHeight.
+    final targetVisibleMeters = targetDistance;
 
     // This formula is a heuristic to convert meters to a zoom level.
     // It's derived from how map scales work (roughly doubles with each zoom level).
@@ -231,7 +311,7 @@ class MapCubit extends Cubit<MapState> {
     double requiredZoom = 15.6 - math.log(targetVisibleMeters / lookAheadHeight) / math.ln2;
 
     // Clamp the zoom level to reasonable bounds
-    return requiredZoom.clamp(_zoomLongStraight, _zoomComplexTurn);
+    return requiredZoom.clamp(_zoomLongStraight, _zoomMax);
   }
 
   void _onGpsData(GpsData data) {
@@ -256,16 +336,12 @@ class MapCubit extends Cubit<MapState> {
       orientation: orientationForMarker,
     ));
 
-    // Throttle map updates to reduce performance impact
-    _updateTimer?.cancel();
-    _updateTimer = Timer(const Duration(milliseconds: 100), () {
-      if (!isClosed) {
-        _moveAndRotate(positionForDisplay, courseForMapRotation);
-      }
-    });
+    // Update map immediately to keep marker and map synchronized
+    _moveAndRotate(positionForDisplay, courseForMapRotation);
   }
 
   void _onThemeUpdate(ThemeState event) {
+    _currentTheme = event;
     final current = state;
     emit(MapState.loading(controller: state.controller, position: state.position));
     _getTheme(event.isDark).then((theme) => emit(switch (current) {
@@ -276,11 +352,12 @@ class MapCubit extends Cubit<MapState> {
 
   Future<void> _onMapReady(TickerProvider vsync) async {
     final current = state;
-    _animatedController = AnimatedMapController(
-        vsync: vsync,
-        mapController: current.controller,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut);
+    _transformAnimator = MapTransformAnimator(
+      mapController: current.controller,
+      tickerProvider: vsync,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
 
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
@@ -293,6 +370,7 @@ class MapCubit extends Cubit<MapState> {
           tiles: AsyncMbTilesProvider(_tilesRepository), // Re-init or ensure it's available
           theme: await _getTheme(true), // Default theme
           themeMode: 'dark', // Default to dark
+          renderMode: _currentSettings?.mapRenderMode == MapRenderMode.vector ? 'vector' : 'raster',
           onReady: _onMapReady,
           isReady: true,
         ),
@@ -326,28 +404,45 @@ class MapCubit extends Cubit<MapState> {
     return state.position;
   }
 
-  Future<void> _loadMap(ThemeState themeState) async {
-    _animatedController = null;
+  Future<void> _loadMap(ThemeState themeState, SettingsData settings) async {
+    // Dispose old animator before creating new map to clean up active tickers
+    _transformAnimator?.stopAnimations();
+    _transformAnimator?.dispose();
+    _transformAnimator = null;
+    _currentSettings = settings;
     emit(MapState.loading(controller: state.controller, position: state.position));
-    final theme = await _getTheme(themeState.isDark);
     final ctrl = MapController();
 
-    final provider = AsyncMbTilesProvider(_tilesRepository);
-    final tilesInit = await provider.init();
+    // Check map type setting
+    if (settings.mapType == MapType.online) {
+      // Load online map
+      emit(MapState.online(
+        position: state.position,
+        orientation: 0,
+        controller: ctrl,
+        onReady: _onMapReady,
+      ));
+    } else {
+      // Load offline map
+      final theme = await _getTheme(themeState.isDark);
+      final provider = AsyncMbTilesProvider(_tilesRepository);
+      final tilesInit = await provider.init();
 
-    switch (tilesInit) {
-      case InitSuccess(:final metadata):
-        emit(MapState.offline(
-          tiles: provider,
-          position: _getInitialCoordinates(metadata),
-          orientation: 0,
-          controller: ctrl,
-          theme: theme,
-          themeMode: themeState.isDark ? 'dark' : 'light',
-          onReady: _onMapReady,
-        ));
-      case InitError(:final message):
-        emit(MapState.unavailable(message, controller: ctrl, position: state.position));
+      switch (tilesInit) {
+        case InitSuccess(:final metadata):
+          emit(MapState.offline(
+            tiles: provider,
+            position: _getInitialCoordinates(metadata),
+            orientation: 0,
+            controller: ctrl,
+            theme: theme,
+            themeMode: themeState.isDark ? 'dark' : 'light',
+            renderMode: settings.mapRenderMode == MapRenderMode.vector ? 'vector' : 'raster',
+            onReady: _onMapReady,
+          ));
+        case InitError(:final message):
+          emit(MapState.unavailable(message, controller: ctrl, position: state.position));
+      }
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../cubits/navigation_cubit.dart';
 import '../../cubits/navigation_state.dart';
 import '../../routing/models.dart';
+import 'roundabout_icon_painter.dart';
 
 class TurnByTurnWidget extends StatelessWidget {
   final bool compact;
@@ -57,11 +58,11 @@ class TurnByTurnWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       ...state.pendingConditions.map((condition) => Text(
-                        "• $condition",
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: isDark ? Colors.white70 : Colors.black87,
-                        ),
-                      )),
+                            "• $condition",
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark ? Colors.white70 : Colors.black87,
+                            ),
+                          )),
                     ],
                   ),
                 ),
@@ -69,20 +70,57 @@ class TurnByTurnWidget extends StatelessWidget {
             ),
           );
         }
-        
+
         if (!state.hasInstructions || state.status == NavigationStatus.idle) {
           return const SizedBox.shrink();
+        }
+
+        // Special handling for rerouting status - just show small box
+        if (state.status == NavigationStatus.rerouting) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(
+                color: Colors.orange.withOpacity(0.6),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Recalculating route...',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
         }
 
         // Special handling for arrival status
         if (state.status == NavigationStatus.arrived) {
           return Container(
-            padding: padding ?? const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
               borderRadius: BorderRadius.circular(8.0),
               border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                color: Colors.green.withOpacity(0.6),
                 width: 1.5,
               ),
             ),
@@ -92,17 +130,15 @@ class TurnByTurnWidget extends StatelessWidget {
                 Icon(
                   Icons.place,
                   color: Colors.green,
-                  size: compact ? 24 : 48,
+                  size: 24,
                 ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(
-                    'You have arrived!',
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: compact ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(width: 8),
+                Text(
+                  'You have arrived!',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -110,42 +146,196 @@ class TurnByTurnWidget extends StatelessWidget {
           );
         }
 
-        return Container(
-          padding: padding ?? const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(
-              color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
-              width: 1.5,
-            ),
-          ),
-          child: compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark),
-        );
+        // Return the two-box layout directly, no wrapper
+        return compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark);
       },
     );
+  }
+
+  Widget _buildTimeInfoBar(NavigationState state, bool isDark) {
+    final route = state.route;
+    if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
+
+    final upcomingInstructions = state.upcomingInstructions;
+    final firstUpcomingIndex = route.instructions.indexWhere(
+      (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
+    );
+
+    double remainingDistance = 0.0;
+    Duration timeRemaining = Duration.zero;
+
+    if (firstUpcomingIndex >= 0) {
+      final firstUpcoming = upcomingInstructions.first;
+      final firstOriginal = route.instructions[firstUpcomingIndex];
+
+      // Start with distance to the first instruction's maneuver point
+      remainingDistance = firstUpcoming.distance;
+
+      // Add the segment starting at that maneuver point
+      remainingDistance += firstOriginal.distance;
+
+      // Add all subsequent segments
+      for (int i = firstUpcomingIndex + 1; i < route.instructions.length; i++) {
+        remainingDistance += route.instructions[i].distance;
+        timeRemaining += route.instructions[i].duration;
+      }
+
+      // Calculate time remaining: adjust first instruction's time based on progress
+      if (firstOriginal.distance > 0) {
+        // How much of the first segment have we completed?
+        // We haven't reached the maneuver yet, so we're still in the PREVIOUS segment
+        // But upcoming instruction's distance is distance TO the maneuver, not progress THROUGH segment
+        // So we need to estimate time to reach first maneuver + time through first segment + subsequent segments
+        final distanceToFirstManeuver = firstUpcoming.distance;
+        final firstSegmentLength = firstOriginal.distance;
+
+        // Estimate time to first maneuver (assume same speed as first segment)
+        final speedInSegment = firstOriginal.distance > 0
+            ? firstOriginal.duration.inSeconds / firstOriginal.distance
+            : 0.0;
+        final timeToFirstManeuver = Duration(seconds: (distanceToFirstManeuver * speedInSegment).round());
+
+        // Total time = time to first maneuver + duration of first segment + subsequent segments
+        timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
+      } else {
+        timeRemaining += firstOriginal.duration;
+      }
+    }
+
+    // Calculate ETA
+    final now = DateTime.now();
+    final eta = now.add(timeRemaining);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTimeInfoItem(
+            icon: Icons.straighten,
+            label: 'Distance',
+            value: _formatDistanceKm(remainingDistance),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.timer,
+            label: 'Remaining',
+            value: _formatDuration(timeRemaining),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.flag,
+            label: 'ETA',
+            value: _formatTime(eta),
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDark,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: isDark ? Colors.white54 : Colors.black54,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: isDark ? Colors.white70 : Colors.black87,
+            fontSize: 12,
+            fontWeight: FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else {
+      return '${minutes}m';
+    }
+  }
+
+  String _formatTime(DateTime time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+
+    return '$hour:$minute';
+  }
+
+  /// Determines which instruction to use for icon display, handling special cases like roundabout exits
+  /// If the instruction is an Exit that's far from the exit point and there's a preceding Roundabout,
+  /// returns the Roundabout instruction to keep showing the roundabout icon until close to the exit
+  RouteInstruction _getInstructionForIcon(List<RouteInstruction> instructions) {
+    if (instructions.isEmpty) return instructions.first;
+
+    final first = instructions.first;
+
+    // Special handling for Exit instructions (primarily roundabout exits)
+    if (first is Exit && first.distance > 50.0) {
+      // Look for a preceding Roundabout instruction in the list
+      for (final inst in instructions) {
+        if (inst is Roundabout) {
+          // Found a roundabout - keep showing its icon until we're close to the exit
+          return inst.copyWith(distance: first.distance);
+        }
+      }
+    }
+
+    return first;
   }
 
   Widget _buildCompactView(NavigationState state, bool isDark) {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
+    final iconInstruction = _getInstructionForIcon(instructions);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildInstructionIcon(instruction, size: 24, isDark: isDark),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            _formatDistance(instruction.distance),
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+        // Compact: icon above, distance below
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildInstructionIcon(iconInstruction, size: 24, isDark: isDark),
+            const SizedBox(height: 2),
+            Text(
+              _formatDistance(instruction.distance),
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                height: 1.0,
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
+          ],
         ),
       ],
     );
@@ -155,127 +345,185 @@ class TurnByTurnWidget extends StatelessWidget {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
+    final iconInstruction = _getInstructionForIcon(instructions);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _buildInstructionIcon(instruction, size: 48, isDark: isDark),
-            const SizedBox(width: 12),
-            Expanded(
+    // Find next instruction that's not an exit (roundabout exits are confusing in preview)
+    RouteInstruction? nextInstruction;
+    if (instructions.length > 1) {
+      try {
+        nextInstruction = instructions.skip(1).firstWhere((inst) => inst is! Exit);
+      } catch (e) {
+        // All remaining instructions are exits, don't show preview
+        nextInstruction = null;
+      }
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Background: Instruction text box (full width, behind icon box)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(left: 90, right: 12, top: 14, bottom: 14),
+            constraints: const BoxConstraints(minHeight: 80), // Ensure minimum height
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _getInstructionText(instruction, null),
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontSize: 15,
+                    fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // Only show next instruction if it follows shortly after current one (< 300m between them)
+                if (nextInstruction != null && nextInstruction.distance < 300) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Then ${_getShortInstructionText(nextInstruction)}',
+                    style: TextStyle(
+                      color: isDark ? Colors.white38 : Colors.black45,
+                      fontSize: 13,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          // Foreground: Icon/distance box (layered on top, jutting out)
+          Positioned(
+            left: 0,
+            top: -6,
+            child: Container(
+              width: 72, // Fixed narrow width
+              constraints: const BoxConstraints(minHeight: 92), // Taller than instruction box
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  _buildInstructionIcon(iconInstruction, size: 48, isDark: isDark),
+                  const SizedBox(height: 8),
                   Text(
                     _formatDistance(instruction.distance),
                     style: TextStyle(
                       color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 18,
-                      height: 1.1,
+                      fontSize: 15,
+                      height: 1.0,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getInstructionText(instruction, instructions.length > 1 ? instructions[1] : null),
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.black87, // Increased contrast for light theme
-                      fontSize: 14,
-                      fontWeight: isDark ? FontWeight.normal : FontWeight.w500, // Bolder for light theme
-                      height: 1.1,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-        if (state.status == NavigationStatus.rerouting) ...[
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Recalculating route...',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+          ),
+          // Time info bar (overlapping on bottom right)
+          Positioned(
+            right: -6,
+            top: -6,
+            child: _buildTimeInfoBar(state, isDark),
           ),
         ],
-        if (state.isOffRoute) ...[
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              Icon(
-                Icons.warning,
-                color: Colors.orange,
-                size: 16,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Off route',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
+      ),
     );
+  }
+
+  /// Determines the distance threshold (in meters) at which to show the actual maneuver icon
+  /// Different maneuver types have different thresholds based on their complexity and importance
+  /// Below these thresholds, the actual maneuver icon is shown; above them, a straight arrow
+  double _getIconDisplayThreshold(RouteInstruction instruction) {
+    return switch (instruction) {
+      Turn(direction: TurnDirection.uTurn180) ||
+      Turn(direction: TurnDirection.uTurn) ||
+      Turn(direction: TurnDirection.rightUTurn) => 600.0,
+      Turn(direction: TurnDirection.sharpLeft) ||
+      Turn(direction: TurnDirection.sharpRight) ||
+      Roundabout() => 500.0,
+      Turn(direction: TurnDirection.left) ||
+      Turn(direction: TurnDirection.right) ||
+      Exit() => 400.0,
+      Turn(direction: TurnDirection.slightLeft) ||
+      Turn(direction: TurnDirection.slightRight) ||
+      Merge() => 300.0,
+      Keep() => 150.0,
+      Other() => 1000.0,
+    };
   }
 
   Widget _buildInstructionIcon(RouteInstruction instruction, {required double size, required bool isDark}) {
     IconData iconData;
     Color iconColor = isDark ? Colors.white : Colors.black87;
 
-    // For long distances (>1km), show straight arrow
-    if (instruction.distance > 1000) {
+    // Check if we should show the maneuver icon based on distance and instruction type
+    final threshold = _getIconDisplayThreshold(instruction);
+    if (instruction.distance > threshold) {
       iconData = Icons.straight;
     } else {
       switch (instruction) {
-      case Keep(direction: final direction):
-        iconData = switch (direction) {
-          KeepDirection.straight => Icons.straight,
-          KeepDirection.left => Icons.turn_slight_left,
-          KeepDirection.right => Icons.turn_slight_right,
-        };
-        break;
-      case Turn(direction: final direction):
-        iconData = switch (direction) {
-          TurnDirection.left => Icons.turn_left,
-          TurnDirection.right => Icons.turn_right,
-          TurnDirection.slightLeft => Icons.turn_slight_left,
-          TurnDirection.slightRight => Icons.turn_slight_right,
-          TurnDirection.sharpLeft => Icons.turn_sharp_left,
-          TurnDirection.sharpRight => Icons.turn_sharp_right,
-          TurnDirection.uTurn180 || TurnDirection.uTurn => Icons.u_turn_left,
-          TurnDirection.rightUTurn => Icons.u_turn_right,
-        };
-        break;
-      case Roundabout(side: final side, exitNumber: final exitNumber):
-        // Handle roundabout with custom widget below
-        return _buildRoundaboutIcon(side, exitNumber, size, isDark);
-      case Exit(side: final side):
-        iconData = side == ExitSide.left ? Icons.exit_to_app : Icons.exit_to_app;
-        break;
-      case Other():
-        iconData = Icons.navigation;
-        break;
+        case Keep(direction: final direction):
+          iconData = switch (direction) {
+            KeepDirection.straight => Icons.straight,
+            KeepDirection.left => Icons.turn_slight_left,
+            KeepDirection.right => Icons.turn_slight_right,
+          };
+          break;
+        case Turn(direction: final direction):
+          iconData = switch (direction) {
+            TurnDirection.left => Icons.turn_left,
+            TurnDirection.right => Icons.turn_right,
+            TurnDirection.slightLeft => Icons.turn_slight_left,
+            TurnDirection.slightRight => Icons.turn_slight_right,
+            TurnDirection.sharpLeft => Icons.turn_sharp_left,
+            TurnDirection.sharpRight => Icons.turn_sharp_right,
+            TurnDirection.uTurn180 || TurnDirection.uTurn => Icons.u_turn_left,
+            TurnDirection.rightUTurn => Icons.u_turn_right,
+          };
+          break;
+        case Roundabout(side: final side, exitNumber: final exitNumber, bearingBefore: final bearingBefore):
+          // Handle roundabout with custom widget below
+          return _buildRoundaboutIcon(side, exitNumber, bearingBefore, size, isDark);
+        case Exit(side: final side):
+          // Use turn icons for exits (primarily roundabout exits)
+          iconData = side == ExitSide.left ? Icons.turn_slight_left : Icons.turn_slight_right;
+          break;
+        case Merge(direction: final direction):
+          // Use merge icon, can rotate for directional merge if needed
+          iconData = switch (direction) {
+            MergeDirection.straight => Icons.merge,
+            MergeDirection.left => Icons.merge, // Could add rotation if needed
+            MergeDirection.right => Icons.merge,
+          };
+          break;
+        case Other():
+          iconData = Icons.navigation;
+          break;
       }
     }
 
@@ -298,17 +546,63 @@ class TurnByTurnWidget extends StatelessWidget {
     }
   }
 
+  String _formatDistanceKm(double distance) {
+    if (distance >= 1000) {
+      return '${(distance / 1000).toStringAsFixed(1)} km';
+    } else {
+      return '${distance.toInt()} m';
+    }
+  }
+
   String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
-    // For long distances (>1km), show "Continue for X.X km" message
-    if (instruction.distance > 1000) {
-      final distanceKm = (instruction.distance / 1000).toStringAsFixed(1);
+    // For long distances (>=1km), show "Continue for X.X km" message
+    // Use same rounding as _formatDistance to ensure consistency
+    if (instruction.distance >= 1000) {
+      final roundedDistance = (((instruction.distance + 99) ~/ 100) * 100) / 1000;
+      final distanceKm = roundedDistance.toStringAsFixed(1);
       return 'Continue for $distanceKm km';
     }
 
-    // Use Valhalla's instruction text if available.
-    String baseText = instruction.instructionText ?? '';
+    // Check if we're showing a straight arrow due to distance threshold
+    // If so, preview the upcoming maneuver
+    final threshold = _getIconDisplayThreshold(instruction);
+    if (instruction.distance > threshold) {
+      final distanceText = _formatDistance(instruction.distance);
+      final maneuverPreview = _getShortInstructionText(instruction);
+      return 'In $distanceText, $maneuverPreview';
+    }
 
-    // If Valhalla's text is empty, generate a fallback.
+    String baseText = '';
+
+    // Use distance-based verbal instructions from Valhalla
+    if (instruction.distance > 150) {
+      // Use alert instruction for distances > 150m (e.g., "In 200m, take the 3rd exit")
+      baseText = switch (instruction) {
+        Keep(verbalAlertInstruction: final alert) => alert ?? '',
+        Turn(verbalAlertInstruction: final alert) => alert ?? '',
+        Exit(verbalAlertInstruction: final alert) => alert ?? '',
+        Merge(verbalAlertInstruction: final alert) => alert ?? '',
+        Roundabout(verbalAlertInstruction: final alert) => alert ?? '',
+        Other(verbalAlertInstruction: final alert) => alert ?? '',
+      };
+    } else {
+      // Use immediate verbal instruction for close distances (e.g., "Take the 3rd exit")
+      baseText = switch (instruction) {
+        Keep(verbalInstruction: final verbal) => verbal ?? '',
+        Turn(verbalInstruction: final verbal) => verbal ?? '',
+        Exit(verbalInstruction: final verbal) => verbal ?? '',
+        Merge(verbalInstruction: final verbal) => verbal ?? '',
+        Roundabout(verbalInstruction: final verbal) => verbal ?? '',
+        Other(verbalInstruction: final verbal) => verbal ?? '',
+      };
+    }
+
+    // Fall back to regular instruction text if verbal instructions aren't available
+    if (baseText.isEmpty) {
+      baseText = instruction.instructionText ?? '';
+    }
+
+    // If still empty, generate a fallback.
     if (baseText.isEmpty) {
       baseText = switch (instruction) {
         Keep(direction: final direction, streetName: final streetName) =>
@@ -316,9 +610,11 @@ class TurnByTurnWidget extends StatelessWidget {
         Turn(direction: final direction, streetName: final streetName) =>
           streetName != null ? 'Turn ${direction.name} onto $streetName' : 'Turn ${direction.name}',
         Roundabout(exitNumber: final exitNumber, streetName: final streetName) =>
-          streetName != null ? 'Take exit ${exitNumber} onto $streetName' : 'Take exit $exitNumber',
+          streetName != null ? 'Take exit $exitNumber onto $streetName' : 'Take exit $exitNumber',
         Exit(side: final side, streetName: final streetName) =>
           streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
+        Merge(direction: final direction, streetName: final streetName) =>
+          streetName != null ? 'Merge ${direction.name} onto $streetName' : 'Merge ${direction.name}',
         Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
       };
     }
@@ -351,51 +647,39 @@ class TurnByTurnWidget extends StatelessWidget {
           TurnDirection.rightUTurn => 'make a right U-turn',
           TurnDirection.uTurn => 'make a U-turn',
         },
-      Roundabout(exitNumber: final exitNumber) =>
-        'take the ${exitNumber == 1 ? '1st' : exitNumber == 2 ? '2nd' : exitNumber == 3 ? '3rd' : '${exitNumber}th'} exit',
+      Roundabout(exitNumber: final exitNumber) => _getOrdinalExitText(exitNumber),
+      Merge(direction: final direction) => switch (direction) {
+          MergeDirection.straight => 'merge',
+          MergeDirection.left => 'merge left',
+          MergeDirection.right => 'merge right',
+        },
       Other() => 'continue',
       Exit(side: final side) => 'take the ${side.name} exit',
     };
   }
 
-  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double size, bool isDark) {
-    // Use appropriate directional icon based on side
-    final IconData roundaboutIcon = side == RoundaboutSide.left ? Icons.roundabout_left : Icons.roundabout_right;
+  String _getOrdinalExitText(int exitNumber) {
+    // Handle ordinal suffixes for any exit number
+    final suffix = switch (exitNumber % 10) {
+      1 when exitNumber % 100 != 11 => 'st',
+      2 when exitNumber % 100 != 12 => 'nd',
+      3 when exitNumber % 100 != 13 => 'rd',
+      _ => 'th',
+    };
+    return 'take the $exitNumber$suffix exit';
+  }
 
-    final iconColor = isDark ? Colors.white : Colors.black87;
-    final borderColor = isDark ? Colors.white : Colors.black87;
-
+  Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double? bearingBefore, double size, bool isDark) {
     return SizedBox(
       width: size,
       height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            roundaboutIcon,
-            color: iconColor,
-            size: size,
-          ),
-          Container(
-            width: size * 0.35,
-            height: size * 0.35,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 1.5),
-            ),
-            child: Center(
-              child: Text(
-                exitNumber.toString(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: size * 0.2,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+      child: CustomPaint(
+        painter: RoundaboutIconPainter(
+          exitNumber: exitNumber,
+          bearingBefore: bearingBefore,
+          isDark: isDark,
+          size: size,
+        ),
       ),
     );
   }
