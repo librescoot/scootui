@@ -11,6 +11,7 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
 
   bool _isClosing = false;
   bool _isPaused = false;
+  bool _hasLoggedError = false; // Track if we've already logged connection errors
   final Map<String, Timer> _timers = {};
   final Map<String, SyncFieldSettings> _fields = {};
   final Map<String, SyncSetFieldSettings> _setFields = {};
@@ -23,6 +24,12 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     // print("SyncableCubit (${state.syncSettings.channel}): _doRefresh called for variable: $variable");
     redisRepository.get(state.syncSettings.channel, variable).then((value) {
       if (_isPaused || _isClosing) return;
+
+      // Log recovery if we were in error state
+      if (_hasLoggedError) {
+        print("SyncableCubit (${state.syncSettings.channel}): Connection recovered");
+        _hasLoggedError = false;
+      }
 
       // print("SyncableCubit (${state.syncSettings.channel}): Got value for $variable: $value");
       if (value == null && variable != "destination") {
@@ -39,8 +46,12 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
               "")); // Pass empty string if null, or let `update` handle null
       _refresh(variable);
     }).catchError((e) {
-      print(
-          "SyncableCubit (${state.syncSettings.channel}): Error in _doRefresh for $variable: $e");
+      // Only log the first error to avoid spam
+      if (!_hasLoggedError) {
+        print(
+            "SyncableCubit (${state.syncSettings.channel}): Redis connection error: $e");
+        _hasLoggedError = true;
+      }
       // Don't schedule next refresh on error - connection recovery will restart polling
     });
   }
@@ -66,6 +77,12 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     redisRepository.getSetMembers(setKey).then((members) {
       if (_isPaused || _isClosing) return;
 
+      // Log recovery if we were in error state
+      if (_hasLoggedError) {
+        print("SyncableCubit (${state.syncSettings.channel}): Connection recovered");
+        _hasLoggedError = false;
+      }
+
       Set<dynamic> parsedSet;
 
       switch (field.elementType) {
@@ -82,8 +99,12 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
       emit(state.updateSet(name, parsedSet));
       _refreshSet(name, field);
     }).catchError((e) {
-      print(
-          "SyncableCubit (${state.syncSettings.channel}): Error in _doRefreshSet for $name: $e");
+      // Only log the first error to avoid spam
+      if (!_hasLoggedError) {
+        print(
+            "SyncableCubit (${state.syncSettings.channel}): Redis connection error: $e");
+        _hasLoggedError = true;
+      }
       // Don't schedule next refresh on error - connection recovery will restart polling
     });
   }
@@ -149,6 +170,7 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
   void _resumePolling() {
     if (!_isPaused) return;
     _isPaused = false;
+    _hasLoggedError = false; // Reset error state on connection recovery
 
     print("SyncableCubit (${state.syncSettings.channel}): Polling resumed, fetching current values");
 
