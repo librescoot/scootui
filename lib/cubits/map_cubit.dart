@@ -43,7 +43,7 @@ class MapCubit extends Cubit<MapState> {
   // Dynamic zoom constants based on navigation context
   static const double _zoomLongStraight = 15.0; // Long straight sections (~1000m look-ahead)
   static const double _zoomDefault = 16.0; // Default navigation zoom (~500m look-ahead)
-  static const double _zoomMax = 17.75; // Maximum zoom for complex turns (~150m look-ahead)
+  static const double _zoomMax = 17.5; // Maximum zoom for complex turns (~150m look-ahead)
 
   // Vehicle positioning - public so VehicleIndicator can use the same value
   static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
@@ -106,7 +106,7 @@ class MapCubit extends Cubit<MapState> {
     } catch (e) {
       print("MapCubit: Error disposing MapController: $e");
     }
-    
+
     switch (current) {
       case MapOffline():
         final tiles = current.tiles;
@@ -120,7 +120,7 @@ class MapCubit extends Cubit<MapState> {
         break;
       default:
     }
-    
+
     // Cancel all streams
     _themeSub.cancel();
     _gpsSub.cancel();
@@ -180,8 +180,7 @@ class MapCubit extends Cubit<MapState> {
     // Reload map if map type or render mode changed
     if (previous != null &&
         _currentTheme != null &&
-        (previous.mapType != settings.mapType ||
-         previous.mapRenderMode != settings.mapRenderMode)) {
+        (previous.mapType != settings.mapType || previous.mapRenderMode != settings.mapRenderMode)) {
       // Dispose old animator before reloading to clean up active tickers
       _transformAnimator?.stopAnimations();
       _transformAnimator?.dispose();
@@ -256,6 +255,12 @@ class MapCubit extends Cubit<MapState> {
       return _zoomMax;
     }
 
+    // Don't start zooming in until we're within 300m of the maneuver
+    // This prevents premature zoom-in during long straights
+    if (distanceToTurn > 300) {
+      return _zoomDefault;
+    }
+
     // Look ahead up to 2 more turns (max 3 total) within 150m from current position
     double targetDistance = distanceToTurn;
     int significantTurnsFound = 0;
@@ -268,8 +273,7 @@ class MapCubit extends Cubit<MapState> {
 
       // Check if this is a significant maneuver
       final isSignificantTurn = switch (instruction) {
-        Turn(:final direction) => direction != TurnDirection.slightLeft &&
-                                   direction != TurnDirection.slightRight,
+        Turn(:final direction) => direction != TurnDirection.slightLeft && direction != TurnDirection.slightRight,
         Exit() => true,
         Roundabout() => true,
         Merge() => false, // Merges are like "keep" instructions
@@ -351,8 +355,8 @@ class MapCubit extends Cubit<MapState> {
     _transformAnimator = MapTransformAnimator(
       mapController: current.controller,
       tickerProvider: vsync,
-      duration: const Duration(milliseconds: 450), // Match typical GPS update rate (2Hz / 500ms) for smooth motion
-      curve: Curves.linear, // Linear for constant velocity feel
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
     );
 
     emit(switch (current) {

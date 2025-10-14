@@ -156,7 +156,6 @@ class TurnByTurnWidget extends StatelessWidget {
     final route = state.route;
     if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
 
-    // Find the current instruction in the full route to calculate totals
     final upcomingInstructions = state.upcomingInstructions;
     final firstUpcomingIndex = route.instructions.indexWhere(
       (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
@@ -166,24 +165,40 @@ class TurnByTurnWidget extends StatelessWidget {
     Duration timeRemaining = Duration.zero;
 
     if (firstUpcomingIndex >= 0) {
-      // Sum all distances and durations from the current instruction onwards
-      for (int i = firstUpcomingIndex; i < route.instructions.length; i++) {
+      final firstUpcoming = upcomingInstructions.first;
+      final firstOriginal = route.instructions[firstUpcomingIndex];
+
+      // Start with distance to the first instruction's maneuver point
+      remainingDistance = firstUpcoming.distance;
+
+      // Add the segment starting at that maneuver point
+      remainingDistance += firstOriginal.distance;
+
+      // Add all subsequent segments
+      for (int i = firstUpcomingIndex + 1; i < route.instructions.length; i++) {
         remainingDistance += route.instructions[i].distance;
         timeRemaining += route.instructions[i].duration;
       }
 
-      // Adjust first instruction's distance and time based on actual progress
-      final firstInstruction = upcomingInstructions.first;
-      final originalFirstInstruction = route.instructions[firstUpcomingIndex];
-      if (originalFirstInstruction.distance > 0) {
-        // Calculate how much of the first instruction has been completed
-        final completedDistance = originalFirstInstruction.distance - firstInstruction.distance;
-        final completedRatio = completedDistance / originalFirstInstruction.distance;
+      // Calculate time remaining: adjust first instruction's time based on progress
+      if (firstOriginal.distance > 0) {
+        // How much of the first segment have we completed?
+        // We haven't reached the maneuver yet, so we're still in the PREVIOUS segment
+        // But upcoming instruction's distance is distance TO the maneuver, not progress THROUGH segment
+        // So we need to estimate time to reach first maneuver + time through first segment + subsequent segments
+        final distanceToFirstManeuver = firstUpcoming.distance;
+        final firstSegmentLength = firstOriginal.distance;
 
-        // Subtract the completed portions from totals
-        remainingDistance -= completedDistance;
-        final passedTime = originalFirstInstruction.duration * completedRatio;
-        timeRemaining -= passedTime;
+        // Estimate time to first maneuver (assume same speed as first segment)
+        final speedInSegment = firstOriginal.distance > 0
+            ? firstOriginal.duration.inSeconds / firstOriginal.distance
+            : 0.0;
+        final timeToFirstManeuver = Duration(seconds: (distanceToFirstManeuver * speedInSegment).round());
+
+        // Total time = time to first maneuver + duration of first segment + subsequent segments
+        timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
+      } else {
+        timeRemaining += firstOriginal.duration;
       }
     }
 
@@ -274,10 +289,33 @@ class TurnByTurnWidget extends StatelessWidget {
     return '$hour:$minute';
   }
 
+  /// Determines which instruction to use for icon display, handling special cases like roundabout exits
+  /// If the instruction is an Exit that's far from the exit point and there's a preceding Roundabout,
+  /// returns the Roundabout instruction to keep showing the roundabout icon until close to the exit
+  RouteInstruction _getInstructionForIcon(List<RouteInstruction> instructions) {
+    if (instructions.isEmpty) return instructions.first;
+
+    final first = instructions.first;
+
+    // Special handling for Exit instructions (primarily roundabout exits)
+    if (first is Exit && first.distance > 50.0) {
+      // Look for a preceding Roundabout instruction in the list
+      for (final inst in instructions) {
+        if (inst is Roundabout) {
+          // Found a roundabout - keep showing its icon until we're close to the exit
+          return inst.copyWith(distance: first.distance);
+        }
+      }
+    }
+
+    return first;
+  }
+
   Widget _buildCompactView(NavigationState state, bool isDark) {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
+    final iconInstruction = _getInstructionForIcon(instructions);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -286,7 +324,7 @@ class TurnByTurnWidget extends StatelessWidget {
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildInstructionIcon(instruction, size: 24, isDark: isDark),
+            _buildInstructionIcon(iconInstruction, size: 24, isDark: isDark),
             const SizedBox(height: 2),
             Text(
               _formatDistance(instruction.distance),
@@ -307,6 +345,8 @@ class TurnByTurnWidget extends StatelessWidget {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
+    final iconInstruction = _getInstructionForIcon(instructions);
+
     // Find next instruction that's not an exit (roundabout exits are confusing in preview)
     RouteInstruction? nextInstruction;
     if (instructions.length > 1) {
@@ -389,7 +429,7 @@ class TurnByTurnWidget extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildInstructionIcon(instruction, size: 48, isDark: isDark),
+                  _buildInstructionIcon(iconInstruction, size: 48, isDark: isDark),
                   const SizedBox(height: 8),
                   Text(
                     _formatDistance(instruction.distance),
@@ -415,12 +455,35 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
+  /// Determines the distance threshold (in meters) at which to show the actual maneuver icon
+  /// Different maneuver types have different thresholds based on their complexity and importance
+  /// Below these thresholds, the actual maneuver icon is shown; above them, a straight arrow
+  double _getIconDisplayThreshold(RouteInstruction instruction) {
+    return switch (instruction) {
+      Turn(direction: TurnDirection.uTurn180) ||
+      Turn(direction: TurnDirection.uTurn) ||
+      Turn(direction: TurnDirection.rightUTurn) => 600.0,
+      Turn(direction: TurnDirection.sharpLeft) ||
+      Turn(direction: TurnDirection.sharpRight) ||
+      Roundabout() => 500.0,
+      Turn(direction: TurnDirection.left) ||
+      Turn(direction: TurnDirection.right) ||
+      Exit() => 400.0,
+      Turn(direction: TurnDirection.slightLeft) ||
+      Turn(direction: TurnDirection.slightRight) ||
+      Merge() => 300.0,
+      Keep() => 150.0,
+      Other() => 1000.0,
+    };
+  }
+
   Widget _buildInstructionIcon(RouteInstruction instruction, {required double size, required bool isDark}) {
     IconData iconData;
     Color iconColor = isDark ? Colors.white : Colors.black87;
 
-    // For long distances (>1km), show straight arrow
-    if (instruction.distance > 1000) {
+    // Check if we should show the maneuver icon based on distance and instruction type
+    final threshold = _getIconDisplayThreshold(instruction);
+    if (instruction.distance > threshold) {
       iconData = Icons.straight;
     } else {
       switch (instruction) {
@@ -492,10 +555,21 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
-    // For long distances (>1km), show "Continue for X.X km" message
-    if (instruction.distance > 1000) {
-      final distanceKm = (instruction.distance / 1000).toStringAsFixed(1);
+    // For long distances (>=1km), show "Continue for X.X km" message
+    // Use same rounding as _formatDistance to ensure consistency
+    if (instruction.distance >= 1000) {
+      final roundedDistance = (((instruction.distance + 99) ~/ 100) * 100) / 1000;
+      final distanceKm = roundedDistance.toStringAsFixed(1);
       return 'Continue for $distanceKm km';
+    }
+
+    // Check if we're showing a straight arrow due to distance threshold
+    // If so, preview the upcoming maneuver
+    final threshold = _getIconDisplayThreshold(instruction);
+    if (instruction.distance > threshold) {
+      final distanceText = _formatDistance(instruction.distance);
+      final maneuverPreview = _getShortInstructionText(instruction);
+      return 'In $distanceText, $maneuverPreview';
     }
 
     String baseText = '';
