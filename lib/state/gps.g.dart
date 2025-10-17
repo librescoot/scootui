@@ -23,7 +23,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
   GpsState get state;
   get syncSettings => SyncSettings(
       "gps",
-      Duration(microseconds: 3000000),
+      Duration(microseconds: 1000000),
       [
         SyncFieldSettings(
             name: "latitude",

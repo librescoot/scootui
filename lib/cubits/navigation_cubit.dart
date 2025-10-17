@@ -156,10 +156,10 @@ class NavigationCubit extends Cubit<NavigationState> {
         print("NavigationCubit: Current position is null, cannot calculate route yet.");
         // Store pending destination and show conditions that need to be met
         emit(state.copyWith(
-            destination: destination, 
-            status: NavigationStatus.idle, 
+            destination: destination,
+            status: NavigationStatus.idle,
             error: "Waiting for recent GPS fix to calculate route.",
-            pendingConditions: ["GPS fix required (last update >10 seconds ago)"]));
+            pendingConditions: ["Waiting for GPS fix"]));
         return;
       }
 

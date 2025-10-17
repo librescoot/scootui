@@ -15,7 +15,7 @@ enum GpsState {
   error,
 }
 
-@StateClass("gps", Duration(seconds: 3))
+@StateClass("gps", Duration(seconds: 1))
 class GpsData extends Equatable with $GpsData {
   @override
   @StateField()
