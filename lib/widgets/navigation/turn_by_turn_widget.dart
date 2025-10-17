@@ -26,7 +26,7 @@ class TurnByTurnWidget extends StatelessWidget {
         // Show pending conditions if navigation is idle but has destination
         if (state.status == NavigationStatus.idle && state.hasDestination && state.hasPendingConditions) {
           return Container(
-            padding: padding ?? const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9),
               borderRadius: BorderRadius.circular(8.0),
@@ -38,32 +38,21 @@ class TurnByTurnWidget extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.warning,
-                  color: Colors.orange,
-                  size: compact ? 20 : 24,
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "Navigation Pending",
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      ...state.pendingConditions.map((condition) => Text(
-                            "• $condition",
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          )),
-                    ],
+                Text(
+                  state.pendingConditions.first,
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
