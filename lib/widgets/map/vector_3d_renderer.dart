@@ -12,6 +12,7 @@ class Camera3D {
   final double bearing; // Rotation in radians
   final double pitch; // Tilt in radians (0 = top-down, PI/2 = horizon)
   final Size viewportSize;
+  final Offset vehicleOffset; // Offset of vehicle marker from screen center
 
   const Camera3D({
     required this.center,
@@ -19,6 +20,7 @@ class Camera3D {
     required this.bearing,
     required this.pitch,
     required this.viewportSize,
+    this.vehicleOffset = const Offset(0, 140), // Default: vehicle at bottom-center
   });
 
   /// Get the scale factor (pixels per world unit at zoom level)
@@ -60,8 +62,9 @@ class Camera3D {
     final depth = perspectiveDistance + z2;
     final scale = depth > 0.1 ? perspectiveDistance / depth : 1.0;
 
-    final screenX = x1 * scale + viewportSize.width / 2;
-    final screenY = y2 * scale + viewportSize.height / 2;
+    // Project with vehicle position as origin (vehicle is offset down from center)
+    final screenX = x1 * scale + viewportSize.width / 2 + vehicleOffset.dx;
+    final screenY = y2 * scale + viewportSize.height / 2 + vehicleOffset.dy;
 
     return Offset(screenX, screenY);
   }

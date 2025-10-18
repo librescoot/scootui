@@ -8,6 +8,7 @@ import 'package:vector_map_tiles/vector_map_tiles.dart';
 import 'package:vector_tile/vector_tile.dart' as vt;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' as vtr;
 
+import '../../cubits/map_cubit.dart';
 import '../../routing/models.dart';
 import 'vector_3d_renderer.dart';
 
@@ -28,7 +29,7 @@ class Vector3DMapWidget extends StatefulWidget {
     required this.position,
     required this.zoom,
     required this.bearing,
-    this.pitch = 1.0, // Default ~60 degree tilt
+    this.pitch = 1.2, // Default ~69 degree tilt (Google Maps style)
     required this.tileProvider,
     required this.theme,
     this.route,
@@ -65,16 +66,31 @@ class _Vector3DMapWidgetState extends State<Vector3DMapWidget> {
   Future<void> _loadVisibleTiles() async {
     setState(() => _isLoading = true);
 
-    final tileZ = widget.zoom.floor().clamp(0, 20);
+    // Load tiles at min of requested zoom and max available (14)
+    final tileZ = math.min(14, widget.zoom.floor());
     final centerTile = _latLngToTile(widget.position, tileZ);
 
-    // Load 3x3 grid of tiles around center
+    // Load tiles in the direction we're facing (bearing-aware)
+    // With 69° pitch, we see far into the distance
     final tilesToLoad = <TileCoord>[];
-    for (var dx = -1; dx <= 1; dx++) {
-      for (var dy = -1; dy <= 1; dy++) {
+
+    // Calculate forward direction based on bearing
+    // bearing: 0 = north, π/2 = east, π = south, 3π/2 = west
+    final cosB = math.cos(-widget.bearing);
+    final sinB = math.sin(-widget.bearing);
+
+    // Create a grid that extends forward in the look direction
+    // Grid: 3 tiles wide (-1 to +1), 5 tiles deep (-1 to +3 forward)
+    // Compact grid for overzoomed view
+    for (var localX = -1; localX <= 1; localX++) {
+      for (var localY = -1; localY <= 3; localY++) {
+        // Rotate the local grid to world space based on bearing
+        final worldDx = (localX * cosB - localY * sinB).round();
+        final worldDy = (localX * sinB + localY * cosB).round();
+
         tilesToLoad.add(TileCoord(
-          centerTile.x + dx,
-          centerTile.y + dy,
+          centerTile.x + worldDx,
+          centerTile.y + worldDy,
           tileZ,
         ));
       }
@@ -127,16 +143,9 @@ class _Vector3DMapWidgetState extends State<Vector3DMapWidget> {
       }
 
       _tileCache[tileCoord] = features;
-      if (features.isNotEmpty) {
-        debugPrint('Loaded tile $tileCoord with ${features.length} features');
-      }
     } catch (e) {
       // Silently cache empty feature list for missing tiles to avoid repeated requests
       _tileCache[tileCoord] = [];
-      // Only log actual errors, not just missing tiles
-      if (!e.toString().contains('Tile not found')) {
-        debugPrint('Failed to load tile $tileCoord: $e');
-      }
     }
   }
 
@@ -173,6 +182,7 @@ class _Vector3DMapWidgetState extends State<Vector3DMapWidget> {
           bearing: widget.bearing,
           pitch: widget.pitch,
           viewportSize: Size(constraints.maxWidth, constraints.maxHeight),
+          vehicleOffset: MapCubit.mapCenterOffset, // Use same offset as vehicle marker
         );
 
         return CustomPaint(
@@ -205,8 +215,6 @@ class Vector3DMapPainter extends CustomPainter {
   final Route? route;
   final LatLng? destination;
 
-  static bool _hasLoggedLayers = false;
-
   Vector3DMapPainter({
     required this.camera,
     required this.features,
@@ -217,28 +225,22 @@ class Vector3DMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Draw background color (from mapdark theme: hsl(33,48%,5%))
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..color = const Color(0xFF0D0804),
+    );
+
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final rendered = <RenderedFeature>[];
-    final layerCounts = <String, int>{};
-    int filteredCount = 0;
 
     // Render vector tile features
     for (final feature in features) {
-      layerCounts[feature.layerName] = (layerCounts[feature.layerName] ?? 0) + 1;
       final renderedFeature = _renderFeature(feature);
       if (renderedFeature != null) {
         rendered.add(renderedFeature);
-      } else {
-        filteredCount++;
       }
-    }
-
-    if (features.isNotEmpty && !_hasLoggedLayers) {
-      _hasLoggedLayers = true;
-      debugPrint('Rendering ${features.length} features: ${rendered.length} visible, $filteredCount filtered');
-      debugPrint('Available layers: ${layerCounts.keys.join(", ")}');
-      debugPrint('Layer counts: $layerCounts');
     }
 
     // Sort by depth (painter's algorithm - far to near)
@@ -310,75 +312,83 @@ class Vector3DMapPainter extends CustomPainter {
     final layerName = feature.layerName;
     final paint = Paint();
 
-    // Styling based on actual MBTiles layer names
+    // Match mapdark/maplight theme - only render what the theme renders
     switch (layerName) {
       case 'water_polygons':
-        paint.color = const Color(0xFF4A90E2).withOpacity(0.6);
+        // Theme: "water" layer
+        paint.color = const Color(0xFF2D4A5F); // hsl(205,35%,22%) dark theme color
         paint.style = PaintingStyle.fill;
         break;
 
-      case 'water_lines':
-        paint.color = const Color(0xFF4A90E2).withOpacity(0.8);
-        paint.strokeWidth = 2.0;
-        paint.style = PaintingStyle.stroke;
-        break;
-
       case 'land':
-        final kind = feature.properties['class']?.toString() ?? '';
-        if (kind.contains('park') || kind.contains('grass')) {
-          paint.color = const Color(0xFF8BC34A).withOpacity(0.4);
-        } else if (kind.contains('wood') || kind.contains('forest')) {
-          paint.color = const Color(0xFF4CAF50).withOpacity(0.5);
-        } else {
-          paint.color = const Color(0xFFE0E0E0).withOpacity(0.3);
+        // Theme: various land layers with kind filtering
+        final kind = feature.properties['kind']?.toString() ?? '';
+
+        // Forest (minzoom 7)
+        if (kind == 'forest') {
+          paint.color = const Color(0xFF2E3D2E); // hsl(110,30%,18%)
+        }
+        // Parks (minzoom 11)
+        else if (['park', 'village_green', 'recreation_ground', 'playground', 'golf_course'].contains(kind)) {
+          paint.color = const Color(0xFF2D3D2B); // hsl(100,25%,17%)
+        }
+        // Grass (minzoom 11)
+        else if (['grass', 'grassland', 'meadow'].contains(kind)) {
+          paint.color = const Color(0xFF2E3D2B); // hsl(95,25%,17%)
+        }
+        // Residential/commercial/industrial (minzoom 11)
+        else if (['residential', 'garages'].contains(kind)) {
+          paint.color = const Color(0xFF1F1F1F).withOpacity(0.3); // hsl(0,0%,12%) 30%
+        } else if (['commercial', 'retail'].contains(kind)) {
+          paint.color = const Color(0xFF2B2426).withOpacity(0.3); // hsl(330,15%,15%) 30%
+        } else if (['industrial', 'quarry', 'railway'].contains(kind)) {
+          paint.color = const Color(0xFF2D2B26).withOpacity(0.3); // hsl(48,20%,15%) 30%
+        }
+        // Skip or use base land color
+        else {
+          paint.color = const Color(0xFF1A1712).withOpacity(0.2); // hsla(33,18%,10%,0.2)
         }
         paint.style = PaintingStyle.fill;
         break;
 
       case 'streets':
-        final roadClass = feature.properties['class']?.toString() ?? '';
-        if (roadClass.contains('motorway')) {
-          paint.color = const Color(0xFFE06666);
-          paint.strokeWidth = 6.0;
-        } else if (roadClass.contains('primary')) {
-          paint.color = const Color(0xFFFFA726);
-          paint.strokeWidth = 5.0;
-        } else if (roadClass.contains('secondary')) {
-          paint.color = const Color(0xFFFFD54F);
+        // Theme: roads with kind-based styling
+        final kind = feature.properties['kind']?.toString() ?? '';
+
+        // Major roads: motorway, trunk
+        if (['motorway', 'trunk'].contains(kind)) {
+          paint.color = const Color(0xFF594D2E); // hsl(48,60%,35%)
           paint.strokeWidth = 4.0;
-        } else {
-          paint.color = const Color(0xFFBDBDBD);
+        }
+        // Main roads: primary, secondary
+        else if (['primary', 'secondary'].contains(kind)) {
+          paint.color = const Color(0xFF4D4026); // hsl(48,50%,30%)
           paint.strokeWidth = 3.0;
         }
+        // Local roads: tertiary, unclassified, residential, living_street
+        else if (['tertiary', 'unclassified', 'residential', 'living_street'].contains(kind)) {
+          paint.color = const Color(0xFF403620); // hsl(48,40%,25%)
+          paint.strokeWidth = 2.0;
+        }
+        // Railways (minzoom 13)
+        else if (kind == 'rail') {
+          paint.color = const Color(0xFF404040); // hsl(0,0%,25%)
+          paint.strokeWidth = 1.0;
+          // Note: theme uses dasharray [3, 3] which we can't easily do
+        }
+        // Skip other road types
+        else {
+          return null;
+        }
+
         paint.style = PaintingStyle.stroke;
         paint.strokeCap = StrokeCap.round;
         paint.strokeJoin = StrokeJoin.round;
         break;
 
-      case 'bridges':
-        paint.color = const Color(0xFF757575);
-        paint.strokeWidth = 4.0;
-        paint.style = PaintingStyle.stroke;
-        paint.strokeCap = StrokeCap.round;
-        break;
-
-      case 'buildings':
-        paint.color = const Color(0xFF90A4AE).withOpacity(0.7);
-        paint.style = PaintingStyle.fill;
-        break;
-
-      case 'street_polygons':
-        paint.color = const Color(0xFFBDBDBD).withOpacity(0.5);
-        paint.style = PaintingStyle.fill;
-        break;
-
-      case 'pier_polygons':
-        paint.color = const Color(0xFF8D6E63).withOpacity(0.6);
-        paint.style = PaintingStyle.fill;
-        break;
-
       default:
-        return null; // Don't render labels, pois, addresses, etc.
+        // Skip all other layers: buildings, addresses, labels, pois, bridges, etc.
+        return null;
     }
 
     return paint;
@@ -386,15 +396,10 @@ class Vector3DMapPainter extends CustomPainter {
 
   double _getElevationForLayer(String layerName) {
     switch (layerName) {
-      case 'buildings':
-        return 10.0; // Buildings elevated
       case 'streets':
-      case 'bridges':
-        return 1.0; // Roads slightly elevated
-      case 'street_polygons':
-        return 0.5; // Road areas slightly above ground
+        return 0.5; // Roads slightly elevated above land
       default:
-        return 0.0; // Ground level
+        return 0.0; // Ground level for water and land
     }
   }
 
