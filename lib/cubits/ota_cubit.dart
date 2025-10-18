@@ -107,17 +107,17 @@ class OtaCubit extends Cubit<OtaState> {
   void _initialize() {
     // Subscribe to OTA status updates
     _otaSubscription = _otaSync.stream.listen((otaData) {
-      _updateState(otaData.otaStatus);
+      _updateState();
     });
 
     // Subscribe to vehicle state updates
     _vehicleSubscription = _vehicleSync.stream.listen((vehicleData) {
       // Re-evaluate OTA state when vehicle state changes
-      _updateState(_otaSync.state.otaStatus);
+      _updateState();
     });
   }
 
-  void _updateState(String? otaStatusString) {
+  void _updateState() {
     final vehicleState = _vehicleSync.state.state;
     final isReadyToDrive = vehicleState == ScooterState.readyToDrive;
     final isParked = vehicleState == ScooterState.parked;

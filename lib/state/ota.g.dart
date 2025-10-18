@@ -7,49 +7,39 @@ part of 'ota.dart';
 // **************************************************************************
 
 abstract mixin class $OtaData implements Syncable<OtaData> {
-  String get otaStatus;
-  String get updateType;
   String get dbcStatus;
-  String get mdbStatus;
   String get dbcUpdateVersion;
+  String get dbcUpdateMethod;
   String get dbcError;
   String get dbcErrorMessage;
   String get dbcDownloadProgress;
+  String get mdbStatus;
+  String get mdbUpdateVersion;
+  String get mdbUpdateMethod;
+  String get mdbError;
+  String get mdbErrorMessage;
+  String get mdbDownloadProgress;
   get syncSettings => SyncSettings(
       "ota",
       Duration(microseconds: 5000000),
       [
         SyncFieldSettings(
-            name: "otaStatus",
-            variable: "status",
-            type: SyncFieldType.string,
-            typeName: "String",
-            defaultValue: "unknown",
-            interval: null),
-        SyncFieldSettings(
-            name: "updateType",
-            variable: "update-type",
-            type: SyncFieldType.string,
-            typeName: "String",
-            defaultValue: "none",
-            interval: null),
-        SyncFieldSettings(
             name: "dbcStatus",
             variable: "status:dbc",
             type: SyncFieldType.string,
             typeName: "String",
-            defaultValue: "",
+            defaultValue: "idle",
             interval: null),
         SyncFieldSettings(
-            name: "mdbStatus",
-            variable: "status:mdb",
+            name: "dbcUpdateVersion",
+            variable: "update-version:dbc",
             type: SyncFieldType.string,
             typeName: "String",
             defaultValue: "",
             interval: null),
         SyncFieldSettings(
-            name: "dbcUpdateVersion",
-            variable: "update-version:dbc",
+            name: "dbcUpdateMethod",
+            variable: "update-method:dbc",
             type: SyncFieldType.string,
             typeName: "String",
             defaultValue: "",
@@ -75,6 +65,48 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             typeName: "String",
             defaultValue: "0",
             interval: null),
+        SyncFieldSettings(
+            name: "mdbStatus",
+            variable: "status:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "idle",
+            interval: null),
+        SyncFieldSettings(
+            name: "mdbUpdateVersion",
+            variable: "update-version:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
+        SyncFieldSettings(
+            name: "mdbUpdateMethod",
+            variable: "update-method:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
+        SyncFieldSettings(
+            name: "mdbError",
+            variable: "error:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
+        SyncFieldSettings(
+            name: "mdbErrorMessage",
+            variable: "error-message:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
+        SyncFieldSettings(
+            name: "mdbDownloadProgress",
+            variable: "download-progress:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "0",
+            interval: null),
       ],
       "null",
       []);
@@ -82,55 +114,72 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
   @override
   OtaData update(String name, String value) {
     return OtaData(
-      otaStatus: "status" != name ? otaStatus : value,
-      updateType: "update-type" != name ? updateType : value,
       dbcStatus: "status:dbc" != name ? dbcStatus : value,
-      mdbStatus: "status:mdb" != name ? mdbStatus : value,
       dbcUpdateVersion: "update-version:dbc" != name ? dbcUpdateVersion : value,
+      dbcUpdateMethod: "update-method:dbc" != name ? dbcUpdateMethod : value,
       dbcError: "error:dbc" != name ? dbcError : value,
       dbcErrorMessage: "error-message:dbc" != name ? dbcErrorMessage : value,
       dbcDownloadProgress:
           "download-progress:dbc" != name ? dbcDownloadProgress : value,
+      mdbStatus: "status:mdb" != name ? mdbStatus : value,
+      mdbUpdateVersion: "update-version:mdb" != name ? mdbUpdateVersion : value,
+      mdbUpdateMethod: "update-method:mdb" != name ? mdbUpdateMethod : value,
+      mdbError: "error:mdb" != name ? mdbError : value,
+      mdbErrorMessage: "error-message:mdb" != name ? mdbErrorMessage : value,
+      mdbDownloadProgress:
+          "download-progress:mdb" != name ? mdbDownloadProgress : value,
     );
   }
 
   @override
   OtaData updateSet(String name, Set<dynamic> value) {
     return OtaData(
-      otaStatus: otaStatus,
-      updateType: updateType,
       dbcStatus: dbcStatus,
-      mdbStatus: mdbStatus,
       dbcUpdateVersion: dbcUpdateVersion,
+      dbcUpdateMethod: dbcUpdateMethod,
       dbcError: dbcError,
       dbcErrorMessage: dbcErrorMessage,
       dbcDownloadProgress: dbcDownloadProgress,
+      mdbStatus: mdbStatus,
+      mdbUpdateVersion: mdbUpdateVersion,
+      mdbUpdateMethod: mdbUpdateMethod,
+      mdbError: mdbError,
+      mdbErrorMessage: mdbErrorMessage,
+      mdbDownloadProgress: mdbDownloadProgress,
     );
   }
 
   List<Object?> get props => [
-        otaStatus,
-        updateType,
         dbcStatus,
-        mdbStatus,
         dbcUpdateVersion,
+        dbcUpdateMethod,
         dbcError,
         dbcErrorMessage,
-        dbcDownloadProgress
+        dbcDownloadProgress,
+        mdbStatus,
+        mdbUpdateVersion,
+        mdbUpdateMethod,
+        mdbError,
+        mdbErrorMessage,
+        mdbDownloadProgress
       ];
   @override
   String toString() {
     final buf = StringBuffer();
 
     buf.writeln("OtaData(");
-    buf.writeln("	otaStatus = $otaStatus");
-    buf.writeln("	updateType = $updateType");
     buf.writeln("	dbcStatus = $dbcStatus");
-    buf.writeln("	mdbStatus = $mdbStatus");
     buf.writeln("	dbcUpdateVersion = $dbcUpdateVersion");
+    buf.writeln("	dbcUpdateMethod = $dbcUpdateMethod");
     buf.writeln("	dbcError = $dbcError");
     buf.writeln("	dbcErrorMessage = $dbcErrorMessage");
     buf.writeln("	dbcDownloadProgress = $dbcDownloadProgress");
+    buf.writeln("	mdbStatus = $mdbStatus");
+    buf.writeln("	mdbUpdateVersion = $mdbUpdateVersion");
+    buf.writeln("	mdbUpdateMethod = $mdbUpdateMethod");
+    buf.writeln("	mdbError = $mdbError");
+    buf.writeln("	mdbErrorMessage = $mdbErrorMessage");
+    buf.writeln("	mdbDownloadProgress = $mdbDownloadProgress");
     buf.writeln(")");
 
     return buf.toString();
