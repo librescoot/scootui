@@ -267,12 +267,13 @@ class TurnByTurnWidget extends StatelessWidget {
                   _getInstructionText(instruction, null),
                   style: TextStyle(
                     color: isDark ? Colors.white70 : Colors.black87,
-                    fontSize: 15,
+                    fontSize: 18,
                     fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
                     height: 1.2,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: 3,
+                  overflow: TextOverflow.fade,
+                  softWrap: true,
                 ),
                 // Only show next instruction if it follows shortly after current one (< 300m between them)
                 if (nextInstruction != null && nextInstruction.distance < 300) ...[
@@ -281,7 +282,7 @@ class TurnByTurnWidget extends StatelessWidget {
                     'Then ${_getShortInstructionText(nextInstruction)}',
                     style: TextStyle(
                       color: isDark ? Colors.white38 : Colors.black45,
-                      fontSize: 13,
+                      fontSize: 14,
                       height: 1.2,
                     ),
                     maxLines: 1,
