@@ -19,26 +19,35 @@ class SpeedCenterWidget extends StatelessWidget {
     // Get the correct speed based on settings
     final speed = _getDisplaySpeed(engineData, settings);
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        const SpeedLimitIndicator(iconSize: 36),
-        Text(
-          speed.toStringAsFixed(0),
-          style: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-            height: 1.0,
-          ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              speed.toStringAsFixed(0),
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+            Text(
+              'km/h',
+              style: TextStyle(
+                fontSize: 16,
+                color: isDark ? Colors.white70 : Colors.black54,
+                height: 0.8,
+              ),
+            ),
+          ],
         ),
-        Text(
-          'km/h',
-          style: TextStyle(
-            fontSize: 16,
-            color: isDark ? Colors.white70 : Colors.black54,
-            height: 0.8,
-          ),
+        // Position speed limit to the right of the speed
+        Positioned(
+          right: 0,
+          child: const SpeedLimitIndicator(iconSize: 36),
         ),
       ],
     );

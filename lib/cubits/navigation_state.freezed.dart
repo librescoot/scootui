@@ -26,6 +26,9 @@ mixin _$NavigationState {
   bool get isOffRoute;
   LatLng? get snappedPosition;
   List<String> get pendingConditions;
+  String? get currentStreetName;
+  String? get currentRoadType;
+  String? get currentSpeedLimit;
 
   /// Create a copy of NavigationState
   /// with the given fields replaced by the non-null parameter values.
@@ -58,7 +61,13 @@ mixin _$NavigationState {
             (identical(other.snappedPosition, snappedPosition) ||
                 other.snappedPosition == snappedPosition) &&
             const DeepCollectionEquality()
-                .equals(other.pendingConditions, pendingConditions));
+                .equals(other.pendingConditions, pendingConditions) &&
+            (identical(other.currentStreetName, currentStreetName) ||
+                other.currentStreetName == currentStreetName) &&
+            (identical(other.currentRoadType, currentRoadType) ||
+                other.currentRoadType == currentRoadType) &&
+            (identical(other.currentSpeedLimit, currentSpeedLimit) ||
+                other.currentSpeedLimit == currentSpeedLimit));
   }
 
   @override
@@ -74,11 +83,14 @@ mixin _$NavigationState {
       distanceFromRoute,
       isOffRoute,
       snappedPosition,
-      const DeepCollectionEquality().hash(pendingConditions));
+      const DeepCollectionEquality().hash(pendingConditions),
+      currentStreetName,
+      currentRoadType,
+      currentSpeedLimit);
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions, currentStreetName: $currentStreetName, currentRoadType: $currentRoadType, currentSpeedLimit: $currentSpeedLimit)';
   }
 }
 
@@ -99,7 +111,10 @@ abstract mixin class $NavigationStateCopyWith<$Res> {
       double distanceFromRoute,
       bool isOffRoute,
       LatLng? snappedPosition,
-      List<String> pendingConditions});
+      List<String> pendingConditions,
+      String? currentStreetName,
+      String? currentRoadType,
+      String? currentSpeedLimit});
 
   $RouteCopyWith<$Res>? get route;
   $RouteInstructionCopyWith<$Res>? get currentInstruction;
@@ -129,6 +144,9 @@ class _$NavigationStateCopyWithImpl<$Res>
     Object? isOffRoute = null,
     Object? snappedPosition = freezed,
     Object? pendingConditions = null,
+    Object? currentStreetName = freezed,
+    Object? currentRoadType = freezed,
+    Object? currentSpeedLimit = freezed,
   }) {
     return _then(_self.copyWith(
       route: freezed == route
@@ -175,6 +193,18 @@ class _$NavigationStateCopyWithImpl<$Res>
           ? _self.pendingConditions
           : pendingConditions // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      currentStreetName: freezed == currentStreetName
+          ? _self.currentStreetName
+          : currentStreetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      currentRoadType: freezed == currentRoadType
+          ? _self.currentRoadType
+          : currentRoadType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      currentSpeedLimit: freezed == currentSpeedLimit
+          ? _self.currentSpeedLimit
+          : currentSpeedLimit // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 
@@ -221,7 +251,10 @@ class _NavigationState extends NavigationState {
       this.distanceFromRoute = 0.0,
       this.isOffRoute = false,
       this.snappedPosition = null,
-      final List<String> pendingConditions = const []})
+      final List<String> pendingConditions = const [],
+      this.currentStreetName = null,
+      this.currentRoadType = null,
+      this.currentSpeedLimit = null})
       : _upcomingInstructions = upcomingInstructions,
         _pendingConditions = pendingConditions,
         super._();
@@ -273,6 +306,16 @@ class _NavigationState extends NavigationState {
     return EqualUnmodifiableListView(_pendingConditions);
   }
 
+  @override
+  @JsonKey()
+  final String? currentStreetName;
+  @override
+  @JsonKey()
+  final String? currentRoadType;
+  @override
+  @JsonKey()
+  final String? currentSpeedLimit;
+
   /// Create a copy of NavigationState
   /// with the given fields replaced by the non-null parameter values.
   @override
@@ -304,7 +347,13 @@ class _NavigationState extends NavigationState {
             (identical(other.snappedPosition, snappedPosition) ||
                 other.snappedPosition == snappedPosition) &&
             const DeepCollectionEquality()
-                .equals(other._pendingConditions, _pendingConditions));
+                .equals(other._pendingConditions, _pendingConditions) &&
+            (identical(other.currentStreetName, currentStreetName) ||
+                other.currentStreetName == currentStreetName) &&
+            (identical(other.currentRoadType, currentRoadType) ||
+                other.currentRoadType == currentRoadType) &&
+            (identical(other.currentSpeedLimit, currentSpeedLimit) ||
+                other.currentSpeedLimit == currentSpeedLimit));
   }
 
   @override
@@ -320,11 +369,14 @@ class _NavigationState extends NavigationState {
       distanceFromRoute,
       isOffRoute,
       snappedPosition,
-      const DeepCollectionEquality().hash(_pendingConditions));
+      const DeepCollectionEquality().hash(_pendingConditions),
+      currentStreetName,
+      currentRoadType,
+      currentSpeedLimit);
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions, currentStreetName: $currentStreetName, currentRoadType: $currentRoadType, currentSpeedLimit: $currentSpeedLimit)';
   }
 }
 
@@ -347,7 +399,10 @@ abstract mixin class _$NavigationStateCopyWith<$Res>
       double distanceFromRoute,
       bool isOffRoute,
       LatLng? snappedPosition,
-      List<String> pendingConditions});
+      List<String> pendingConditions,
+      String? currentStreetName,
+      String? currentRoadType,
+      String? currentSpeedLimit});
 
   @override
   $RouteCopyWith<$Res>? get route;
@@ -379,6 +434,9 @@ class __$NavigationStateCopyWithImpl<$Res>
     Object? isOffRoute = null,
     Object? snappedPosition = freezed,
     Object? pendingConditions = null,
+    Object? currentStreetName = freezed,
+    Object? currentRoadType = freezed,
+    Object? currentSpeedLimit = freezed,
   }) {
     return _then(_NavigationState(
       route: freezed == route
@@ -425,6 +483,18 @@ class __$NavigationStateCopyWithImpl<$Res>
           ? _self._pendingConditions
           : pendingConditions // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      currentStreetName: freezed == currentStreetName
+          ? _self.currentStreetName
+          : currentStreetName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      currentRoadType: freezed == currentRoadType
+          ? _self.currentRoadType
+          : currentRoadType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      currentSpeedLimit: freezed == currentSpeedLimit
+          ? _self.currentSpeedLimit
+          : currentSpeedLimit // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 
