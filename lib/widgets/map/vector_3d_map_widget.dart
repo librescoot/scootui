@@ -48,19 +48,73 @@ class Vector3DMapWidget extends StatefulWidget {
   State<Vector3DMapWidget> createState() => _Vector3DMapWidgetState();
 }
 
-class _Vector3DMapWidgetState extends State<Vector3DMapWidget> {
+class _Vector3DMapWidgetState extends State<Vector3DMapWidget> with SingleTickerProviderStateMixin {
   final Map<TileCoord, List<VectorFeature>> _tileCache = {};
   bool _isLoading = true;
+
+  late AnimationController _positionController;
+  late Animation<double> _latAnimation;
+  late Animation<double> _lngAnimation;
+  LatLng _currentPosition;
+
+  _Vector3DMapWidgetState() : _currentPosition = const LatLng(0, 0);
 
   @override
   void initState() {
     super.initState();
+    _currentPosition = widget.position;
+
+    _positionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100), // Short, smooth animation
+    );
+
+    _latAnimation = Tween<double>(
+      begin: widget.position.latitude,
+      end: widget.position.latitude,
+    ).animate(CurvedAnimation(
+      parent: _positionController,
+      curve: Curves.linear,
+    ))..addListener(() {
+      setState(() {
+        _currentPosition = LatLng(_latAnimation.value, _lngAnimation.value);
+      });
+    });
+
+    _lngAnimation = Tween<double>(
+      begin: widget.position.longitude,
+      end: widget.position.longitude,
+    ).animate(_positionController);
+
     _loadVisibleTiles();
   }
 
   @override
   void didUpdateWidget(Vector3DMapWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // Animate position change
+    if (oldWidget.position != widget.position) {
+      _latAnimation = Tween<double>(
+        begin: _currentPosition.latitude,
+        end: widget.position.latitude,
+      ).animate(CurvedAnimation(
+        parent: _positionController,
+        curve: Curves.linear,
+      ))..addListener(() {
+        setState(() {
+          _currentPosition = LatLng(_latAnimation.value, _lngAnimation.value);
+        });
+      });
+
+      _lngAnimation = Tween<double>(
+        begin: _currentPosition.longitude,
+        end: widget.position.longitude,
+      ).animate(_positionController);
+
+      _positionController.forward(from: 0.0);
+    }
+
     // Only reload if zoom changed significantly or position moved far enough to need new tiles
     final zoomChanged = (oldWidget.zoom.floor() != widget.zoom.floor());
     final distanceMoved = distanceCalculator.distance(oldWidget.position, widget.position);
@@ -69,6 +123,12 @@ class _Vector3DMapWidgetState extends State<Vector3DMapWidget> {
     if (needsReload) {
       _loadVisibleTiles();
     }
+  }
+
+  @override
+  void dispose() {
+    _positionController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadVisibleTiles() async {
@@ -185,7 +245,7 @@ class _Vector3DMapWidgetState extends State<Vector3DMapWidget> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final camera = Camera3D(
-          center: widget.position,
+          center: _currentPosition, // Use animated position for smooth movement
           zoom: widget.zoom,
           bearing: widget.bearing,
           pitch: widget.pitch,
