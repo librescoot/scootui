@@ -1481,17 +1481,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cluster Simulator'),
-      ),
       body: Stack(
         children: [
-          SingleChildScrollView(
+          Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Dashboard cluster
+                // Dashboard cluster - fixed, doesn't scroll
                 SizedBox(
                   width: 480,
                   height: 560,
@@ -1500,19 +1497,21 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
                 const SizedBox(width: 16),
 
-                // Control cards in a wrap layout next to the dashboard
+                // Control cards - scrollable independently
                 Expanded(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.start,
-                    children: [
-                      for (final builder in _cardBuilders)
-                        SizedBox(
-                          width: 220,
-                          child: builder(),
-                        ),
-                    ],
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.start,
+                      children: [
+                        for (final builder in _cardBuilders)
+                          SizedBox(
+                            width: 220,
+                            child: builder(),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
