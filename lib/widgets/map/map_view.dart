@@ -339,8 +339,8 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
     // Set flag FIRST to prevent new tickers from being created
     _isDisposing = true;
 
-    // Don't dispose the animator - it's shared state in MapCubit
-    // Just stop creating new tickers via createTicker override
+    // Dispose the animator to prevent it from using the disposed ticker provider
+    _mapCubit?.disposeAnimator();
 
     // Always call super.dispose() to clean up tickers
     super.dispose();
@@ -486,8 +486,8 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     // Set flag FIRST to prevent new tickers from being created
     _isDisposing = true;
 
-    // Don't dispose the animator - it's shared state in MapCubit
-    // Just stop creating new tickers via createTicker override
+    // Dispose the animator to prevent it from using the disposed ticker provider
+    _mapCubit?.disposeAnimator();
 
     // Always call super.dispose() to clean up tickers
     super.dispose();
