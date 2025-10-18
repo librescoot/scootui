@@ -35,6 +35,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   String? _errorMessage;
   StreamSubscription? _connectionStateSubscription;
 
+  // GPS values
+  double _gpsLatitude = 0.0;
+  double _gpsLongitude = 0.0;
+  double _gpsCourse = 0.0;
+  double _gpsSpeed = 0.0;
+  double _gpsAltitude = 0.0;
+
+  // Navigation values
+  String _navigationDestination = '';
+
   // Current states
   String _blinkerState = 'off';
   String _handlebarPosition = 'unlocked';
@@ -43,18 +53,34 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   String _leftBrakeState = 'off';
   String _rightBrakeState = 'off';
   String _seatboxButtonState = 'off';
+  String _seatboxLockState = 'open';
   String _bluetoothStatus = 'disconnected';
   String _internetStatus = 'disconnected';
+  String _internetAccessTech = 'UNKNOWN';
   String _cloudStatus = 'disconnected';
   String _gpsState = 'off';
-  String _otaStatus = 'none';
-  String _dbcStatus = '';
-  String _mdbStatus = '';
-  String _updateType = 'none';
+
+  // OTA status fields (per component)
+  String _dbcStatus = 'idle';
+  String _dbcUpdateVersion = '';
+  String _dbcUpdateMethod = '';
+  int _dbcDownloadProgress = 0;
+  String _mdbStatus = 'idle';
+  String _mdbUpdateVersion = '';
+  String _mdbUpdateMethod = '';
+  int _mdbDownloadProgress = 0;
 
   // Battery states
   String _battery0State = 'unknown';
   String _battery1State = 'unknown';
+
+  // Motor states
+  int _motorVoltage = 50000; // 50V in mV
+  int _motorRpm = 0;
+  int _motorTemperature = 25; // °C
+  String _motorThrottle = 'off';
+  String _motorKers = 'off';
+  String _motorKersReasonOff = 'none';
 
   // Battery fault codes (Sets to match production behavior)
   Set<int> _battery0Fault = {};
@@ -72,7 +98,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   // Expanded sections
   bool _vehicleStateExpanded = false;
-  bool _otaStatusExpanded = false;
 
   // GPS timestamp simulation
   Timer? _gpsTimestampTimer;
@@ -135,18 +160,27 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           await widget.repository.get('vehicle', 'brake:left');
       final rightBrakeState =
           await widget.repository.get('vehicle', 'brake:right');
+      final seatboxLockState =
+          await widget.repository.get('vehicle', 'seatbox:lock');
 
       // Load system states
       final bluetoothStatus = await widget.repository.get('ble', 'status');
       final internetStatus = await widget.repository.get('internet', 'status');
+      final internetAccessTech = await widget.repository.get('internet', 'access-tech');
       final signalQuality =
           await widget.repository.get('internet', 'signal-quality');
       final cloudStatus = await widget.repository.get('internet', 'unu-cloud');
       final gpsState = await widget.repository.get('gps', 'state');
-      final otaStatus = await widget.repository.get('ota', 'status');
+
+      // OTA status fields
       final dbcStatus = await widget.repository.get('ota', 'status:dbc');
+      final dbcUpdateVersion = await widget.repository.get('ota', 'update-version:dbc');
+      final dbcUpdateMethod = await widget.repository.get('ota', 'update-method:dbc');
+      final dbcDownloadProgress = await widget.repository.get('ota', 'download-progress:dbc');
       final mdbStatus = await widget.repository.get('ota', 'status:mdb');
-      final updateType = await widget.repository.get('ota', 'update-type');
+      final mdbUpdateVersion = await widget.repository.get('ota', 'update-version:mdb');
+      final mdbUpdateMethod = await widget.repository.get('ota', 'update-method:mdb');
+      final mdbDownloadProgress = await widget.repository.get('ota', 'download-progress:mdb');
 
       // Load battery states
       final battery0Present =
@@ -158,6 +192,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           await widget.repository.get('battery:1', 'present');
       final battery1Charge = await widget.repository.get('battery:1', 'charge');
       final battery1State = await widget.repository.get('battery:1', 'state');
+
+      // Load motor states
+      final motorVoltage = await widget.repository.get('engine-ecu', 'motor:voltage');
+      final motorRpm = await widget.repository.get('engine-ecu', 'rpm');
+      final motorTemperature = await widget.repository.get('engine-ecu', 'temperature');
+      final motorThrottle = await widget.repository.get('engine-ecu', 'throttle');
+      final motorKers = await widget.repository.get('engine-ecu', 'kers');
+      final motorKersReasonOff = await widget.repository.get('engine-ecu', 'kers-reason-off');
 
       // Load battery fault codes from Sets
       final battery0FaultMembers =
@@ -186,6 +228,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       final rpm = await widget.repository.get('engine-ecu', 'rpm');
       final odometer = await widget.repository.get('engine-ecu', 'odometer');
 
+      // Load GPS values
+      final gpsLatitude = await widget.repository.get('gps', 'latitude');
+      final gpsLongitude = await widget.repository.get('gps', 'longitude');
+      final gpsCourse = await widget.repository.get('gps', 'course');
+      final gpsSpeed = await widget.repository.get('gps', 'speed');
+      final gpsAltitude = await widget.repository.get('gps', 'altitude');
+
+      // Load navigation values
+      final navigationDestination = await widget.repository.get('navigation', 'destination');
+
       // Update state with loaded values
       setState(() {
         if (blinkerState != null) _blinkerState = blinkerState;
@@ -194,17 +246,25 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (vehicleState != null) _vehicleState = vehicleState;
         if (leftBrakeState != null) _leftBrakeState = leftBrakeState;
         if (rightBrakeState != null) _rightBrakeState = rightBrakeState;
+        if (seatboxLockState != null) _seatboxLockState = seatboxLockState;
 
         if (bluetoothStatus != null) _bluetoothStatus = bluetoothStatus;
         if (internetStatus != null) _internetStatus = internetStatus;
+        if (internetAccessTech != null) _internetAccessTech = internetAccessTech;
         if (signalQuality != null)
           _signalQuality = int.tryParse(signalQuality) ?? 0;
         if (cloudStatus != null) _cloudStatus = cloudStatus;
         if (gpsState != null) _gpsState = gpsState;
-        if (otaStatus != null) _otaStatus = otaStatus;
+
+        // OTA status fields
         if (dbcStatus != null) _dbcStatus = dbcStatus;
+        if (dbcUpdateVersion != null) _dbcUpdateVersion = dbcUpdateVersion;
+        if (dbcUpdateMethod != null) _dbcUpdateMethod = dbcUpdateMethod;
+        if (dbcDownloadProgress != null) _dbcDownloadProgress = int.tryParse(dbcDownloadProgress) ?? 0;
         if (mdbStatus != null) _mdbStatus = mdbStatus;
-        if (updateType != null) _updateType = updateType;
+        if (mdbUpdateVersion != null) _mdbUpdateVersion = mdbUpdateVersion;
+        if (mdbUpdateMethod != null) _mdbUpdateMethod = mdbUpdateMethod;
+        if (mdbDownloadProgress != null) _mdbDownloadProgress = int.tryParse(mdbDownloadProgress) ?? 0;
 
         if (battery0Present != null)
           _battery0Present = battery0Present.toLowerCase() == 'true';
@@ -217,6 +277,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (battery1Charge != null)
           _simulatedBatteryCharge1 = int.tryParse(battery1Charge) ?? 100;
         if (battery1State != null) _battery1State = battery1State;
+
+        if (motorVoltage != null)
+          _motorVoltage = int.tryParse(motorVoltage) ?? 50000;
+        if (motorRpm != null)
+          _motorRpm = int.tryParse(motorRpm) ?? 0;
+        if (motorTemperature != null)
+          _motorTemperature = int.tryParse(motorTemperature) ?? 25;
+        if (motorThrottle != null) _motorThrottle = motorThrottle;
+        if (motorKers != null) _motorKers = motorKers;
+        if (motorKersReasonOff != null) _motorKersReasonOff = motorKersReasonOff;
 
         // Battery fault codes
         _battery0Fault = battery0FaultMembers
@@ -254,6 +324,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           _simulatedOdometer =
               odometerValue / 1000.0; // Convert from meters to km
         }
+
+        if (gpsLatitude != null) _gpsLatitude = double.tryParse(gpsLatitude) ?? 0.0;
+        if (gpsLongitude != null) _gpsLongitude = double.tryParse(gpsLongitude) ?? 0.0;
+        if (gpsCourse != null) _gpsCourse = double.tryParse(gpsCourse) ?? 0.0;
+        if (gpsSpeed != null) _gpsSpeed = double.tryParse(gpsSpeed) ?? 0.0;
+        if (gpsAltitude != null) _gpsAltitude = double.tryParse(gpsAltitude) ?? 0.0;
+
+        if (navigationDestination != null) _navigationDestination = navigationDestination;
       });
     } catch (e) {
       setState(() {
@@ -301,8 +379,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('internet', 'signal-quality', _signalQuality.toString()),
       _publishEvent('internet', 'unu-cloud', _cloudStatus),
       _publishEvent('gps', 'state', _gpsState),
-      _publishEvent('ota', 'status', _otaStatus),
     ]);
+
+    // Initialize OTA status fields
+    await _updateOtaValues();
 
     // Start GPS timestamp simulation if GPS is already fix-established
     if (_gpsState == 'fix-established') {
@@ -385,6 +465,35 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('aux-battery', 'charge', _auxBatteryCharge.toString()),
       _publishEvent('aux-battery', 'voltage', _auxBatteryVoltage.toString()),
       _publishEvent('aux-battery', 'charge-status', _auxBatteryChargeStatus),
+    ];
+    await Future.wait(futures);
+  }
+
+  Future<void> _updateGpsValues() async {
+    final futures = [
+      _publishEvent('gps', 'latitude', _gpsLatitude.toStringAsFixed(6)),
+      _publishEvent('gps', 'longitude', _gpsLongitude.toStringAsFixed(6)),
+      _publishEvent('gps', 'course', _gpsCourse.toStringAsFixed(1)),
+      _publishEvent('gps', 'speed', _gpsSpeed.toStringAsFixed(1)),
+      _publishEvent('gps', 'altitude', _gpsAltitude.toStringAsFixed(1)),
+    ];
+    await Future.wait(futures);
+  }
+
+  Future<void> _updateNavigationValues() async {
+    await _publishEvent('navigation', 'destination', _navigationDestination);
+  }
+
+  Future<void> _updateOtaValues() async {
+    final futures = [
+      _publishEvent('ota', 'status:dbc', _dbcStatus),
+      _publishEvent('ota', 'update-version:dbc', _dbcUpdateVersion),
+      _publishEvent('ota', 'update-method:dbc', _dbcUpdateMethod),
+      _publishEvent('ota', 'download-progress:dbc', _dbcDownloadProgress.toString()),
+      _publishEvent('ota', 'status:mdb', _mdbStatus),
+      _publishEvent('ota', 'update-version:mdb', _mdbUpdateVersion),
+      _publishEvent('ota', 'update-method:mdb', _mdbUpdateMethod),
+      _publishEvent('ota', 'download-progress:mdb', _mdbDownloadProgress.toString()),
     ];
     await Future.wait(futures);
   }
@@ -490,7 +599,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     switch (index) {
       case 0:
         return _buildSection(
-          'Speed & RPM',
+          'Motor',
           [
             _buildSlider(
               'Speed (km/h)',
@@ -499,16 +608,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               100,
               (value) {
                 setState(() => _simulatedSpeed = value.toInt());
-                _updateEngineValues();
-              },
-            ),
-            _buildSlider(
-              'RPM',
-              _simulatedRpm,
-              0,
-              10000,
-              (value) {
-                setState(() => _simulatedRpm = value.toInt());
                 _updateEngineValues();
               },
             ),
@@ -536,6 +635,36 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                       width: 60,
                       child: Text(
                         _simulatedMotorCurrent.toString(),
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Motor Voltage (mV)'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Slider(
+                        value: _motorVoltage.toDouble(),
+                        min: 35000,
+                        max: 60000,
+                        divisions: 250,
+                        label: _motorVoltage.toString(),
+                        onChanged: (value) {
+                          setState(() => _motorVoltage = value.toInt());
+                          _publishEvent('engine-ecu', 'motor:voltage', value.toInt().toString());
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 80,
+                      child: Text(
+                        '${(_motorVoltage / 1000).toStringAsFixed(1)}V',
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -758,38 +887,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         );
       case 5:
         return _buildSection(
-          'Handlebar',
+          'Vehicle Switches',
           [
-            _buildSegmentedButton(
-              '',
-              ['unlocked', 'locked'],
-              _handlebarPosition,
-              (value) {
-                setState(() => _handlebarPosition = value);
-                _publishEvent('vehicle', 'handlebar:position', value);
-              },
-            ),
-          ],
-        );
-      case 6:
-        return _buildSection(
-          'Kickstand',
-          [
-            _buildSegmentedButton(
-              '',
-              ['up', 'down'],
-              _kickstandState,
-              (value) {
-                setState(() => _kickstandState = value);
-                _publishEvent('vehicle', 'kickstand', value);
-              },
-            ),
-          ],
-        );
-      case 7:
-        return _buildSection(
-          'Blinker State',
-          [
+            Text('Blinker:', style: TextStyle(fontWeight: FontWeight.bold)),
             _buildSegmentedButton(
               '',
               ['off', 'left', 'right', 'both'],
@@ -799,12 +899,94 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 _publishEvent('vehicle', 'blinker:state', value);
               },
             ),
+            const SizedBox(height: 16),
+            Text('Handlebar:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['unlocked', 'locked'],
+              _handlebarPosition,
+              (value) {
+                setState(() => _handlebarPosition = value);
+                _publishEvent('vehicle', 'handlebar:position', value);
+              },
+            ),
+            const SizedBox(height: 16),
+            Text('Kickstand:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['up', 'down'],
+              _kickstandState,
+              (value) {
+                setState(() => _kickstandState = value);
+                _publishEvent('vehicle', 'kickstand', value);
+              },
+            ),
+            const SizedBox(height: 16),
+            Text('Seatbox Lock:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['open', 'closed'],
+              _seatboxLockState,
+              (value) {
+                setState(() => _seatboxLockState = value);
+                _publishEvent('vehicle', 'seatbox:lock', value);
+              },
+            ),
+            const SizedBox(height: 16),
+            Text('Seatbox Button:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Listener(
+              onPointerDown: (_) => _seatboxButtonDown(),
+              onPointerUp: (_) => _seatboxButtonUp(),
+              onPointerCancel: (_) => _seatboxButtonUp(),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size(double.infinity, 40),
+                  backgroundColor: _seatboxButtonState == 'on'
+                      ? Colors.green.shade700
+                      : Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {},
+                child: Text(
+                  'Press & Hold',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Text('State:', style: TextStyle(fontSize: 12)),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: _seatboxButtonState == 'on' ? Colors.green : Colors.grey,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _seatboxButtonState.toUpperCase(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         );
-      case 8:
+      case 6:
         return _buildSection(
           'Vehicle State',
           [
+            Text('State:', style: TextStyle(fontWeight: FontWeight.bold)),
             _buildSegmentedButton(
               '',
               [
@@ -842,337 +1024,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               },
               child: Text(_vehicleStateExpanded ? 'Show Less' : 'Show More'),
             ),
-          ],
-        );
-      case 9:
-        return _buildSection(
-          'Left Brake',
-          [
-            _buildSegmentedButton(
-              '',
-              ['off', 'on'],
-              _leftBrakeState,
-              (value) {
-                // Only update state when UI button is pressed
-                setState(() => _leftBrakeState = value);
-                if (value == 'on') {
-                  print('SIM: Left brake pressed via UI button');
-                } else {
-                  print('SIM: Left brake released via UI button');
-                }
-                _publishEvent('vehicle', 'brake:left', value);
-                _publishButtonEvent('brake:left:$value');
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: const Size(0, 32),
-                  ),
-                  onPressed: () => _simulateBrakeTap('left'),
-                  child: const Text('Tap'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: const Size(0, 32),
-                  ),
-                  onPressed: () => _simulateBrakeDoubleTap('left'),
-                  child: const Text('Double-Tap'),
-                ),
-              ],
-            ),
-          ],
-        );
-      case 10:
-        return _buildSection(
-          'Right Brake',
-          [
-            _buildSegmentedButton(
-              '',
-              ['off', 'on'],
-              _rightBrakeState,
-              (value) {
-                // Only update state when UI button is pressed
-                setState(() => _rightBrakeState = value);
-                if (value == 'on') {
-                  print('SIM: Right brake pressed via UI button');
-                } else {
-                  print('SIM: Right brake released via UI button');
-                }
-                _publishEvent('vehicle', 'brake:right', value);
-                _publishButtonEvent('brake:right:$value');
-              },
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: const Size(0, 32),
-                  ),
-                  onPressed: () => _simulateBrakeTap('right'),
-                  child: const Text('Tap'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: const Size(0, 32),
-                  ),
-                  onPressed: () => _simulateBrakeDoubleTap('right'),
-                  child: const Text('Double-Tap'),
-                ),
-              ],
-            ),
-          ],
-        );
-      case 11:
-        return _buildSection(
-          'Seatbox Button',
-          [
-            // Button with mouse events
-            Listener(
-              onPointerDown: (_) => _seatboxButtonDown(),
-              onPointerUp: (_) => _seatboxButtonUp(),
-              onPointerCancel: (_) => _seatboxButtonUp(),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 40),
-                  backgroundColor: _seatboxButtonState == 'on'
-                      ? Colors.green.shade700
-                      : Colors.blue.shade700,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  // This is needed for the button to be clickable,
-                  // but the actual events are handled by the Listener
-                },
-                child: Text(
-                  'Seatbox button',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Current state indicator
-            Row(
-              children: [
-                const Text('Current state:'),
-                const SizedBox(width: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _seatboxButtonState == 'on'
-                        ? Colors.green
-                        : Colors.grey,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _seatboxButtonState.toUpperCase(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      case 12:
-        return _buildSection(
-          'Bluetooth',
-          [
-            _buildSegmentedButton(
-              '',
-              ['disconnected', 'connected'],
-              _bluetoothStatus,
-              (value) {
-                setState(() => _bluetoothStatus = value);
-                _publishEvent('ble', 'status', value);
-              },
-            ),
-          ],
-        );
-      case 13:
-        return _buildSection(
-          'Internet Status',
-          [
-            _buildSegmentedButton(
-              '',
-              ['disconnected', 'connected'],
-              _internetStatus,
-              (value) {
-                setState(() => _internetStatus = value);
-                _publishEvent('internet', 'status', value);
-              },
-            ),
-            _buildSlider(
-              'Signal Quality',
-              _signalQuality,
-              0,
-              100,
-              (value) {
-                setState(() => _signalQuality = value.toInt());
-                _publishEvent(
-                    'internet', 'signal-quality', value.toInt().toString());
-              },
-            ),
-          ],
-        );
-      case 14:
-        return _buildSection(
-          'Cloud Status',
-          [
-            _buildSegmentedButton(
-              '',
-              ['disconnected', 'connected'],
-              _cloudStatus,
-              (value) {
-                setState(() => _cloudStatus = value);
-                _publishEvent('internet', 'unu-cloud', value);
-              },
-            ),
-          ],
-        );
-      case 15:
-        return _buildSection(
-          'GPS Status',
-          [
-            _buildSegmentedButton(
-              '',
-              ['off', 'searching', 'fix-established', 'error'],
-              _gpsState,
-              (value) {
-                setState(() => _gpsState = value);
-                _publishEvent('gps', 'state', value);
-
-                // Handle GPS timestamp simulation based on status
-                if (value == 'fix-established') {
-                  _startGpsTimestampSimulation();
-                } else {
-                  _stopGpsTimestampSimulation();
-                }
-              },
-            ),
-          ],
-        );
-      case 16:
-        return _buildSection(
-          'OTA Status',
-          [
-            Text('General OTA Status:',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildSegmentedButton(
-              '',
-              [
-                'none',
-                'initializing',
-                'checking-updates',
-                'device-updated',
-                'waiting-dashboard'
-              ],
-              _otaStatus,
-              (value) {
-                setState(() => _otaStatus = value);
-                _publishEvent('ota', 'status', value);
-              },
-            ),
-            if (_otaStatusExpanded) ...[
-              _buildSegmentedButton(
-                '',
-                [
-                  'downloading-updates',
-                  'installing-updates',
-                  'checking-update-error',
-                  'downloading-update-error'
-                ],
-                _otaStatus,
-                (value) {
-                  setState(() => _otaStatus = value);
-                  _publishEvent('ota', 'status', value);
-                },
-              ),
-              _buildSegmentedButton(
-                '',
-                [
-                  'installing-update-error',
-                  'installation-complete-waiting-dashboard-reboot',
-                  'installation-complete-waiting-reboot',
-                  'unknown'
-                ],
-                _otaStatus,
-                (value) {
-                  setState(() => _otaStatus = value);
-                  _publishEvent('ota', 'status', value);
-                },
-              ),
-            ],
-            TextButton(
-              onPressed: () {
-                setState(() => _otaStatusExpanded = !_otaStatusExpanded);
-              },
-              child: Text(_otaStatusExpanded ? 'Show Less' : 'Show More'),
-            ),
-            SizedBox(height: 16),
-            Text('DBC Status:', style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildSegmentedButton(
-              '',
-              ['', 'downloading', 'installing'],
-              _dbcStatus,
-              (value) {
-                setState(() => _dbcStatus = value);
-                _publishEvent('ota', 'status:dbc', value);
-              },
-            ),
-            SizedBox(height: 8),
-            Text('MDB Status:', style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildSegmentedButton(
-              '',
-              ['', 'downloading', 'installing'],
-              _mdbStatus,
-              (value) {
-                setState(() => _mdbStatus = value);
-                _publishEvent('ota', 'status:mdb', value);
-              },
-            ),
-            SizedBox(height: 8),
-            Text('Update Type:', style: TextStyle(fontWeight: FontWeight.bold)),
-            _buildSegmentedButton(
-              '',
-              ['none', 'blocking', 'non-blocking'],
-              _updateType,
-              (value) {
-                setState(() => _updateType = value);
-                _publishEvent('ota', 'update-type', value);
-              },
-            ),
-          ],
-        );
-      case 17:
-        return _buildSection(
-          'Odometer',
-          [
+            const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Odometer (km)'),
+                Text('Odometer (km)', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
                 TextField(
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
@@ -1191,6 +1048,429 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                   },
                 ),
               ],
+            ),
+          ],
+        );
+      case 7:
+        return _buildSection(
+          'Brakes',
+          [
+            Text('Left Brake:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['off', 'on'],
+              _leftBrakeState,
+              (value) {
+                setState(() => _leftBrakeState = value);
+                if (value == 'on') {
+                  print('SIM: Left brake pressed via UI button');
+                } else {
+                  print('SIM: Left brake released via UI button');
+                }
+                _publishEvent('vehicle', 'brake:left', value);
+                _publishButtonEvent('brake:left:$value');
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 32),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeTap('left'),
+              child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 32),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeDoubleTap('left'),
+              child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 16),
+            Text('Right Brake:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['off', 'on'],
+              _rightBrakeState,
+              (value) {
+                setState(() => _rightBrakeState = value);
+                if (value == 'on') {
+                  print('SIM: Right brake pressed via UI button');
+                } else {
+                  print('SIM: Right brake released via UI button');
+                }
+                _publishEvent('vehicle', 'brake:right', value);
+                _publishButtonEvent('brake:right:$value');
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 32),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeTap('right'),
+              child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 32),
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeDoubleTap('right'),
+              child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      case 8:
+        return _buildSection(
+          'Connectivity',
+          [
+            Text('Bluetooth:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['disconnected', 'connected'],
+              _bluetoothStatus,
+              (value) {
+                setState(() => _bluetoothStatus = value);
+                _publishEvent('ble', 'status', value);
+              },
+            ),
+            const SizedBox(height: 16),
+            Text('Internet:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['disconnected', 'connected'],
+              _internetStatus,
+              (value) {
+                setState(() => _internetStatus = value);
+                _publishEvent('internet', 'status', value);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text('Access Tech:', style: TextStyle(fontSize: 12)),
+            _buildSegmentedButton(
+              '',
+              ['UNKNOWN', '2G', '3G', '4G', '5G'],
+              _internetAccessTech,
+              (value) {
+                setState(() => _internetAccessTech = value);
+                _publishEvent('internet', 'access-tech', value);
+              },
+            ),
+            _buildSlider(
+              'Signal Quality',
+              _signalQuality,
+              0,
+              100,
+              (value) {
+                setState(() => _signalQuality = value.toInt());
+                _publishEvent(
+                    'internet', 'signal-quality', value.toInt().toString());
+              },
+            ),
+            const SizedBox(height: 16),
+            Text('Cloud:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['disconnected', 'connected'],
+              _cloudStatus,
+              (value) {
+                setState(() => _cloudStatus = value);
+                _publishEvent('internet', 'unu-cloud', value);
+              },
+            ),
+          ],
+        );
+      case 9:
+        return _buildSection(
+          'GPS',
+          [
+            Text('GPS Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['off', 'searching', 'fix-established', 'error'],
+              _gpsState,
+              (value) {
+                setState(() => _gpsState = value);
+                _publishEvent('gps', 'state', value);
+
+                // Handle GPS timestamp simulation based on status
+                if (value == 'fix-established') {
+                  _startGpsTimestampSimulation();
+                } else {
+                  _stopGpsTimestampSimulation();
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            Text('Position:', style: TextStyle(fontWeight: FontWeight.bold)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Latitude'),
+                TextField(
+                  keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  controller: TextEditingController(
+                      text: _gpsLatitude.toStringAsFixed(6)),
+                  onSubmitted: (value) {
+                    final parsedValue = double.tryParse(value);
+                    if (parsedValue != null) {
+                      setState(() => _gpsLatitude = parsedValue);
+                      _updateGpsValues();
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Longitude'),
+                TextField(
+                  keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  controller: TextEditingController(
+                      text: _gpsLongitude.toStringAsFixed(6)),
+                  onSubmitted: (value) {
+                    final parsedValue = double.tryParse(value);
+                    if (parsedValue != null) {
+                      setState(() => _gpsLongitude = parsedValue);
+                      _updateGpsValues();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
+        );
+      case 10:
+        return _buildSection(
+          'Navigation',
+          [
+            Text('Destination (lat,lon)', style: TextStyle(fontSize: 12)),
+            const SizedBox(height: 4),
+            TextField(
+              keyboardType: TextInputType.text,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                hintText: '48.123456,11.123456',
+              ),
+              controller: TextEditingController(text: _navigationDestination),
+              onSubmitted: (value) {
+                setState(() => _navigationDestination = value);
+                _updateNavigationValues();
+              },
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 36),
+              ),
+              onPressed: () {
+                setState(() => _navigationDestination = '');
+                _updateNavigationValues();
+              },
+              child: const Text('Clear Destination'),
+            ),
+          ],
+        );
+      case 11:
+        return _buildSection(
+          'OTA - DBC',
+          [
+            Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['idle', 'downloading', 'installing', 'rebooting', 'error'],
+              _dbcStatus,
+              (value) {
+                setState(() => _dbcStatus = value);
+                _updateOtaValues();
+              },
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Update Version'),
+                TextField(
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    hintText: '20250506t214046',
+                  ),
+                  controller: TextEditingController(text: _dbcUpdateVersion),
+                  onSubmitted: (value) {
+                    setState(() => _dbcUpdateVersion = value);
+                    _updateOtaValues();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['', 'full', 'delta'],
+              _dbcUpdateMethod,
+              (value) {
+                setState(() => _dbcUpdateMethod = value);
+                _updateOtaValues();
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildSlider(
+              'Download Progress (%)',
+              _dbcDownloadProgress,
+              0,
+              100,
+              (value) {
+                setState(() => _dbcDownloadProgress = value.toInt());
+                _updateOtaValues();
+              },
+            ),
+          ],
+        );
+      case 12:
+        return _buildSection(
+          'OTA - MDB',
+          [
+            Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['idle', 'downloading', 'installing', 'rebooting', 'error'],
+              _mdbStatus,
+              (value) {
+                setState(() => _mdbStatus = value);
+                _updateOtaValues();
+              },
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Update Version'),
+                TextField(
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    hintText: '20250506t214046',
+                  ),
+                  controller: TextEditingController(text: _mdbUpdateVersion),
+                  onSubmitted: (value) {
+                    setState(() => _mdbUpdateVersion = value);
+                    _updateOtaValues();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['', 'full', 'delta'],
+              _mdbUpdateMethod,
+              (value) {
+                setState(() => _mdbUpdateMethod = value);
+                _updateOtaValues();
+              },
+            ),
+            const SizedBox(height: 8),
+            _buildSlider(
+              'Download Progress (%)',
+              _mdbDownloadProgress,
+              0,
+              100,
+              (value) {
+                setState(() => _mdbDownloadProgress = value.toInt());
+                _updateOtaValues();
+              },
+            ),
+          ],
+        );
+      case 13:
+        return _buildSection(
+          'ECU Extended',
+          [
+            _buildSlider(
+              'RPM',
+              _motorRpm,
+              0,
+              1000,
+              (value) {
+                setState(() => _motorRpm = value.toInt());
+                _publishEvent('engine-ecu', 'rpm', value.toInt().toString());
+              },
+            ),
+            _buildSlider(
+              'Temperature (°C)',
+              _motorTemperature,
+              -20,
+              100,
+              (value) {
+                setState(() => _motorTemperature = value.toInt());
+                _publishEvent('engine-ecu', 'temperature', value.toInt().toString());
+              },
+            ),
+            const SizedBox(height: 8),
+            Text('Throttle:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['off', 'on'],
+              _motorThrottle,
+              (value) {
+                setState(() => _motorThrottle = value);
+                _publishEvent('engine-ecu', 'throttle', value);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text('KERS:', style: TextStyle(fontWeight: FontWeight.bold)),
+            _buildSegmentedButton(
+              '',
+              ['off', 'on'],
+              _motorKers,
+              (value) {
+                setState(() => _motorKers = value);
+                _publishEvent('engine-ecu', 'kers', value);
+              },
+            ),
+            const SizedBox(height: 8),
+            Text('KERS Reason Off:', style: TextStyle(fontSize: 12)),
+            _buildSegmentedButton(
+              '',
+              ['none', 'cold', 'hot'],
+              _motorKersReasonOff,
+              (value) {
+                setState(() => _motorKersReasonOff = value);
+                _publishEvent('engine-ecu', 'kers-reason-off', value);
+              },
             ),
           ],
         );
@@ -1228,7 +1508,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     runSpacing: 8,
                     alignment: WrapAlignment.start,
                     children: [
-                      for (int i = 0; i < 18; i++)
+                      for (int i = 0; i < 14; i++)
                         SizedBox(
                           width: 220,
                           child: _buildCard(i),
