@@ -1314,24 +1314,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               },
             ),
             const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Update Version'),
-                TextField(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    hintText: '20250506t214046',
-                  ),
-                  controller: TextEditingController(text: _dbcUpdateVersion),
-                  onSubmitted: (value) {
-                    setState(() => _dbcUpdateVersion = value);
-                    _updateOtaValues();
-                  },
-                ),
-              ],
+            _buildSlider(
+              'Download Progress (%)',
+              _dbcDownloadProgress,
+              0,
+              100,
+              (value) {
+                setState(() => _dbcDownloadProgress = value.toInt());
+                _updateOtaValues();
+              },
             ),
             const SizedBox(height: 8),
             Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1341,17 +1332,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               _dbcUpdateMethod,
               (value) {
                 setState(() => _dbcUpdateMethod = value);
-                _updateOtaValues();
-              },
-            ),
-            const SizedBox(height: 8),
-            _buildSlider(
-              'Download Progress (%)',
-              _dbcDownloadProgress,
-              0,
-              100,
-              (value) {
-                setState(() => _dbcDownloadProgress = value.toInt());
                 _updateOtaValues();
               },
             ),
@@ -1372,24 +1352,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               },
             ),
             const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Update Version'),
-                TextField(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    hintText: '20250506t214046',
-                  ),
-                  controller: TextEditingController(text: _mdbUpdateVersion),
-                  onSubmitted: (value) {
-                    setState(() => _mdbUpdateVersion = value);
-                    _updateOtaValues();
-                  },
-                ),
-              ],
+            _buildSlider(
+              'Download Progress (%)',
+              _mdbDownloadProgress,
+              0,
+              100,
+              (value) {
+                setState(() => _mdbDownloadProgress = value.toInt());
+                _updateOtaValues();
+              },
             ),
             const SizedBox(height: 8),
             Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1399,17 +1370,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               _mdbUpdateMethod,
               (value) {
                 setState(() => _mdbUpdateMethod = value);
-                _updateOtaValues();
-              },
-            ),
-            const SizedBox(height: 8),
-            _buildSlider(
-              'Download Progress (%)',
-              _mdbDownloadProgress,
-              0,
-              100,
-              (value) {
-                setState(() => _mdbDownloadProgress = value.toInt());
                 _updateOtaValues();
               },
             ),
