@@ -14,6 +14,14 @@ import 'vector_3d_renderer.dart';
 
 final distanceCalculator = Distance();
 
+class _PaintConfig {
+  final Paint paint;
+  final Paint? outlinePaint;
+  final int roadHierarchy;
+
+  _PaintConfig(this.paint, this.roadHierarchy, {this.outlinePaint});
+}
+
 class Vector3DMapWidget extends StatefulWidget {
   final LatLng position;
   final double zoom;
@@ -237,18 +245,48 @@ class Vector3DMapPainter extends CustomPainter {
 
     // Render vector tile features
     for (final feature in features) {
-      final renderedFeature = _renderFeature(feature);
-      if (renderedFeature != null) {
-        rendered.add(renderedFeature);
+      final renderedFeatures = _renderFeature(feature);
+      rendered.addAll(renderedFeatures);
+    }
+
+    // Sort by depth, then by road hierarchy (painter's algorithm - far to near, then minor roads first)
+    rendered.sort((a, b) {
+      final depthCompare = b.depth.compareTo(a.depth);
+      if (depthCompare != 0) return depthCompare;
+      // Within same depth, draw lower hierarchy roads first (so higher roads draw on top)
+      return a.roadHierarchy.compareTo(b.roadHierarchy);
+    });
+
+    // Group by road hierarchy and draw in order (low to high priority)
+    final grouped = <int, List<RenderedFeature>>{};
+    for (final feature in rendered) {
+      grouped.putIfAbsent(feature.roadHierarchy, () => []).add(feature);
+    }
+
+    final hierarchyLevels = grouped.keys.toList()..sort();
+
+    // Sort features by depth within each hierarchy level
+    for (final level in hierarchyLevels) {
+      grouped[level]!.sort((a, b) => b.depth.compareTo(a.depth));
+    }
+
+    // Global two-pass: draw ALL outlines hierarchically, then ALL fills hierarchically
+    // This prevents visible seams at road segment connections
+
+    // Pass 1: Draw all outlines from low to high hierarchy
+    for (final level in hierarchyLevels) {
+      for (final feature in grouped[level]!) {
+        if (feature.outlinePaint != null) {
+          canvas.drawPath(feature.path, feature.outlinePaint!);
+        }
       }
     }
 
-    // Sort by depth (painter's algorithm - far to near)
-    rendered.sort((a, b) => b.depth.compareTo(a.depth));
-
-    // Draw all features in depth order
-    for (final feature in rendered) {
-      canvas.drawPath(feature.path, feature.paint);
+    // Pass 2: Draw all fills from low to high hierarchy
+    for (final level in hierarchyLevels) {
+      for (final feature in grouped[level]!) {
+        canvas.drawPath(feature.path, feature.paint);
+      }
     }
 
     // Draw route first
@@ -327,11 +365,7 @@ class Vector3DMapPainter extends CustomPainter {
     canvas.restore();
   }
 
-  RenderedFeature? _renderFeature(VectorFeature feature) {
-    // Get styling based on layer and zoom
-    final paint = _getStyleForFeature(feature);
-    if (paint == null) return null;
-
+  List<RenderedFeature> _renderFeature(VectorFeature feature) {
     final path = ui.Path();
     double totalDepth = 0.0;
     int depthSamples = 0;
@@ -364,107 +398,198 @@ class Vector3DMapPainter extends CustomPainter {
 
     final avgDepth = depthSamples > 0 ? totalDepth / depthSamples : 0.0;
 
-    return RenderedFeature(
-      path: path,
-      paint: paint,
-      depth: avgDepth,
-      layerName: feature.layerName,
-      properties: feature.properties,
-    );
+    // Get styling - single config with optional outline
+    final config = _getStyleForFeature(feature);
+    if (config == null) return [];
+
+    return [
+      RenderedFeature(
+        path: path,
+        paint: config.paint,
+        outlinePaint: config.outlinePaint,
+        depth: avgDepth,
+        layerName: feature.layerName,
+        properties: feature.properties,
+        roadHierarchy: config.roadHierarchy,
+      )
+    ];
   }
 
-  Paint? _getStyleForFeature(VectorFeature feature) {
+  _PaintConfig? _getStyleForFeature(VectorFeature feature) {
     final layerName = feature.layerName;
-    final paint = Paint();
 
     // Match mapdark/maplight theme - only render what the theme renders
     switch (layerName) {
       case 'water_polygons':
         // Theme: "water" layer
-        paint.color = const Color(0xFF2D4A5F); // hsl(205,35%,22%) dark theme color
-        paint.style = PaintingStyle.fill;
-        break;
+        final paint = Paint()
+          ..color = const Color(0xFF2D4A5F) // hsl(205,35%,22%) dark theme color
+          ..style = PaintingStyle.fill;
+        return _PaintConfig(paint, 0);
 
       case 'water_lines':
         // Water lines (rivers, streams)
-        paint.color = const Color(0xFF2D4A5F); // Same as water polygons
-        paint.strokeWidth = 3.0;
-        paint.style = PaintingStyle.stroke;
-        paint.strokeCap = StrokeCap.round;
-        break;
+        final paint = Paint()
+          ..color = const Color(0xFF2D4A5F) // Same as water polygons
+          ..strokeWidth = 3.0
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
+        return _PaintConfig(paint, 0);
 
       case 'land':
         // Theme: various land layers with kind filtering
         final kind = feature.properties['kind']?.toString() ?? '';
+        Color landColor;
 
         // Forest (minzoom 7)
         if (kind == 'forest') {
-          paint.color = const Color(0xFF2E3D2E); // hsl(110,30%,18%)
+          landColor = const Color(0xFF2E3D2E); // hsl(110,30%,18%)
         }
         // Parks (minzoom 11)
         else if (['park', 'village_green', 'recreation_ground', 'playground', 'golf_course'].contains(kind)) {
-          paint.color = const Color(0xFF2D3D2B); // hsl(100,25%,17%)
+          landColor = const Color(0xFF2D3D2B); // hsl(100,25%,17%)
         }
         // Grass (minzoom 11)
         else if (['grass', 'grassland', 'meadow'].contains(kind)) {
-          paint.color = const Color(0xFF2E3D2B); // hsl(95,25%,17%)
+          landColor = const Color(0xFF2E3D2B); // hsl(95,25%,17%)
         }
         // Residential/commercial/industrial (minzoom 11)
         else if (['residential', 'garages'].contains(kind)) {
-          paint.color = const Color(0xFF1F1F1F).withOpacity(0.3); // hsl(0,0%,12%) 30%
+          landColor = const Color(0xFF1F1F1F).withOpacity(0.3); // hsl(0,0%,12%) 30%
         } else if (['commercial', 'retail'].contains(kind)) {
-          paint.color = const Color(0xFF2B2426).withOpacity(0.3); // hsl(330,15%,15%) 30%
+          landColor = const Color(0xFF2B2426).withOpacity(0.3); // hsl(330,15%,15%) 30%
         } else if (['industrial', 'quarry', 'railway'].contains(kind)) {
-          paint.color = const Color(0xFF2D2B26).withOpacity(0.3); // hsl(48,20%,15%) 30%
+          landColor = const Color(0xFF2D2B26).withOpacity(0.3); // hsl(48,20%,15%) 30%
         }
         // Skip or use base land color
         else {
-          paint.color = const Color(0xFF1A1712).withOpacity(0.2); // hsla(33,18%,10%,0.2)
+          landColor = const Color(0xFF1A1712).withOpacity(0.2); // hsla(33,18%,10%,0.2)
         }
-        paint.style = PaintingStyle.fill;
-        break;
+
+        final paint = Paint()
+          ..color = landColor
+          ..style = PaintingStyle.fill;
+        return _PaintConfig(paint, 0);
 
       case 'streets':
-        // Theme: roads with kind-based styling (thicker for 3D visibility)
+        // Theme: roads with kind-based styling (gray shades, varied thickness)
         final kind = feature.properties['kind']?.toString() ?? '';
 
-        // Major roads: motorway, trunk
+        // Render polygons (for wider roads/areas) or lines
+        final isPolygon = feature.geometryType == vt.GeometryType.Polygon ||
+            feature.geometryType == vt.GeometryType.MultiPolygon;
+
+        // Major roads: motorway, trunk (lightest gray, thickest)
         if (['motorway', 'trunk'].contains(kind)) {
-          paint.color = const Color(0xFF594D2E); // hsl(48,60%,35%)
-          paint.strokeWidth = 8.0;
+          if (isPolygon) {
+            final paint = Paint()
+              ..color = const Color(0xFF9E9E9E)
+              ..style = PaintingStyle.fill;
+            return _PaintConfig(paint, 4);
+          } else {
+            final outline = Paint()
+              ..color = Colors.black.withOpacity(0.3)
+              ..strokeWidth = 14.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            final fill = Paint()
+              ..color = const Color(0xFF9E9E9E)
+              ..strokeWidth = 12.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            return _PaintConfig(fill, 4, outlinePaint: outline);
+          }
         }
-        // Main roads: primary, secondary
-        else if (['primary', 'secondary'].contains(kind)) {
-          paint.color = const Color(0xFF4D4026); // hsl(48,50%,30%)
-          paint.strokeWidth = 6.0;
+        // Primary roads (medium-light gray, thick)
+        else if (kind == 'primary') {
+          if (isPolygon) {
+            final paint = Paint()
+              ..color = const Color(0xFF808080)
+              ..style = PaintingStyle.fill;
+            return _PaintConfig(paint, 3);
+          } else {
+            final outline = Paint()
+              ..color = Colors.black.withOpacity(0.3)
+              ..strokeWidth = 10.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            final fill = Paint()
+              ..color = const Color(0xFF808080)
+              ..strokeWidth = 8.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            return _PaintConfig(fill, 3, outlinePaint: outline);
+          }
         }
-        // Local roads: tertiary, unclassified, residential, living_street
+        // Secondary roads (medium gray, medium)
+        else if (kind == 'secondary') {
+          if (isPolygon) {
+            final paint = Paint()
+              ..color = const Color(0xFF707070)
+              ..style = PaintingStyle.fill;
+            return _PaintConfig(paint, 2);
+          } else {
+            final outline = Paint()
+              ..color = Colors.black.withOpacity(0.3)
+              ..strokeWidth = 8.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            final fill = Paint()
+              ..color = const Color(0xFF707070)
+              ..strokeWidth = 6.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            return _PaintConfig(fill, 2, outlinePaint: outline);
+          }
+        }
+        // Local roads: tertiary, unclassified, residential, living_street (darker gray, thin)
         else if (['tertiary', 'unclassified', 'residential', 'living_street'].contains(kind)) {
-          paint.color = const Color(0xFF403620); // hsl(48,40%,25%)
-          paint.strokeWidth = 4.0;
+          if (isPolygon) {
+            final paint = Paint()
+              ..color = const Color(0xFF606060)
+              ..style = PaintingStyle.fill;
+            return _PaintConfig(paint, 1);
+          } else {
+            final outline = Paint()
+              ..color = Colors.black.withOpacity(0.3)
+              ..strokeWidth = 5.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            final fill = Paint()
+              ..color = const Color(0xFF606060)
+              ..strokeWidth = 3.0
+              ..style = PaintingStyle.stroke
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round;
+            return _PaintConfig(fill, 1, outlinePaint: outline);
+          }
         }
         // Railways (minzoom 13)
         else if (kind == 'rail') {
-          paint.color = const Color(0xFF404040); // hsl(0,0%,25%)
-          paint.strokeWidth = 2.0;
-          // Note: theme uses dasharray [3, 3] which we can't easily do
+          final paint = Paint()
+            ..color = const Color(0xFF505050)
+            ..strokeWidth = 1.5
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round;
+          return _PaintConfig(paint, 0);
         }
         // Skip other road types
         else {
           return null;
         }
 
-        paint.style = PaintingStyle.stroke;
-        paint.strokeCap = StrokeCap.round;
-        paint.strokeJoin = StrokeJoin.round;
-        break;
-
       default:
         // Skip all other layers: buildings, addresses, labels, pois, bridges, etc.
         return null;
     }
-
-    return paint;
   }
 
   double _getElevationForLayer(String layerName) {

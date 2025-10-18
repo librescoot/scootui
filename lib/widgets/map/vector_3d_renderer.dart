@@ -105,16 +105,20 @@ class Point3D {
 class RenderedFeature {
   final ui.Path path;
   final Paint paint;
+  final Paint? outlinePaint; // Optional outline drawn first
   final double depth;
   final String layerName;
   final Map<String, dynamic> properties;
+  final int roadHierarchy; // 0 = not a road, higher = more important road
 
   RenderedFeature({
     required this.path,
     required this.paint,
+    this.outlinePaint,
     required this.depth,
     required this.layerName,
     required this.properties,
+    this.roadHierarchy = 0,
   });
 }
 
