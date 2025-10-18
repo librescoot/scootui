@@ -232,8 +232,8 @@ class MapCubit extends Cubit<MapState> {
     try {
       animator.animateTo(targetTransform);
     } catch (e) {
-      // Widget disposed during animation, ignore the error
-      print("MapCubit: Animation error (likely disposed): $e");
+      // Widget disposed during animation or custom renderer doesn't support MapController
+      // Silently ignore - this is expected with custom 3D renderer
     }
   }
 

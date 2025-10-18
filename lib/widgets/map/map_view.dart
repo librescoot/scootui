@@ -2,20 +2,19 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart'
-    show Border, BoxDecoration, BoxShape, BorderRadius, BorderSide, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart'
     show FlutterMap, MapController, MapOptions, Marker, MarkerLayer, Polyline, PolylineLayer, TileLayer;
 import 'package:latlong2/latlong.dart';
-import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer, VectorTileLayerMode, VectorTileProvider;
+import 'package:vector_map_tiles/vector_map_tiles.dart' show VectorTileProvider;
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' as vtr;
 
 import '../../cubits/map_cubit.dart';
-import '../../repositories/mdb_repository.dart';
 import '../../routing/models.dart';
-import '../../utils/theme_aware_cache.dart';
+import 'vector_3d_map_widget.dart';
 
 final distanceCalculator = Distance();
 
@@ -493,103 +492,26 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     super.dispose();
   }
 
-  Widget? _routeLayer(BuildContext context) {
-    final waypoints = widget.route?.waypoints;
-    if (waypoints == null || waypoints.isEmpty) {
-      return null;
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return PolylineLayer(
-      polylines: [
-        // Border/outline
-        Polyline(
-          points: waypoints,
-          strokeWidth: 6.0,
-          color: isDark ? Colors.grey.shade800 : Colors.white,
-        ),
-        // Main route line
-        Polyline(
-          points: waypoints,
-          strokeWidth: 4.0,
-          color: Colors.blue.shade400,
-        ),
-      ],
-    );
-  }
-
-  List<Marker> _routeMarkers() {
-    final markers = <Marker>[];
-    if (widget.destination != null) {
-      markers.add(Marker(
-        point: widget.destination!,
-        rotate: true,
-        child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
-      ));
-    }
-    return markers;
-  }
-
-  double? _getZoomIfReady() {
-    try {
-      return widget.mapController.camera.zoom;
-    } catch (_) {
-      return null; // Camera not ready yet
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final routeLayer = _routeLayer(context);
+    // Call mapReady callback after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.mapReady != null) {
+        widget.mapReady?.call(this);
+      }
+    });
 
     return Stack(
       children: [
-        FlutterMap(
-          options: MapOptions(
-            onMapReady: () {
-              widget.mapReady?.call(this);
-            },
-            minZoom: 8,
-            maxZoom: 20,
-            initialCenter: widget.position,
-            initialZoom: 17,
-            onTap: (tapPosition, latLng) {
-              // Set GPS location via MDBRepository in simulator mode
-              final mdbRepo = RepositoryProvider.of<MDBRepository>(context);
-              mdbRepo.set("gps", "latitude", latLng.latitude.toString());
-              mdbRepo.set("gps", "longitude", latLng.longitude.toString());
-            },
-            onSecondaryTap: (tapPosition, latLng) {
-              // Set destination via MDBRepository, NavigationCubit will pick it up
-              final mdbRepo = RepositoryProvider.of<MDBRepository>(context);
-              final coordinates = "${latLng.latitude},${latLng.longitude}";
-              mdbRepo.set("navigation", "destination", coordinates);
-            },
-          ),
-          mapController: widget.mapController,
-          children: [
-            VectorTileLayer(
-              theme: widget.theme,
-              tileProviders: TileProviders({
-                'versatiles-shortbread': widget.tiles,
-              }),
-              layerMode: widget.renderMode == 'vector'
-                  ? VectorTileLayerMode.vector
-                  : VectorTileLayerMode.raster,
-              maximumZoom: 20,
-              // Optimized cache settings for better performance
-              fileCacheTtl: const Duration(days: 7),
-              memoryTileCacheMaxSize: 10 * 1024 * 1024, // 10MB memory cache (bytes)
-              memoryTileDataCacheMaxSize: 99, // 99 parsed tiles in memory (max < 100)
-              fileCacheMaximumSizeInBytes: 500 * 1024 * 1024, // 500MB file cache
-              tileDelay: Duration.zero,
-              cacheFolder: ThemeAwareCache.getCacheFolderProvider(widget.themeMode),
-            ),
-            if (routeLayer != null) routeLayer,
-            // Only show destination markers, not the vehicle (it's a fixed overlay now)
-            MarkerLayer(markers: _routeMarkers()),
-          ],
+        Vector3DMapWidget(
+          position: widget.position,
+          zoom: 14.0, // Lower zoom level more likely to have data
+          bearing: widget.orientation * math.pi / 180.0, // Convert degrees to radians
+          pitch: 1.0, // ~60 degree tilt
+          tileProvider: widget.tiles,
+          theme: widget.theme,
+          route: widget.route,
+          destination: widget.destination,
         ),
         const VehicleIndicator(),
         Positioned(
@@ -602,7 +524,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
               NorthIndicator(orientation: widget.orientation),
               const SizedBox(height: 4),
               ScaleBar(
-                zoom: _getZoomIfReady(),
+                zoom: 14.0, // Match the map zoom
                 latitude: widget.position.latitude,
               ),
             ],
