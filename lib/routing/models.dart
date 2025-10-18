@@ -100,6 +100,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? postInstructionText,
     String? verbalAlertInstruction,
     String? verbalInstruction,
+    String? verbalSuccinctInstruction,
+    @Default(false) bool verbalMultiCue,
   }) = Keep;
 
   const factory RouteInstruction.turn({
@@ -113,6 +115,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? postInstructionText,
     String? verbalAlertInstruction,
     String? verbalInstruction,
+    String? verbalSuccinctInstruction,
+    @Default(false) bool verbalMultiCue,
   }) = Turn;
 
   const factory RouteInstruction.exit({
@@ -126,6 +130,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? postInstructionText,
     String? verbalAlertInstruction,
     String? verbalInstruction,
+    String? verbalSuccinctInstruction,
+    @Default(false) bool verbalMultiCue,
   }) = Exit;
 
   const factory RouteInstruction.merge({
@@ -139,6 +145,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? postInstructionText,
     String? verbalAlertInstruction,
     String? verbalInstruction,
+    String? verbalSuccinctInstruction,
+    @Default(false) bool verbalMultiCue,
   }) = Merge;
 
   const factory RouteInstruction.roundabout({
@@ -155,6 +163,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     double? bearingAfter,
     String? verbalAlertInstruction,
     String? verbalInstruction,
+    String? verbalSuccinctInstruction,
+    @Default(false) bool verbalMultiCue,
   }) = Roundabout;
 
   const factory RouteInstruction.other({
@@ -167,6 +177,8 @@ sealed class RouteInstruction with _$RouteInstruction {
     String? postInstructionText,
     String? verbalAlertInstruction,
     String? verbalInstruction,
+    String? verbalSuccinctInstruction,
+    @Default(false) bool verbalMultiCue,
   }) = Other;
 
   factory RouteInstruction.fromHint(List<int> hint, List<LatLng> polyline) {

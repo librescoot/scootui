@@ -53,6 +53,7 @@ abstract class Maneuver with _$Maneuver {
     @JsonKey(name: 'verbal_transition_alert_instruction') String? verbalTransitionAlertInstruction,
     @JsonKey(name: 'verbal_pre_transition_instruction') String? verbalPreTransitionInstruction,
     @JsonKey(name: 'verbal_post_transition_instruction') String? verbalPostTransitionInstruction,
+    @JsonKey(name: 'verbal_succinct_transition_instruction') String? verbalSuccinctTransitionInstruction,
     @JsonKey(name: 'verbal_multi_cue') @Default(false) bool verbalMultiCue,
     @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
     @JsonKey(name: 'depart_instruction') String? departInstruction,

@@ -275,8 +275,12 @@ class TurnByTurnWidget extends StatelessWidget {
                   overflow: TextOverflow.fade,
                   softWrap: true,
                 ),
-                // Only show next instruction if it follows shortly after current one (< 300m between them)
-                if (nextInstruction != null && nextInstruction.distance < 300) ...[
+                // Only show next instruction preview if:
+                // 1. There is a next instruction that follows shortly (< 300m)
+                // 2. Current instruction doesn't have verbalMultiCue (which already includes "Then" in succinct form)
+                if (nextInstruction != null &&
+                    nextInstruction.distance < 300 &&
+                    !_hasMultiCueHint(instruction)) ...[
                   const SizedBox(height: 4),
                   Text(
                     'Then ${_getShortInstructionText(nextInstruction)}',
@@ -437,8 +441,21 @@ class TurnByTurnWidget extends StatelessWidget {
     }
   }
 
+  /// Checks if the instruction has the verbalMultiCue flag set
+  /// When true, Valhalla's succinct instruction already includes the next maneuver
+  bool _hasMultiCueHint(RouteInstruction instruction) {
+    return switch (instruction) {
+      Keep(verbalMultiCue: final multiCue) => multiCue,
+      Turn(verbalMultiCue: final multiCue) => multiCue,
+      Exit(verbalMultiCue: final multiCue) => multiCue,
+      Merge(verbalMultiCue: final multiCue) => multiCue,
+      Roundabout(verbalMultiCue: final multiCue) => multiCue,
+      Other(verbalMultiCue: final multiCue) => multiCue,
+    };
+  }
+
   String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
-    // For long distances (>=1km), show "Continue for X.X km" message
+    // For very long distances (>=1km), show "Continue for X.X km" message
     // Use same rounding as _formatDistance to ensure consistency
     if (instruction.distance >= 1000) {
       final roundedDistance = (((instruction.distance + 99) ~/ 100) * 100) / 1000;
@@ -446,20 +463,15 @@ class TurnByTurnWidget extends StatelessWidget {
       return 'Continue for $distanceKm km';
     }
 
-    // Check if we're showing a straight arrow due to distance threshold
-    // If so, preview the upcoming maneuver
-    final threshold = _getIconDisplayThreshold(instruction);
-    if (instruction.distance > threshold) {
-      final distanceText = _formatDistance(instruction.distance);
-      final maneuverPreview = _getShortInstructionText(instruction);
-      return 'In $distanceText, $maneuverPreview';
-    }
-
     String baseText = '';
 
-    // Use distance-based verbal instructions from Valhalla
-    if (instruction.distance > 150) {
-      // Use alert instruction for distances > 150m (e.g., "In 200m, take the 3rd exit")
+    // Select verbal instruction based on distance according to Valhalla best practices:
+    // - Alert (> 300m): "Turn right onto Anna-Louisa-Karsch-Straße" - prepares for upcoming maneuver
+    // - Pre (50-300m): "Turn right onto Anna-Louisa-Karsch-Straße" - immediately prior to maneuver
+    // - Succinct (< 50m): "Turn right" - abbreviated for immediate action
+    // Note: Distance is already shown separately in the icon box, so we don't repeat it in text
+    if (instruction.distance > 300) {
+      // Use alert instruction - prepares user for upcoming maneuver
       baseText = switch (instruction) {
         Keep(verbalAlertInstruction: final alert) => alert ?? '',
         Turn(verbalAlertInstruction: final alert) => alert ?? '',
@@ -468,8 +480,30 @@ class TurnByTurnWidget extends StatelessWidget {
         Roundabout(verbalAlertInstruction: final alert) => alert ?? '',
         Other(verbalAlertInstruction: final alert) => alert ?? '',
       };
+    } else if (instruction.distance >= 50) {
+      // Use pre-transition instruction - immediately prior to maneuver
+      baseText = switch (instruction) {
+        Keep(verbalInstruction: final verbal) => verbal ?? '',
+        Turn(verbalInstruction: final verbal) => verbal ?? '',
+        Exit(verbalInstruction: final verbal) => verbal ?? '',
+        Merge(verbalInstruction: final verbal) => verbal ?? '',
+        Roundabout(verbalInstruction: final verbal) => verbal ?? '',
+        Other(verbalInstruction: final verbal) => verbal ?? '',
+      };
     } else {
-      // Use immediate verbal instruction for close distances (e.g., "Take the 3rd exit")
+      // Use succinct instruction - abbreviated for immediate action
+      baseText = switch (instruction) {
+        Keep(verbalSuccinctInstruction: final succinct) => succinct ?? '',
+        Turn(verbalSuccinctInstruction: final succinct) => succinct ?? '',
+        Exit(verbalSuccinctInstruction: final succinct) => succinct ?? '',
+        Merge(verbalSuccinctInstruction: final succinct) => succinct ?? '',
+        Roundabout(verbalSuccinctInstruction: final succinct) => succinct ?? '',
+        Other(verbalSuccinctInstruction: final succinct) => succinct ?? '',
+      };
+    }
+
+    // Fall back to pre-transition if succinct not available (for < 50m case)
+    if (baseText.isEmpty && instruction.distance < 50) {
       baseText = switch (instruction) {
         Keep(verbalInstruction: final verbal) => verbal ?? '',
         Turn(verbalInstruction: final verbal) => verbal ?? '',
@@ -485,7 +519,7 @@ class TurnByTurnWidget extends StatelessWidget {
       baseText = instruction.instructionText ?? '';
     }
 
-    // If still empty, generate a fallback.
+    // If still empty, generate a fallback
     if (baseText.isEmpty) {
       baseText = switch (instruction) {
         Keep(direction: final direction, streetName: final streetName) =>
@@ -500,13 +534,6 @@ class TurnByTurnWidget extends StatelessWidget {
           streetName != null ? 'Merge ${direction.name} onto $streetName' : 'Merge ${direction.name}',
         Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
       };
-    }
-
-    // Append the post-maneuver instruction if available.
-    if (instruction.postInstructionText?.isNotEmpty == true) {
-      // Ensure the base text ends correctly before appending.
-      final cleanBaseText = baseText.endsWith('.') ? baseText.substring(0, baseText.length - 1) : baseText;
-      return '$cleanBaseText. ${instruction.postInstructionText!}';
     }
 
     return baseText;

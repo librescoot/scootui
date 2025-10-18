@@ -72,6 +72,8 @@ _Maneuver _$ManeuverFromJson(Map<String, dynamic> json) => _Maneuver(
           json['verbal_pre_transition_instruction'] as String?,
       verbalPostTransitionInstruction:
           json['verbal_post_transition_instruction'] as String?,
+      verbalSuccinctTransitionInstruction:
+          json['verbal_succinct_transition_instruction'] as String?,
       verbalMultiCue: json['verbal_multi_cue'] as bool? ?? false,
       roundaboutExitCount: (json['roundabout_exit_count'] as num?)?.toInt(),
       departInstruction: json['depart_instruction'] as String?,
@@ -105,6 +107,8 @@ Map<String, dynamic> _$ManeuverToJson(_Maneuver instance) => <String, dynamic>{
           instance.verbalPreTransitionInstruction,
       'verbal_post_transition_instruction':
           instance.verbalPostTransitionInstruction,
+      'verbal_succinct_transition_instruction':
+          instance.verbalSuccinctTransitionInstruction,
       'verbal_multi_cue': instance.verbalMultiCue,
       'roundabout_exit_count': instance.roundaboutExitCount,
       'depart_instruction': instance.departInstruction,

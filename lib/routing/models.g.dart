@@ -19,6 +19,8 @@ Keep _$KeepFromJson(Map<String, dynamic> json) => Keep(
       postInstructionText: json['postInstructionText'] as String?,
       verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
       verbalInstruction: json['verbalInstruction'] as String?,
+      verbalSuccinctInstruction: json['verbalSuccinctInstruction'] as String?,
+      verbalMultiCue: json['verbalMultiCue'] as bool? ?? false,
       $type: json['runtimeType'] as String?,
     );
 
@@ -33,6 +35,8 @@ Map<String, dynamic> _$KeepToJson(Keep instance) => <String, dynamic>{
       'postInstructionText': instance.postInstructionText,
       'verbalAlertInstruction': instance.verbalAlertInstruction,
       'verbalInstruction': instance.verbalInstruction,
+      'verbalSuccinctInstruction': instance.verbalSuccinctInstruction,
+      'verbalMultiCue': instance.verbalMultiCue,
       'runtimeType': instance.$type,
     };
 
@@ -55,6 +59,8 @@ Turn _$TurnFromJson(Map<String, dynamic> json) => Turn(
       postInstructionText: json['postInstructionText'] as String?,
       verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
       verbalInstruction: json['verbalInstruction'] as String?,
+      verbalSuccinctInstruction: json['verbalSuccinctInstruction'] as String?,
+      verbalMultiCue: json['verbalMultiCue'] as bool? ?? false,
       $type: json['runtimeType'] as String?,
     );
 
@@ -69,6 +75,8 @@ Map<String, dynamic> _$TurnToJson(Turn instance) => <String, dynamic>{
       'postInstructionText': instance.postInstructionText,
       'verbalAlertInstruction': instance.verbalAlertInstruction,
       'verbalInstruction': instance.verbalInstruction,
+      'verbalSuccinctInstruction': instance.verbalSuccinctInstruction,
+      'verbalMultiCue': instance.verbalMultiCue,
       'runtimeType': instance.$type,
     };
 
@@ -97,6 +105,8 @@ Exit _$ExitFromJson(Map<String, dynamic> json) => Exit(
       postInstructionText: json['postInstructionText'] as String?,
       verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
       verbalInstruction: json['verbalInstruction'] as String?,
+      verbalSuccinctInstruction: json['verbalSuccinctInstruction'] as String?,
+      verbalMultiCue: json['verbalMultiCue'] as bool? ?? false,
       $type: json['runtimeType'] as String?,
     );
 
@@ -111,6 +121,8 @@ Map<String, dynamic> _$ExitToJson(Exit instance) => <String, dynamic>{
       'postInstructionText': instance.postInstructionText,
       'verbalAlertInstruction': instance.verbalAlertInstruction,
       'verbalInstruction': instance.verbalInstruction,
+      'verbalSuccinctInstruction': instance.verbalSuccinctInstruction,
+      'verbalMultiCue': instance.verbalMultiCue,
       'runtimeType': instance.$type,
     };
 
@@ -132,6 +144,8 @@ Merge _$MergeFromJson(Map<String, dynamic> json) => Merge(
       postInstructionText: json['postInstructionText'] as String?,
       verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
       verbalInstruction: json['verbalInstruction'] as String?,
+      verbalSuccinctInstruction: json['verbalSuccinctInstruction'] as String?,
+      verbalMultiCue: json['verbalMultiCue'] as bool? ?? false,
       $type: json['runtimeType'] as String?,
     );
 
@@ -146,6 +160,8 @@ Map<String, dynamic> _$MergeToJson(Merge instance) => <String, dynamic>{
       'postInstructionText': instance.postInstructionText,
       'verbalAlertInstruction': instance.verbalAlertInstruction,
       'verbalInstruction': instance.verbalInstruction,
+      'verbalSuccinctInstruction': instance.verbalSuccinctInstruction,
+      'verbalMultiCue': instance.verbalMultiCue,
       'runtimeType': instance.$type,
     };
 
@@ -171,6 +187,8 @@ Roundabout _$RoundaboutFromJson(Map<String, dynamic> json) => Roundabout(
       bearingAfter: (json['bearingAfter'] as num?)?.toDouble(),
       verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
       verbalInstruction: json['verbalInstruction'] as String?,
+      verbalSuccinctInstruction: json['verbalSuccinctInstruction'] as String?,
+      verbalMultiCue: json['verbalMultiCue'] as bool? ?? false,
       $type: json['runtimeType'] as String?,
     );
 
@@ -189,6 +207,8 @@ Map<String, dynamic> _$RoundaboutToJson(Roundabout instance) =>
       'bearingAfter': instance.bearingAfter,
       'verbalAlertInstruction': instance.verbalAlertInstruction,
       'verbalInstruction': instance.verbalInstruction,
+      'verbalSuccinctInstruction': instance.verbalSuccinctInstruction,
+      'verbalMultiCue': instance.verbalMultiCue,
       'runtimeType': instance.$type,
     };
 
@@ -209,6 +229,8 @@ Other _$OtherFromJson(Map<String, dynamic> json) => Other(
       postInstructionText: json['postInstructionText'] as String?,
       verbalAlertInstruction: json['verbalAlertInstruction'] as String?,
       verbalInstruction: json['verbalInstruction'] as String?,
+      verbalSuccinctInstruction: json['verbalSuccinctInstruction'] as String?,
+      verbalMultiCue: json['verbalMultiCue'] as bool? ?? false,
       $type: json['runtimeType'] as String?,
     );
 
@@ -222,6 +244,8 @@ Map<String, dynamic> _$OtherToJson(Other instance) => <String, dynamic>{
       'postInstructionText': instance.postInstructionText,
       'verbalAlertInstruction': instance.verbalAlertInstruction,
       'verbalInstruction': instance.verbalInstruction,
+      'verbalSuccinctInstruction': instance.verbalSuccinctInstruction,
+      'verbalMultiCue': instance.verbalMultiCue,
       'runtimeType': instance.$type,
     };
 
