@@ -41,9 +41,9 @@ class MapCubit extends Cubit<MapState> {
   final TilesRepository _tilesRepository;
 
   // Dynamic zoom constants based on navigation context (3D perspective-aware)
-  static const double _zoomLongStraight = 17.0; // Long straight sections (~1000m look-ahead)
-  static const double _zoomDefault = 18.0; // Default navigation zoom (~500m look-ahead)
-  static const double _zoomMax = 19.0; // Maximum zoom for complex turns (~150m look-ahead)
+  static const double _zoomLongStraight = 18.0; // Long straight sections (~1000m look-ahead)
+  static const double _zoomDefault = 19.0; // Default navigation zoom (~500m look-ahead)
+  static const double _zoomMax = 20.0; // Maximum zoom for complex turns (~150m look-ahead)
 
   // Vehicle positioning - public so VehicleIndicator can use the same value
   static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
@@ -291,7 +291,7 @@ class MapCubit extends Cubit<MapState> {
     const screenHeight = 480.0;
     const topStatusBarHeight = 30.0;
     const bottomBarHeight = 60.0;
-    const vehicleVerticalOffset = 0.75;
+    const vehicleVerticalOffset = 0.75; // Vehicle at 75% down the screen
 
     const visibleMapHeight = screenHeight - topStatusBarHeight - bottomBarHeight;
 
@@ -300,11 +300,20 @@ class MapCubit extends Cubit<MapState> {
     // This means we have more "look-ahead" distance.
     final lookAheadHeight = visibleMapHeight * vehicleVerticalOffset;
 
-    // Account for 3D perspective: with pitch, we can see more ground distance
-    // Pitch = 1.33 rad (~76°), cos(1.33) ≈ 0.243, so we see ~4x more distance
+    // Account for 3D perspective: with pitch, we see much more ground distance
+    // At pitch 1.33 rad (~76°), the view is almost parallel to the ground
+    // The perspective compression means we can see farther ahead
     const pitch = 1.33; // Match the pitch in map_view.dart
-    final perspectiveFactor = 1.0 / math.cos(pitch);
-    final effectiveLookAheadHeight = lookAheadHeight * perspectiveFactor;
+
+    // With steep pitch, the visible ground distance is much larger than screen pixels
+    // Use tan to get the ground distance based on viewing angle
+    // At 76° pitch, we're looking at ~14° above horizontal, so tan gives huge multiplier
+    final groundViewAngle = math.pi / 2 - pitch; // Angle above horizontal
+    final perspectiveFactor = 1.0 / math.tan(groundViewAngle);
+
+    // Clamp perspective factor to reasonable range (between 3x and 8x)
+    final clampedPerspective = perspectiveFactor.clamp(3.0, 8.0);
+    final effectiveLookAheadHeight = lookAheadHeight * clampedPerspective;
 
     // We want to fit the targetDistance within this effectiveLookAheadHeight.
     final targetVisibleMeters = targetDistance;
@@ -313,8 +322,8 @@ class MapCubit extends Cubit<MapState> {
     // It's derived from how map scales work (roughly doubles with each zoom level).
     // The constants are tuned to fit the visual layout.
     // C - log2(meters) -> zoom
-    // The value 17.6 accounts for higher base zoom with 3D perspective.
-    double requiredZoom = 17.6 - math.log(targetVisibleMeters / effectiveLookAheadHeight) / math.ln2;
+    // The value 18.8 accounts for higher base zoom with 3D perspective.
+    double requiredZoom = 18.8 - math.log(targetVisibleMeters / effectiveLookAheadHeight) / math.ln2;
 
     // Clamp the zoom level to reasonable bounds
     return requiredZoom.clamp(_zoomLongStraight, _zoomMax);
