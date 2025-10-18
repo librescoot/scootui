@@ -40,10 +40,10 @@ class MapCubit extends Cubit<MapState> {
   late final StreamSubscription<SettingsData> _settingsSub;
   final TilesRepository _tilesRepository;
 
-  // Dynamic zoom constants based on navigation context
-  static const double _zoomLongStraight = 15.0; // Long straight sections (~1000m look-ahead)
-  static const double _zoomDefault = 16.0; // Default navigation zoom (~500m look-ahead)
-  static const double _zoomMax = 17.5; // Maximum zoom for complex turns (~150m look-ahead)
+  // Dynamic zoom constants based on navigation context (3D perspective-aware)
+  static const double _zoomLongStraight = 17.0; // Long straight sections (~1000m look-ahead)
+  static const double _zoomDefault = 18.0; // Default navigation zoom (~500m look-ahead)
+  static const double _zoomMax = 19.0; // Maximum zoom for complex turns (~150m look-ahead)
 
   // Vehicle positioning - public so VehicleIndicator can use the same value
   static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
@@ -300,15 +300,21 @@ class MapCubit extends Cubit<MapState> {
     // This means we have more "look-ahead" distance.
     final lookAheadHeight = visibleMapHeight * vehicleVerticalOffset;
 
-    // We want to fit the targetDistance within this lookAheadHeight.
+    // Account for 3D perspective: with pitch, we can see more ground distance
+    // Pitch = 1.33 rad (~76°), cos(1.33) ≈ 0.243, so we see ~4x more distance
+    const pitch = 1.33; // Match the pitch in map_view.dart
+    final perspectiveFactor = 1.0 / math.cos(pitch);
+    final effectiveLookAheadHeight = lookAheadHeight * perspectiveFactor;
+
+    // We want to fit the targetDistance within this effectiveLookAheadHeight.
     final targetVisibleMeters = targetDistance;
 
     // This formula is a heuristic to convert meters to a zoom level.
     // It's derived from how map scales work (roughly doubles with each zoom level).
     // The constants are tuned to fit the visual layout.
     // C - log2(meters) -> zoom
-    // The value 15.6 is a magic number that works well for this screen size and projection.
-    double requiredZoom = 15.6 - math.log(targetVisibleMeters / lookAheadHeight) / math.ln2;
+    // The value 17.6 accounts for higher base zoom with 3D perspective.
+    double requiredZoom = 17.6 - math.log(targetVisibleMeters / effectiveLookAheadHeight) / math.ln2;
 
     // Clamp the zoom level to reasonable bounds
     return requiredZoom.clamp(_zoomLongStraight, _zoomMax);

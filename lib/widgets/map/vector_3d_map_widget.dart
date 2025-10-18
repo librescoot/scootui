@@ -29,7 +29,7 @@ class Vector3DMapWidget extends StatefulWidget {
     required this.position,
     required this.zoom,
     required this.bearing,
-    this.pitch = 1.2, // Default ~69 degree tilt (Google Maps style)
+    this.pitch = 1.4, // Default ~80 degree tilt (aggressive/flat perspective)
     required this.tileProvider,
     required this.theme,
     this.route,
@@ -251,15 +251,80 @@ class Vector3DMapPainter extends CustomPainter {
       canvas.drawPath(feature.path, feature.paint);
     }
 
-    // Draw route on top if available
+    // Draw route first
     if (route != null && route!.waypoints.isNotEmpty) {
       _drawRoute(canvas);
     }
 
-    // Draw destination marker if available
+    // Draw destination marker
     if (destination != null) {
       _drawDestination(canvas);
     }
+
+    // Draw vehicle marker on top of everything
+    _drawVehicle(canvas);
+  }
+
+  void _drawVehicle(Canvas canvas) {
+    // Vehicle is at camera center
+    final elevation = 2.0;
+    final point3d = camera.project(camera.center, elevation: elevation);
+    final screenPoint = camera.projectToScreen(point3d);
+
+    // Apply pitch transformation - same vertical compression as the map
+    final pitchScale = math.cos(camera.pitch);
+
+    canvas.save();
+    canvas.translate(screenPoint.dx, screenPoint.dy);
+    canvas.scale(1.0, pitchScale);
+    canvas.translate(-screenPoint.dx, -screenPoint.dy);
+
+    // Draw ellipse background (narrower)
+    final circlePaint = Paint()
+      ..color = Colors.grey.shade800.withOpacity(0.5)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawOval(
+      Rect.fromCenter(center: screenPoint, width: 80, height: 165.6),
+      circlePaint,
+    );
+
+    // Draw border
+    final borderPaint = Paint()
+      ..color = Colors.grey.shade600.withOpacity(0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4;
+
+    canvas.drawOval(
+      Rect.fromCenter(center: screenPoint, width: 80, height: 165.6),
+      borderPaint,
+    );
+
+    // Draw navigation arrow (dovetail shape) - 80px tall, 20px wide
+    final arrowPath = ui.Path();
+    arrowPath.moveTo(screenPoint.dx, screenPoint.dy - 48); // Top point
+    arrowPath.lineTo(screenPoint.dx + 20, screenPoint.dy + 32); // Right side
+    arrowPath.lineTo(screenPoint.dx, screenPoint.dy + 16); // V notch
+    arrowPath.lineTo(screenPoint.dx - 20, screenPoint.dy + 32); // Left side
+    arrowPath.close();
+
+    // Draw outline (halfway between white and blue)
+    final arrowOutlinePaint = Paint()
+      ..color = const Color(0xFF90C8F7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(arrowPath, arrowOutlinePaint);
+
+    // Draw fill
+    final arrowPaint = Paint()
+      ..color = Colors.blue
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(arrowPath, arrowPaint);
+
+    canvas.restore();
   }
 
   RenderedFeature? _renderFeature(VectorFeature feature) {
@@ -320,6 +385,14 @@ class Vector3DMapPainter extends CustomPainter {
         paint.style = PaintingStyle.fill;
         break;
 
+      case 'water_lines':
+        // Water lines (rivers, streams)
+        paint.color = const Color(0xFF2D4A5F); // Same as water polygons
+        paint.strokeWidth = 3.0;
+        paint.style = PaintingStyle.stroke;
+        paint.strokeCap = StrokeCap.round;
+        break;
+
       case 'land':
         // Theme: various land layers with kind filtering
         final kind = feature.properties['kind']?.toString() ?? '';
@@ -352,28 +425,28 @@ class Vector3DMapPainter extends CustomPainter {
         break;
 
       case 'streets':
-        // Theme: roads with kind-based styling
+        // Theme: roads with kind-based styling (thicker for 3D visibility)
         final kind = feature.properties['kind']?.toString() ?? '';
 
         // Major roads: motorway, trunk
         if (['motorway', 'trunk'].contains(kind)) {
           paint.color = const Color(0xFF594D2E); // hsl(48,60%,35%)
-          paint.strokeWidth = 4.0;
+          paint.strokeWidth = 8.0;
         }
         // Main roads: primary, secondary
         else if (['primary', 'secondary'].contains(kind)) {
           paint.color = const Color(0xFF4D4026); // hsl(48,50%,30%)
-          paint.strokeWidth = 3.0;
+          paint.strokeWidth = 6.0;
         }
         // Local roads: tertiary, unclassified, residential, living_street
         else if (['tertiary', 'unclassified', 'residential', 'living_street'].contains(kind)) {
           paint.color = const Color(0xFF403620); // hsl(48,40%,25%)
-          paint.strokeWidth = 2.0;
+          paint.strokeWidth = 4.0;
         }
         // Railways (minzoom 13)
         else if (kind == 'rail') {
           paint.color = const Color(0xFF404040); // hsl(0,0%,25%)
-          paint.strokeWidth = 1.0;
+          paint.strokeWidth = 2.0;
           // Note: theme uses dasharray [3, 3] which we can't easily do
         }
         // Skip other road types

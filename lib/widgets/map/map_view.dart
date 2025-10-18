@@ -505,15 +505,15 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
       children: [
         Vector3DMapWidget(
           position: widget.position,
-          zoom: 16.5, // Render zoom (tiles loaded at z14, rendered at z16.5 = overzoom)
+          zoom: 18.0, // Render zoom (tiles loaded at z14, rendered at z18 = overzoom)
           bearing: widget.orientation * math.pi / 180.0, // Convert degrees to radians
-          pitch: 1.2, // ~69 degree tilt (Google Maps-style navigation view)
+          pitch: 1.33, // ~76 degree tilt
           tileProvider: widget.tiles,
           theme: widget.theme,
           route: widget.route,
           destination: widget.destination,
         ),
-        const VehicleIndicator(),
+        // VehicleIndicator now rendered in 3D space by Vector3DMapWidget
         Positioned(
           bottom: 8,
           right: 8,
@@ -524,7 +524,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
               NorthIndicator(orientation: widget.orientation),
               const SizedBox(height: 4),
               ScaleBar(
-                zoom: 16.5, // Match the render zoom
+                zoom: 18.0, // Match the render zoom
                 latitude: widget.position.latitude,
               ),
             ],
