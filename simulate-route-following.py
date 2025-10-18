@@ -354,6 +354,13 @@ def main():
                     lon = lon + (p_next[1] - lon) * ratio
                     distance_to_travel = 0
 
+            # Check if we've reached the destination
+            if waypoint_index >= len(route_waypoints) - 1:
+                print(f"\nDestination reached!")
+                print(f"Final position: lat={lat:.6f}, lon={lon:.6f}")
+                print(f"Final odometer: {int(rounded_odometer)}m")
+                sys.exit(0)
+
             # Calculate course from current position to next waypoint
             if waypoint_index < len(route_waypoints) - 1:
                 p_current = (lat, lon)
