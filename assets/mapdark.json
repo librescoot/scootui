@@ -48,6 +48,24 @@
 			}
 		},
 		{
+			"id": "water_lines",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "water_lines",
+			"paint": {
+				"line-color": "hsl(205,35%,22%)",
+				"line-width": {
+					"stops": [
+						[10, 0.5],
+						[12, 1],
+						[14, 2],
+						[16, 3]
+					]
+				}
+			},
+			"minzoom": 10
+		},
+		{
 			"id": "land",
 			"type": "fill",
 			"source": "versatiles-shortbread",
