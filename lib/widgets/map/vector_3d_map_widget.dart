@@ -66,7 +66,7 @@ class _Vector3DMapWidgetState extends State<Vector3DMapWidget> with SingleTicker
 
     _positionController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100), // Short, smooth animation
+      duration: const Duration(milliseconds: 500), // Smooth animation
     );
 
     _latAnimation = Tween<double>(
