@@ -183,18 +183,27 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onNavigationData(NavigationData data) {
-    print("NavigationCubit: Received NavigationData: ${data.destination}");
+    print("NavigationCubit: Received NavigationData: lat=${data.latitude}, lng=${data.longitude}, address=${data.address}");
     try {
-      if (data.destination.isEmpty) {
+      // Check if destination is cleared (no latitude/longitude)
+      if (!data.hasDestination) {
         print("NavigationCubit: Destination is empty, clearing navigation state.");
         // Clear navigation if destination is empty
         emit(const NavigationState());
         return;
       }
 
-      final coordinates = data.destination.split(",").map(double.parse).toList();
-      final destination = LatLng(coordinates[0], coordinates[1]);
-      print("NavigationCubit: Parsed destination: $destination");
+      // Parse latitude and longitude from new fields
+      final lat = data.latitudeDouble;
+      final lng = data.longitudeDouble;
+
+      if (lat == null || lng == null) {
+        print("NavigationCubit: Invalid latitude or longitude, ignoring.");
+        return;
+      }
+
+      final destination = LatLng(lat, lng);
+      print("NavigationCubit: Parsed destination: $destination${data.address.isNotEmpty ? ' (${data.address})' : ''}");
 
       if (_currentPosition == null) {
         print("NavigationCubit: Current position is null, cannot calculate route yet.");

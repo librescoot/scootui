@@ -229,8 +229,13 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
               title: 'Start Navigation',
               type: MenuItemType.action,
               onChanged: (_) {
-                final mdbRepo = context.read<MDBRepository>();
-                mdbRepo.set("navigation", "destination", location.coordinatesString);
+                // Set destination via NavigationSync with saved location label
+                final navigationSync = context.read<NavigationSync>();
+                navigationSync.setDestination(
+                  location.latitude,
+                  location.longitude,
+                  address: location.label,
+                );
                 savedLocationsCubit.updateLastUsed(location.id);
                 context.read<MenuCubit>().hideMenu();
               },

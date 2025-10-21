@@ -100,20 +100,44 @@ class NavigationSync extends SyncableCubit<NavigationData> {
 
   NavigationSync(MDBRepository repo) : super(redisRepository: repo, initialState: NavigationData());
 
+  /// Set a navigation destination with coordinates and optional address
+  Future<void> setDestination(double latitude, double longitude, {String? address}) async {
+    final channel = state.syncSettings.channel;
+    final timestamp = DateTime.now().toUtc().toIso8601String();
+    final coords = "$latitude,$longitude";
+
+    // Set all fields
+    await redisRepository.set(channel, "latitude", latitude.toString());
+    await redisRepository.set(channel, "longitude", longitude.toString());
+    await redisRepository.set(channel, "timestamp", timestamp);
+    await redisRepository.set(channel, "destination", coords); // Legacy field
+
+    if (address != null && address.isNotEmpty) {
+      await redisRepository.set(channel, "address", address);
+    }
+
+    // Publish notification
+    await redisRepository.publish(channel, "destination");
+
+    print("NavigationSync: Set destination to $latitude,$longitude${address != null ? ' ($address)' : ''}");
+  }
+
   Future<void> clearDestination() async {
     // Get the channel name from syncSettings (e.g., "navigation")
     final channel = state.syncSettings.channel;
-    const field = "destination";
 
-    // Delete the field from Redis
-    await redisRepository.hdel(channel, field);
+    // Delete all navigation fields from Redis
+    final fields = ["latitude", "longitude", "address", "timestamp", "destination"];
+    for (final field in fields) {
+      await redisRepository.hdel(channel, field);
+    }
 
-    // Update local state to reflect the change immediately
-    // This assumes NavigationData().update("destination", "") correctly clears the field.
-    // The PUBSUB mechanism in SyncableCubit might also pick this up if hdel in MDBRepository
-    // correctly notifies subscribers about the change (e.g., by sending the field name).
-    emit(state.update(field, ""));
-    print("NavigationSync: Cleared destination via HDEL and updated local state.");
+    // Publish notification
+    await redisRepository.publish(channel, "cleared");
+
+    // Update local state to empty
+    emit(NavigationData());
+    print("NavigationSync: Cleared destination");
   }
 }
 

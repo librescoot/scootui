@@ -1,0 +1,273 @@
+{
+    "trip": {
+        "locations": [
+            {
+                "type": "break",
+                "lat": 52.51,
+                "lon": 13.305,
+                "side_of_street": "right",
+                "original_index": 0
+            },
+            {
+                "type": "break",
+                "lat": 52.525902,
+                "lon": 13.36618,
+                "side_of_street": "right",
+                "original_index": 1
+            }
+        ],
+        "legs": [
+            {
+                "maneuvers": [
+                    {
+                        "type": 2,
+                        "instruction": "Drive west on Schillerstra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Drive west.",
+                        "verbal_pre_transition_instruction": "Drive west on Schillerstra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 100 meters.",
+                        "street_names": [
+                            "Schillerstra\u00dfe"
+                        ],
+                        "bearing_after": 267,
+                        "time": 37.68,
+                        "length": 0.106,
+                        "cost": 200.419,
+                        "begin_shape_index": 0,
+                        "end_shape_index": 7,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 10,
+                        "instruction": "Turn right onto R\u00fcckertstra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Turn right onto R\u00fcckertstra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Turn right.",
+                        "verbal_pre_transition_instruction": "Turn right onto R\u00fcckertstra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 200 meters.",
+                        "street_names": [
+                            "R\u00fcckertstra\u00dfe"
+                        ],
+                        "bearing_before": 266,
+                        "bearing_after": 353,
+                        "time": 37.609,
+                        "length": 0.159,
+                        "cost": 90.513,
+                        "begin_shape_index": 7,
+                        "end_shape_index": 11,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 10,
+                        "instruction": "Turn right onto Bismarckstra\u00dfe/B 2/B 5.",
+                        "verbal_transition_alert_instruction": "Turn right onto Bismarckstra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Turn right.",
+                        "verbal_pre_transition_instruction": "Turn right onto Bismarckstra\u00dfe, B 2.",
+                        "verbal_post_transition_instruction": "Continue for 1 kilometer.",
+                        "street_names": [
+                            "Bismarckstra\u00dfe",
+                            "B 2",
+                            "B 5"
+                        ],
+                        "bearing_before": 353,
+                        "bearing_after": 83,
+                        "time": 186.507,
+                        "length": 1.215,
+                        "cost": 332.382,
+                        "begin_shape_index": 11,
+                        "end_shape_index": 82,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 26,
+                        "instruction": "Enter Ernst-Reuter-Platz and take the 2nd exit toward B 2/B 5/Mitte/Tiergarten.",
+                        "verbal_transition_alert_instruction": "Enter Ernst-Reuter-Platz and take the 2nd exit toward B 2.",
+                        "verbal_succinct_transition_instruction": "Enter the roundabout and take the 2nd exit toward B 2, Mitte.",
+                        "verbal_pre_transition_instruction": "Enter Ernst-Reuter-Platz and take the 2nd exit toward B 2, Mitte.",
+                        "street_names": [
+                            "Ernst-Reuter-Platz"
+                        ],
+                        "bearing_before": 117,
+                        "bearing_after": 143,
+                        "time": 23.958,
+                        "length": 0.162,
+                        "cost": 38.77,
+                        "begin_shape_index": 82,
+                        "end_shape_index": 103,
+                        "roundabout_exit_count": 2,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 27,
+                        "instruction": "Exit the roundabout toward B 2/B 5/Mitte/Tiergarten.",
+                        "verbal_succinct_transition_instruction": "Exit the roundabout toward B 2, Mitte.",
+                        "verbal_pre_transition_instruction": "Exit the roundabout toward B 2, Mitte.",
+                        "verbal_post_transition_instruction": "Continue for 2 kilometers.",
+                        "street_names": [
+                            "Stra\u00dfe des 17. Juni",
+                            "B 2",
+                            "B 5"
+                        ],
+                        "bearing_before": 33,
+                        "bearing_after": 44,
+                        "time": 263.513,
+                        "length": 1.812,
+                        "cost": 396.592,
+                        "begin_shape_index": 103,
+                        "end_shape_index": 176,
+                        "sign": {},
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 26,
+                        "instruction": "Enter Gro\u00dfer Stern and take the 3rd exit toward Schlo\u00df Bellevue.",
+                        "verbal_transition_alert_instruction": "Enter Gro\u00dfer Stern and take the 3rd exit toward Schlo\u00df Bellevue.",
+                        "verbal_succinct_transition_instruction": "Enter the roundabout and take the 3rd exit toward Schlo\u00df Bellevue.",
+                        "verbal_pre_transition_instruction": "Enter Gro\u00dfer Stern and take the 3rd exit toward Schlo\u00df Bellevue.",
+                        "street_names": [
+                            "Gro\u00dfer Stern"
+                        ],
+                        "bearing_before": 121,
+                        "bearing_after": 137,
+                        "time": 41.381,
+                        "length": 0.219,
+                        "cost": 92.909,
+                        "begin_shape_index": 176,
+                        "end_shape_index": 206,
+                        "roundabout_exit_count": 3,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 27,
+                        "instruction": "Exit the roundabout toward Schlo\u00df Bellevue.",
+                        "verbal_succinct_transition_instruction": "Exit the roundabout toward Schlo\u00df Bellevue.",
+                        "verbal_pre_transition_instruction": "Exit the roundabout toward Schlo\u00df Bellevue.",
+                        "verbal_post_transition_instruction": "Continue for 1 kilometer.",
+                        "street_names": [
+                            "Spreeweg"
+                        ],
+                        "bearing_before": 328,
+                        "bearing_after": 14,
+                        "time": 164.254,
+                        "length": 1.104,
+                        "cost": 378.951,
+                        "begin_shape_index": 206,
+                        "end_shape_index": 268,
+                        "sign": {},
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 10,
+                        "instruction": "Turn right onto Alt-Moabit.",
+                        "verbal_transition_alert_instruction": "Turn right onto Alt-Moabit.",
+                        "verbal_succinct_transition_instruction": "Turn right.",
+                        "verbal_pre_transition_instruction": "Turn right onto Alt-Moabit.",
+                        "verbal_post_transition_instruction": "Continue for 200 meters.",
+                        "street_names": [
+                            "Alt-Moabit"
+                        ],
+                        "bearing_before": 18,
+                        "bearing_after": 96,
+                        "time": 22.27,
+                        "length": 0.153,
+                        "cost": 48.996,
+                        "begin_shape_index": 268,
+                        "end_shape_index": 275,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 24,
+                        "instruction": "Keep left to take Invalidenstra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Keep left to take Invalidenstra\u00dfe.",
+                        "verbal_pre_transition_instruction": "Keep left to take Invalidenstra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 700 meters.",
+                        "street_names": [
+                            "Invalidenstra\u00dfe"
+                        ],
+                        "bearing_before": 101,
+                        "bearing_after": 84,
+                        "time": 98.09,
+                        "length": 0.655,
+                        "cost": 208.277,
+                        "begin_shape_index": 275,
+                        "end_shape_index": 317,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 13,
+                        "instruction": "Make a left U-turn toward A 100.",
+                        "verbal_transition_alert_instruction": "Make a left U-turn toward A 100.",
+                        "verbal_succinct_transition_instruction": "Make a left U-turn toward A 100.",
+                        "verbal_pre_transition_instruction": "Make a left U-turn toward A 100.",
+                        "verbal_post_transition_instruction": "Continue for 100 meters.",
+                        "street_names": [
+                            "Invalidenstra\u00dfe"
+                        ],
+                        "bearing_before": 63,
+                        "bearing_after": 240,
+                        "time": 30.054,
+                        "length": 0.135,
+                        "cost": 77.69,
+                        "begin_shape_index": 317,
+                        "end_shape_index": 324,
+                        "sign": {},
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 5,
+                        "instruction": "Your destination is on the right.",
+                        "verbal_transition_alert_instruction": "Your destination will be on the right.",
+                        "verbal_pre_transition_instruction": "Your destination is on the right.",
+                        "bearing_before": 243,
+                        "time": 0.0,
+                        "length": 0.0,
+                        "cost": 0.0,
+                        "begin_shape_index": 324,
+                        "end_shape_index": 324,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    }
+                ],
+                "summary": {
+                    "has_time_restrictions": false,
+                    "has_toll": false,
+                    "has_highway": false,
+                    "has_ferry": false,
+                    "min_lat": 52.509868,
+                    "min_lon": 13.303147,
+                    "max_lat": 52.526098,
+                    "max_lon": 13.367951,
+                    "time": 905.321,
+                    "length": 5.72,
+                    "cost": 1865.503
+                },
+                "shape": "qm}ccB{iakXNvNDpEHzEPtMDhCt@rh@JdG{Df@yjArN_AJmC\\UuHqEsyAKeDUyGIoC]yKWsJScIE}AIcDC}@q@_WgC_aAg@aR_@yNwCmgAQ}GGeCGsBOgGOuFWmI[iLcCay@cBwm@M_FIwCc@yPU_J[mLa@oOe@yPk@mS}Bu|@[mLGyCIgDKoCOyHIyCGcCCkAOcG}@qg@IsEi@_UGeDC}@g@ySQaIYcME}AG{BEoBIaDc@ePW{I{@c[_@}M}@u[i@aSGkB}CwdAA{@Cw@CaB?cD`@mEd@eCp@gCr@oBlBqBdB_C|AkCjAqCnA_EfAyEj@mDXiDTcFFuE?aFIgGYiEi@}FqAiI{AqG}A_Fs@oAsAmBcBiBaCuBwDcHw@yAqAaDeByFCGa@oAa@mBg@sCUwCcKeqDOuFSqIOcGg@kQK_EoDasAcDmoAQsHC_BI{BIaDIiDO_GWkJaBko@CiASoHGwBGiCEcBEyAKoDCiAS}Ga@iOmG_}BeAg_@{Aoj@IeCGeCEyAIiCEaBGoBI_CAaAm@_TQgGYcMwCy`AG{BOcFSmHQiEQ_FAeA?oBBw_@yLm_EaCaYkIgsCiEq~AkCcaAoBgp@a@oNG_CIcDCqD@eF^aF|@yEdAcFbD{L`CeDrB_EbBwEpAkF\\{B^}Bh@eGRwGAyG[kI[_CQwAeAaGq@oC{@gC_A_CeAuBkAmBqAcBuAwAyAkAkCyAoC_AsCa@sCEuCVqCt@kCnA_C`BmAnAiD}@}DoA{CsAuB{A{AgBw@qAeA{AaGwIcIkPwEqMwBqIgDgKcAiDkR}k@_Mk`@aJ{XwCcJ{DyGuAiBmCsC_DoCsAy@{A[M?_CKgGsB{Bw@g@SoIoBkJmByLgGyC_BcCaAiAQcEm@sMImd@yKoBiDu@S_SyEwMuBOEqBh@wD}@}J_CeHaB}D_Ac^kIs@O}@c@mD{@eEaAk@Ow@Qko@eOcv@iQ}Cm@qJgC}JsDiOaNaAq@{FgCJ{DNmFBiA|@_XjBmh@NiDjE}r@I{CG{BE_AUuDa@gDiAuFuAiFaAsDoA}E_BcGiAmEaBqGqBwBIe@uCeN_S{_A}AkH_AqEyIcb@gAgFaByHaC_LiDiPyM{n@mDqP}EqUiC}Li@cHwAkR]uB{C_R_CkNQiAQqAaA}EKg@iA_GuRobASaAk@sCgAmFwCqNkEpBs@\\qD`BvDtOlCxKnOdu@z@~D"
+            }
+        ],
+        "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 52.509868,
+            "min_lon": 13.303147,
+            "max_lat": 52.526098,
+            "max_lon": 13.367951,
+            "time": 905.321,
+            "length": 5.72,
+            "cost": 1865.503
+        },
+        "status_message": "Found route between points",
+        "status": 0,
+        "units": "kilometers",
+        "language": "en-US"
+    }
+}
