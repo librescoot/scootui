@@ -7,6 +7,7 @@
 # ]
 # ///
 
+import argparse
 import math
 import random
 import subprocess
@@ -185,18 +186,30 @@ def generate_traffic_event(at_intersection=False):
 
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description='Simulate GPS route following with realistic vehicle dynamics'
+    )
+    parser.add_argument('start_lat', type=float, help='Starting latitude')
+    parser.add_argument('start_lon', type=float, help='Starting longitude')
+    parser.add_argument('dest_lat', nargs='?', type=float, help='Destination latitude (optional)')
+    parser.add_argument('dest_lon', nargs='?', type=float, help='Destination longitude (optional)')
+    parser.add_argument('--set-destination', action='store_true',
+                        help='Set the destination in Redis navigation hash for UI display')
+    args = parser.parse_args()
+
+    # Validate destination arguments
+    if (args.dest_lat is None) != (args.dest_lon is None):
+        parser.error('Both destination latitude and longitude must be provided together')
+
     # Simulation timing - easily adjustable
     updates_per_second = 2.0  # Change this to adjust update frequency
     update_interval = 1.0 / updates_per_second
 
-    # Check command line arguments
-    if len(sys.argv) != 3:
-        print(f"Usage: {sys.argv[0]} <starting_latitude> <starting_longitude>")
-        sys.exit(1)
-
     # Initialize variables
-    lat = float(sys.argv[1])
-    lon = float(sys.argv[2])
+    lat = args.start_lat
+    lon = args.start_lon
+    specified_destination = (args.dest_lat, args.dest_lon) if args.dest_lat is not None else None
 
     course = 0
     max_speed = 57                   # Maximum speed in km/h
@@ -228,27 +241,43 @@ def main():
     # Traffic simulation state
     current_traffic_event = None
 
+    # Set destination in Redis if requested (only once at start)
+    if args.set_destination:
+        if specified_destination:
+            dest_lat, dest_lon = specified_destination
+        else:
+            # Generate random destination
+            dest_lat = lat + (random.random() - 0.5) * 0.1  # approx 5km radius
+            dest_lon = lon + (random.random() - 0.5) * 0.1
+
+        dest_str = f"{dest_lat},{dest_lon}"
+        nav_commands = [
+            f"HSET navigation destination {dest_str}",
+            "PUBLISH navigation destination"
+        ]
+        execute_redis_batch(nav_commands)
+        print(f"Set navigation destination in Redis: {dest_str}")
+
     try:
         # Main loop
         while True:
             if not route_waypoints or waypoint_index >= len(route_waypoints) - 1:
-                # Get new route
+                # Determine destination: Redis first, then specified args, then random
                 destination_str = get_redis_value("navigation", "destination")
                 if destination_str:
                     dest_lat, dest_lon = map(float, destination_str.split(','))
-                    print(
-                        f"Found destination in Redis: {dest_lat}, {dest_lon}")
-                    route_waypoints = get_route(
-                        (lat, lon), (dest_lat, dest_lon))
+                    print(f"Using destination from Redis: {dest_lat}, {dest_lon}")
+                elif specified_destination:
+                    dest_lat, dest_lon = specified_destination
+                    print(f"Using specified destination: {dest_lat}, {dest_lon}")
                 else:
                     # Generate random destination
-                    dest_lat = lat + (random.random() - 0.5) * \
-                        0.1  # approx 5km radius
+                    dest_lat = lat + (random.random() - 0.5) * 0.1  # approx 5km radius
                     dest_lon = lon + (random.random() - 0.5) * 0.1
-                    print(
-                        f"No destination set, generating random one: {dest_lat}, {dest_lon}")
-                    route_waypoints = get_route(
-                        (lat, lon), (dest_lat, dest_lon))
+                    print(f"Generating random destination: {dest_lat}, {dest_lon}")
+
+                # Get the route
+                route_waypoints = get_route((lat, lon), (dest_lat, dest_lon))
 
                 if not route_waypoints:
                     print("Could not get a route. Waiting...")
@@ -324,6 +353,13 @@ def main():
                     lat = lat + (p_next[0] - lat) * ratio
                     lon = lon + (p_next[1] - lon) * ratio
                     distance_to_travel = 0
+
+            # Check if we've reached the destination
+            if waypoint_index >= len(route_waypoints) - 1:
+                print(f"\nDestination reached!")
+                print(f"Final position: lat={lat:.6f}, lon={lon:.6f}")
+                print(f"Final odometer: {int(rounded_odometer)}m")
+                sys.exit(0)
 
             # Calculate course from current position to next waypoint
             if waypoint_index < len(route_waypoints) - 1:

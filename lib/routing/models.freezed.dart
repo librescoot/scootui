@@ -44,6 +44,8 @@ mixin _$RouteInstruction {
   String? get postInstructionText;
   String? get verbalAlertInstruction;
   String? get verbalInstruction;
+  String? get verbalSuccinctInstruction;
+  bool get verbalMultiCue;
 
   /// Create a copy of RouteInstruction
   /// with the given fields replaced by the non-null parameter values.
@@ -78,7 +80,12 @@ mixin _$RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -93,11 +100,13 @@ mixin _$RouteInstruction {
       instructionText,
       postInstructionText,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -116,7 +125,9 @@ abstract mixin class $RouteInstructionCopyWith<$Res> {
       String? instructionText,
       String? postInstructionText,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -141,6 +152,8 @@ class _$RouteInstructionCopyWithImpl<$Res>
     Object? postInstructionText = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(_self.copyWith(
       distance: null == distance
@@ -179,6 +192,14 @@ class _$RouteInstructionCopyWithImpl<$Res>
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -197,6 +218,8 @@ class Keep extends RouteInstruction {
       this.postInstructionText,
       this.verbalAlertInstruction,
       this.verbalInstruction,
+      this.verbalSuccinctInstruction,
+      this.verbalMultiCue = false,
       final String? $type})
       : $type = $type ?? 'keep',
         super._();
@@ -222,6 +245,11 @@ class Keep extends RouteInstruction {
   final String? verbalAlertInstruction;
   @override
   final String? verbalInstruction;
+  @override
+  final String? verbalSuccinctInstruction;
+  @override
+  @JsonKey()
+  final bool verbalMultiCue;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -265,7 +293,12 @@ class Keep extends RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -281,11 +314,13 @@ class Keep extends RouteInstruction {
       instructionText,
       postInstructionText,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction.keep(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction.keep(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -306,7 +341,9 @@ abstract mixin class $KeepCopyWith<$Res>
       String? instructionText,
       String? postInstructionText,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -331,6 +368,8 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
     Object? postInstructionText = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(Keep(
       distance: null == distance
@@ -373,6 +412,14 @@ class _$KeepCopyWithImpl<$Res> implements $KeepCopyWith<$Res> {
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -391,6 +438,8 @@ class Turn extends RouteInstruction {
       this.postInstructionText,
       this.verbalAlertInstruction,
       this.verbalInstruction,
+      this.verbalSuccinctInstruction,
+      this.verbalMultiCue = false,
       final String? $type})
       : $type = $type ?? 'turn',
         super._();
@@ -416,6 +465,11 @@ class Turn extends RouteInstruction {
   final String? verbalAlertInstruction;
   @override
   final String? verbalInstruction;
+  @override
+  final String? verbalSuccinctInstruction;
+  @override
+  @JsonKey()
+  final bool verbalMultiCue;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -459,7 +513,12 @@ class Turn extends RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -475,11 +534,13 @@ class Turn extends RouteInstruction {
       instructionText,
       postInstructionText,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction.turn(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction.turn(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -500,7 +561,9 @@ abstract mixin class $TurnCopyWith<$Res>
       String? instructionText,
       String? postInstructionText,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -525,6 +588,8 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
     Object? postInstructionText = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(Turn(
       distance: null == distance
@@ -567,6 +632,14 @@ class _$TurnCopyWithImpl<$Res> implements $TurnCopyWith<$Res> {
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -585,6 +658,8 @@ class Exit extends RouteInstruction {
       this.postInstructionText,
       this.verbalAlertInstruction,
       this.verbalInstruction,
+      this.verbalSuccinctInstruction,
+      this.verbalMultiCue = false,
       final String? $type})
       : $type = $type ?? 'exit',
         super._();
@@ -610,6 +685,11 @@ class Exit extends RouteInstruction {
   final String? verbalAlertInstruction;
   @override
   final String? verbalInstruction;
+  @override
+  final String? verbalSuccinctInstruction;
+  @override
+  @JsonKey()
+  final bool verbalMultiCue;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -652,7 +732,12 @@ class Exit extends RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -668,11 +753,13 @@ class Exit extends RouteInstruction {
       instructionText,
       postInstructionText,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction.exit(distance: $distance, side: $side, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction.exit(distance: $distance, side: $side, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -693,7 +780,9 @@ abstract mixin class $ExitCopyWith<$Res>
       String? instructionText,
       String? postInstructionText,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -718,6 +807,8 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
     Object? postInstructionText = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(Exit(
       distance: null == distance
@@ -760,6 +851,14 @@ class _$ExitCopyWithImpl<$Res> implements $ExitCopyWith<$Res> {
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -778,6 +877,8 @@ class Merge extends RouteInstruction {
       this.postInstructionText,
       this.verbalAlertInstruction,
       this.verbalInstruction,
+      this.verbalSuccinctInstruction,
+      this.verbalMultiCue = false,
       final String? $type})
       : $type = $type ?? 'merge',
         super._();
@@ -803,6 +904,11 @@ class Merge extends RouteInstruction {
   final String? verbalAlertInstruction;
   @override
   final String? verbalInstruction;
+  @override
+  final String? verbalSuccinctInstruction;
+  @override
+  @JsonKey()
+  final bool verbalMultiCue;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -846,7 +952,12 @@ class Merge extends RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -862,11 +973,13 @@ class Merge extends RouteInstruction {
       instructionText,
       postInstructionText,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction.merge(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction.merge(distance: $distance, direction: $direction, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -887,7 +1000,9 @@ abstract mixin class $MergeCopyWith<$Res>
       String? instructionText,
       String? postInstructionText,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -912,6 +1027,8 @@ class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
     Object? postInstructionText = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(Merge(
       distance: null == distance
@@ -954,6 +1071,14 @@ class _$MergeCopyWithImpl<$Res> implements $MergeCopyWith<$Res> {
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -975,6 +1100,8 @@ class Roundabout extends RouteInstruction {
       this.bearingAfter,
       this.verbalAlertInstruction,
       this.verbalInstruction,
+      this.verbalSuccinctInstruction,
+      this.verbalMultiCue = false,
       final String? $type})
       : $type = $type ?? 'roundabout',
         super._();
@@ -1004,6 +1131,11 @@ class Roundabout extends RouteInstruction {
   final String? verbalAlertInstruction;
   @override
   final String? verbalInstruction;
+  @override
+  final String? verbalSuccinctInstruction;
+  @override
+  @JsonKey()
+  final bool verbalMultiCue;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -1052,7 +1184,12 @@ class Roundabout extends RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1071,11 +1208,13 @@ class Roundabout extends RouteInstruction {
       bearingBefore,
       bearingAfter,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction.roundabout(distance: $distance, side: $side, exitNumber: $exitNumber, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -1100,7 +1239,9 @@ abstract mixin class $RoundaboutCopyWith<$Res>
       double? bearingBefore,
       double? bearingAfter,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -1128,6 +1269,8 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
     Object? bearingAfter = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(Roundabout(
       distance: null == distance
@@ -1182,6 +1325,14 @@ class _$RoundaboutCopyWithImpl<$Res> implements $RoundaboutCopyWith<$Res> {
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -1199,6 +1350,8 @@ class Other extends RouteInstruction {
       this.postInstructionText,
       this.verbalAlertInstruction,
       this.verbalInstruction,
+      this.verbalSuccinctInstruction,
+      this.verbalMultiCue = false,
       final String? $type})
       : $type = $type ?? 'other',
         super._();
@@ -1223,6 +1376,11 @@ class Other extends RouteInstruction {
   final String? verbalAlertInstruction;
   @override
   final String? verbalInstruction;
+  @override
+  final String? verbalSuccinctInstruction;
+  @override
+  @JsonKey()
+  final bool verbalMultiCue;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -1264,7 +1422,12 @@ class Other extends RouteInstruction {
             (identical(other.verbalAlertInstruction, verbalAlertInstruction) ||
                 other.verbalAlertInstruction == verbalAlertInstruction) &&
             (identical(other.verbalInstruction, verbalInstruction) ||
-                other.verbalInstruction == verbalInstruction));
+                other.verbalInstruction == verbalInstruction) &&
+            (identical(other.verbalSuccinctInstruction,
+                    verbalSuccinctInstruction) ||
+                other.verbalSuccinctInstruction == verbalSuccinctInstruction) &&
+            (identical(other.verbalMultiCue, verbalMultiCue) ||
+                other.verbalMultiCue == verbalMultiCue));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1279,11 +1442,13 @@ class Other extends RouteInstruction {
       instructionText,
       postInstructionText,
       verbalAlertInstruction,
-      verbalInstruction);
+      verbalInstruction,
+      verbalSuccinctInstruction,
+      verbalMultiCue);
 
   @override
   String toString() {
-    return 'RouteInstruction.other(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction)';
+    return 'RouteInstruction.other(distance: $distance, duration: $duration, location: $location, originalShapeIndex: $originalShapeIndex, streetName: $streetName, instructionText: $instructionText, postInstructionText: $postInstructionText, verbalAlertInstruction: $verbalAlertInstruction, verbalInstruction: $verbalInstruction, verbalSuccinctInstruction: $verbalSuccinctInstruction, verbalMultiCue: $verbalMultiCue)';
   }
 }
 
@@ -1303,7 +1468,9 @@ abstract mixin class $OtherCopyWith<$Res>
       String? instructionText,
       String? postInstructionText,
       String? verbalAlertInstruction,
-      String? verbalInstruction});
+      String? verbalInstruction,
+      String? verbalSuccinctInstruction,
+      bool verbalMultiCue});
 }
 
 /// @nodoc
@@ -1327,6 +1494,8 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
     Object? postInstructionText = freezed,
     Object? verbalAlertInstruction = freezed,
     Object? verbalInstruction = freezed,
+    Object? verbalSuccinctInstruction = freezed,
+    Object? verbalMultiCue = null,
   }) {
     return _then(Other(
       distance: null == distance
@@ -1365,6 +1534,14 @@ class _$OtherCopyWithImpl<$Res> implements $OtherCopyWith<$Res> {
           ? _self.verbalInstruction
           : verbalInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
+      verbalSuccinctInstruction: freezed == verbalSuccinctInstruction
+          ? _self.verbalSuccinctInstruction
+          : verbalSuccinctInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalMultiCue: null == verbalMultiCue
+          ? _self.verbalMultiCue
+          : verbalMultiCue // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }

@@ -141,6 +141,9 @@ def main():
             set_redis_value("gps", "longitude", lon_formatted)
             set_redis_value("gps", "course", course)
 
+            # Publish timestamp to trigger immediate UI updates
+            subprocess.run(["redis-cli", "PUBLISH", "gps", "timestamp"], check=True)
+
             # Set engine-ecu values in Redis
             engine_speed = int(round(current_speed))
             set_redis_value("engine-ecu", "speed", engine_speed)

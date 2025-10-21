@@ -265,11 +265,15 @@ class MapCubit extends Cubit<MapState> {
     double targetDistance = distanceToTurn;
     int significantTurnsFound = 0;
 
+    // Special handling for roundabouts: always include the exit in the zoom window
+    final isApproachingRoundabout = nextInstruction is Roundabout;
+
     for (int i = 1; i < navState.upcomingInstructions.length && significantTurnsFound < 2; i++) {
       final instruction = navState.upcomingInstructions[i];
 
-      // Stop if we've gone beyond 150m from current position
-      if (instruction.distance > 150) break;
+      // For roundabouts, extend the look-ahead to include the exit even if beyond 150m
+      // For other maneuvers, stop at 150m
+      if (!isApproachingRoundabout && instruction.distance > 150) break;
 
       // Check if this is a significant maneuver
       final isSignificantTurn = switch (instruction) {
@@ -285,6 +289,12 @@ class MapCubit extends Cubit<MapState> {
         // Zoom out to show this turn too
         targetDistance = instruction.distance;
         significantTurnsFound++;
+
+        // If we're approaching a roundabout and found the next significant turn (the exit),
+        // we can stop looking - we've included the full roundabout sequence
+        if (isApproachingRoundabout && significantTurnsFound >= 1) {
+          break;
+        }
       }
     }
 

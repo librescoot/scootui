@@ -675,6 +675,8 @@ mixin _$Maneuver {
   String? get verbalPreTransitionInstruction;
   @JsonKey(name: 'verbal_post_transition_instruction')
   String? get verbalPostTransitionInstruction;
+  @JsonKey(name: 'verbal_succinct_transition_instruction')
+  String? get verbalSuccinctTransitionInstruction;
   @JsonKey(name: 'verbal_multi_cue')
   bool get verbalMultiCue;
   @JsonKey(name: 'roundabout_exit_count')
@@ -728,17 +730,19 @@ mixin _$Maneuver {
                 .equals(other.streetNames, streetNames) &&
             const DeepCollectionEquality()
                 .equals(other.beginStreetNames, beginStreetNames) &&
-            (identical(other.verbalTransitionAlertInstruction,
-                    verbalTransitionAlertInstruction) ||
+            (identical(other.verbalTransitionAlertInstruction, verbalTransitionAlertInstruction) ||
                 other.verbalTransitionAlertInstruction ==
                     verbalTransitionAlertInstruction) &&
             (identical(other.verbalPreTransitionInstruction, verbalPreTransitionInstruction) ||
                 other.verbalPreTransitionInstruction ==
                     verbalPreTransitionInstruction) &&
-            (identical(other.verbalPostTransitionInstruction,
-                    verbalPostTransitionInstruction) ||
+            (identical(other.verbalPostTransitionInstruction, verbalPostTransitionInstruction) ||
                 other.verbalPostTransitionInstruction ==
                     verbalPostTransitionInstruction) &&
+            (identical(other.verbalSuccinctTransitionInstruction,
+                    verbalSuccinctTransitionInstruction) ||
+                other.verbalSuccinctTransitionInstruction ==
+                    verbalSuccinctTransitionInstruction) &&
             (identical(other.verbalMultiCue, verbalMultiCue) ||
                 other.verbalMultiCue == verbalMultiCue) &&
             (identical(other.roundaboutExitCount, roundaboutExitCount) ||
@@ -779,6 +783,7 @@ mixin _$Maneuver {
         verbalTransitionAlertInstruction,
         verbalPreTransitionInstruction,
         verbalPostTransitionInstruction,
+        verbalSuccinctTransitionInstruction,
         verbalMultiCue,
         roundaboutExitCount,
         departInstruction,
@@ -796,7 +801,7 @@ mixin _$Maneuver {
 
   @override
   String toString() {
-    return 'Maneuver(type: $type, instruction: $instruction, length: $length, time: $time, beginShapeIndex: $beginShapeIndex, endShapeIndex: $endShapeIndex, travelMode: $travelMode, streetNames: $streetNames, beginStreetNames: $beginStreetNames, verbalTransitionAlertInstruction: $verbalTransitionAlertInstruction, verbalPreTransitionInstruction: $verbalPreTransitionInstruction, verbalPostTransitionInstruction: $verbalPostTransitionInstruction, verbalMultiCue: $verbalMultiCue, roundaboutExitCount: $roundaboutExitCount, departInstruction: $departInstruction, verbalDepartInstruction: $verbalDepartInstruction, arriveInstruction: $arriveInstruction, verbalArriveInstruction: $verbalArriveInstruction, toll: $toll, gate: $gate, ferry: $ferry, lanes: $lanes, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, bssManeuverType: $bssManeuverType)';
+    return 'Maneuver(type: $type, instruction: $instruction, length: $length, time: $time, beginShapeIndex: $beginShapeIndex, endShapeIndex: $endShapeIndex, travelMode: $travelMode, streetNames: $streetNames, beginStreetNames: $beginStreetNames, verbalTransitionAlertInstruction: $verbalTransitionAlertInstruction, verbalPreTransitionInstruction: $verbalPreTransitionInstruction, verbalPostTransitionInstruction: $verbalPostTransitionInstruction, verbalSuccinctTransitionInstruction: $verbalSuccinctTransitionInstruction, verbalMultiCue: $verbalMultiCue, roundaboutExitCount: $roundaboutExitCount, departInstruction: $departInstruction, verbalDepartInstruction: $verbalDepartInstruction, arriveInstruction: $arriveInstruction, verbalArriveInstruction: $verbalArriveInstruction, toll: $toll, gate: $gate, ferry: $ferry, lanes: $lanes, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, bssManeuverType: $bssManeuverType)';
   }
 }
 
@@ -821,6 +826,8 @@ abstract mixin class $ManeuverCopyWith<$Res> {
       String? verbalPreTransitionInstruction,
       @JsonKey(name: 'verbal_post_transition_instruction')
       String? verbalPostTransitionInstruction,
+      @JsonKey(name: 'verbal_succinct_transition_instruction')
+      String? verbalSuccinctTransitionInstruction,
       @JsonKey(name: 'verbal_multi_cue') bool verbalMultiCue,
       @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
       @JsonKey(name: 'depart_instruction') String? departInstruction,
@@ -862,6 +869,7 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
     Object? verbalTransitionAlertInstruction = freezed,
     Object? verbalPreTransitionInstruction = freezed,
     Object? verbalPostTransitionInstruction = freezed,
+    Object? verbalSuccinctTransitionInstruction = freezed,
     Object? verbalMultiCue = null,
     Object? roundaboutExitCount = freezed,
     Object? departInstruction = freezed,
@@ -926,6 +934,11 @@ class _$ManeuverCopyWithImpl<$Res> implements $ManeuverCopyWith<$Res> {
               verbalPostTransitionInstruction
           ? _self.verbalPostTransitionInstruction
           : verbalPostTransitionInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalSuccinctTransitionInstruction: freezed ==
+              verbalSuccinctTransitionInstruction
+          ? _self.verbalSuccinctTransitionInstruction
+          : verbalSuccinctTransitionInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
       verbalMultiCue: null == verbalMultiCue
           ? _self.verbalMultiCue
@@ -1002,6 +1015,8 @@ class _Maneuver implements Maneuver {
       this.verbalPreTransitionInstruction,
       @JsonKey(name: 'verbal_post_transition_instruction')
       this.verbalPostTransitionInstruction,
+      @JsonKey(name: 'verbal_succinct_transition_instruction')
+      this.verbalSuccinctTransitionInstruction,
       @JsonKey(name: 'verbal_multi_cue') this.verbalMultiCue = false,
       @JsonKey(name: 'roundabout_exit_count') this.roundaboutExitCount,
       @JsonKey(name: 'depart_instruction') this.departInstruction,
@@ -1070,6 +1085,9 @@ class _Maneuver implements Maneuver {
   @override
   @JsonKey(name: 'verbal_post_transition_instruction')
   final String? verbalPostTransitionInstruction;
+  @override
+  @JsonKey(name: 'verbal_succinct_transition_instruction')
+  final String? verbalSuccinctTransitionInstruction;
   @override
   @JsonKey(name: 'verbal_multi_cue')
   final bool verbalMultiCue;
@@ -1152,17 +1170,19 @@ class _Maneuver implements Maneuver {
                 .equals(other._streetNames, _streetNames) &&
             const DeepCollectionEquality()
                 .equals(other._beginStreetNames, _beginStreetNames) &&
-            (identical(other.verbalTransitionAlertInstruction,
-                    verbalTransitionAlertInstruction) ||
+            (identical(other.verbalTransitionAlertInstruction, verbalTransitionAlertInstruction) ||
                 other.verbalTransitionAlertInstruction ==
                     verbalTransitionAlertInstruction) &&
             (identical(other.verbalPreTransitionInstruction, verbalPreTransitionInstruction) ||
                 other.verbalPreTransitionInstruction ==
                     verbalPreTransitionInstruction) &&
-            (identical(other.verbalPostTransitionInstruction,
-                    verbalPostTransitionInstruction) ||
+            (identical(other.verbalPostTransitionInstruction, verbalPostTransitionInstruction) ||
                 other.verbalPostTransitionInstruction ==
                     verbalPostTransitionInstruction) &&
+            (identical(other.verbalSuccinctTransitionInstruction,
+                    verbalSuccinctTransitionInstruction) ||
+                other.verbalSuccinctTransitionInstruction ==
+                    verbalSuccinctTransitionInstruction) &&
             (identical(other.verbalMultiCue, verbalMultiCue) ||
                 other.verbalMultiCue == verbalMultiCue) &&
             (identical(other.roundaboutExitCount, roundaboutExitCount) ||
@@ -1203,6 +1223,7 @@ class _Maneuver implements Maneuver {
         verbalTransitionAlertInstruction,
         verbalPreTransitionInstruction,
         verbalPostTransitionInstruction,
+        verbalSuccinctTransitionInstruction,
         verbalMultiCue,
         roundaboutExitCount,
         departInstruction,
@@ -1220,7 +1241,7 @@ class _Maneuver implements Maneuver {
 
   @override
   String toString() {
-    return 'Maneuver(type: $type, instruction: $instruction, length: $length, time: $time, beginShapeIndex: $beginShapeIndex, endShapeIndex: $endShapeIndex, travelMode: $travelMode, streetNames: $streetNames, beginStreetNames: $beginStreetNames, verbalTransitionAlertInstruction: $verbalTransitionAlertInstruction, verbalPreTransitionInstruction: $verbalPreTransitionInstruction, verbalPostTransitionInstruction: $verbalPostTransitionInstruction, verbalMultiCue: $verbalMultiCue, roundaboutExitCount: $roundaboutExitCount, departInstruction: $departInstruction, verbalDepartInstruction: $verbalDepartInstruction, arriveInstruction: $arriveInstruction, verbalArriveInstruction: $verbalArriveInstruction, toll: $toll, gate: $gate, ferry: $ferry, lanes: $lanes, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, bssManeuverType: $bssManeuverType)';
+    return 'Maneuver(type: $type, instruction: $instruction, length: $length, time: $time, beginShapeIndex: $beginShapeIndex, endShapeIndex: $endShapeIndex, travelMode: $travelMode, streetNames: $streetNames, beginStreetNames: $beginStreetNames, verbalTransitionAlertInstruction: $verbalTransitionAlertInstruction, verbalPreTransitionInstruction: $verbalPreTransitionInstruction, verbalPostTransitionInstruction: $verbalPostTransitionInstruction, verbalSuccinctTransitionInstruction: $verbalSuccinctTransitionInstruction, verbalMultiCue: $verbalMultiCue, roundaboutExitCount: $roundaboutExitCount, departInstruction: $departInstruction, verbalDepartInstruction: $verbalDepartInstruction, arriveInstruction: $arriveInstruction, verbalArriveInstruction: $verbalArriveInstruction, toll: $toll, gate: $gate, ferry: $ferry, lanes: $lanes, bearingBefore: $bearingBefore, bearingAfter: $bearingAfter, bssManeuverType: $bssManeuverType)';
   }
 }
 
@@ -1247,6 +1268,8 @@ abstract mixin class _$ManeuverCopyWith<$Res>
       String? verbalPreTransitionInstruction,
       @JsonKey(name: 'verbal_post_transition_instruction')
       String? verbalPostTransitionInstruction,
+      @JsonKey(name: 'verbal_succinct_transition_instruction')
+      String? verbalSuccinctTransitionInstruction,
       @JsonKey(name: 'verbal_multi_cue') bool verbalMultiCue,
       @JsonKey(name: 'roundabout_exit_count') int? roundaboutExitCount,
       @JsonKey(name: 'depart_instruction') String? departInstruction,
@@ -1288,6 +1311,7 @@ class __$ManeuverCopyWithImpl<$Res> implements _$ManeuverCopyWith<$Res> {
     Object? verbalTransitionAlertInstruction = freezed,
     Object? verbalPreTransitionInstruction = freezed,
     Object? verbalPostTransitionInstruction = freezed,
+    Object? verbalSuccinctTransitionInstruction = freezed,
     Object? verbalMultiCue = null,
     Object? roundaboutExitCount = freezed,
     Object? departInstruction = freezed,
@@ -1352,6 +1376,11 @@ class __$ManeuverCopyWithImpl<$Res> implements _$ManeuverCopyWith<$Res> {
               verbalPostTransitionInstruction
           ? _self.verbalPostTransitionInstruction
           : verbalPostTransitionInstruction // ignore: cast_nullable_to_non_nullable
+              as String?,
+      verbalSuccinctTransitionInstruction: freezed ==
+              verbalSuccinctTransitionInstruction
+          ? _self.verbalSuccinctTransitionInstruction
+          : verbalSuccinctTransitionInstruction // ignore: cast_nullable_to_non_nullable
               as String?,
       verbalMultiCue: null == verbalMultiCue
           ? _self.verbalMultiCue

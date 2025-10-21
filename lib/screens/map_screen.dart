@@ -8,6 +8,7 @@ import '../env_config.dart';
 import '../widgets/map/map_overlay_indicators.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
+import '../widgets/navigation/navigation_status_overlay.dart';
 import '../widgets/status_bars/unified_bottom_status_bar.dart';
 import '../widgets/status_bars/speed_center_widget.dart';
 import '../widgets/status_bars/top_status_bar.dart';
@@ -42,7 +43,7 @@ class MapScreen extends StatelessWidget {
               children: [
                 // Map fills entire area as background
                 _buildMap(context, state, theme),
-                
+
                 // Overlay content in Column layout (top to bottom)
                 Padding(
                   padding: const EdgeInsets.all(8),
@@ -50,10 +51,10 @@ class MapScreen extends StatelessWidget {
                     children: [
                       // Navigation info, if navigation is active
                       TurnByTurnWidget(),
-                      
+
                       // 8px spacing
                       const SizedBox(height: 8),
-                      
+
                       // Blinker overlay (BELOW turn by turn)
                       _buildBlinkerRow(context),
                       
@@ -78,6 +79,17 @@ class MapScreen extends StatelessWidget {
                         ],
                       ),
                     ],
+                  ),
+                ),
+
+                // Navigation status overlay (GPS waiting, rerouting, arrival)
+                // Positioned at top-center, floating above everything
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: NavigationStatusOverlay(),
                   ),
                 ),
               ],

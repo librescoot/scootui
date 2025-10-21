@@ -103,6 +103,10 @@ class StatusIndicators extends StatelessWidget {
     return internet.unuCloud == ConnectionStatus.connected;
   }
 
+  bool cloudHasError(InternetData internet) {
+    return internet.unuCloud == ConnectionStatus.disconnected;
+  }
+
   bool internetIsActive(InternetData internet) {
     return internet.status == ConnectionStatus.connected;
   }
@@ -150,7 +154,7 @@ class StatusIndicators extends StatelessWidget {
       ));
     }
 
-    if (shouldShowIndicator(settings.showCloud ?? 'error', cloudIsActive(internet), false)) {
+    if (shouldShowIndicator(settings.showCloud ?? 'error', cloudIsActive(internet), cloudHasError(internet))) {
       children.add(IndicatorLight(
         icon: IndicatorLight.svgAsset(cloudIcon(internet)),
         isActive: true,

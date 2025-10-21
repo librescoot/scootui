@@ -58,15 +58,31 @@ ScootUI includes a simulator mode for development and testing without physical s
 
 ScootUI uses Redis for dynamic configuration. Settings are stored in the `settings` hash and can be modified at runtime.
 
+### Dashboard Display Settings
+
+| Key | Possible Values | Default | Description |
+|-----|-----------------|---------|-------------|
+| `dashboard.show-raw-speed` | `true`, `false` | `false` | Show uncorrected speed as reported by ECU instead of wheel circumference corrected speed |
+| `dashboard.show-gps` | `always`, `active-or-error`, `error`, `never` | `error` | GPS icon visibility: always show, when GPS has fix or error, error only, or never |
+| `dashboard.show-bluetooth` | `always`, `active-or-error`, `error`, `never` | `active-or-error` | Bluetooth icon visibility: always show, when connected or error, error only, or never |
+| `dashboard.show-cloud` | `always`, `active-or-error`, `error`, `never` | `error` | Cloud connection icon visibility: always show, when connected or error, error only, or never |
+| `dashboard.show-internet` | `always`, `active-or-error`, `error`, `never` | `always` | Internet/cellular icon visibility: always show, when connected or error, error only, or never |
+
 ### Map Settings
 
-| Key | Values | Default | Description |
-|-----|--------|---------|-------------|
-| `dashboard.map.type` | `online`, `offline` | `offline` | Map source: online uses CartoDB tiles, offline uses MBTiles |
-| `dashboard.map.render-mode` | `vector`, `raster` | `raster` | Rendering mode for offline maps |
+| Key | Possible Values | Default | Description |
+|-----|-----------------|---------|-------------|
+| `dashboard.map.type` | `online`, `offline` | `offline` | Map source: online uses CartoDB tiles, offline uses local MBTiles |
+| `dashboard.map.render-mode` | `vector`, `raster` | `raster` | Rendering mode for offline maps: vector for dynamic styling, raster for pre-rendered tiles |
 
-**Example:**
+**Examples:**
 ```bash
+# Show raw GPS speed on dashboard
+redis-cli hset settings dashboard.show-raw-speed true
+
+# Always show GPS indicator
+redis-cli hset settings dashboard.show-gps always
+
 # Switch to online maps
 redis-cli hset settings dashboard.map.type online
 
