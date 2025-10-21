@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../cubits/mdb_cubits.dart';
+import '../../cubits/navigation_cubit.dart';
 
 class SpeedLimitIndicator extends StatelessWidget {
   final double iconSize;
@@ -16,47 +17,37 @@ class SpeedLimitIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final speedLimitData = SpeedLimitSync.watch(context);
+    final speedLimit = context.select((NavigationCubit c) => c.state.currentSpeedLimit);
 
     // Don't show anything if there's no speed limit data
-    if (!speedLimitData.hasSpeedLimit || speedLimitData.iconName.isEmpty) {
+    if (speedLimit == null || speedLimit.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // If using blank template, overlay text on the icon
-    if (speedLimitData.iconName == "speedlimit_blank") {
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          // Base icon
-          SvgPicture.asset(
-            'assets/icons/speedlimit_blank.svg',
-            width: iconSize,
-            height: iconSize,
-            colorFilter: iconColor != null ? ColorFilter.mode(iconColor!, BlendMode.srcIn) : null,
-          ),
+    // Use the blank template with custom text overlay
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Base icon
+        SvgPicture.asset(
+          'assets/icons/speedlimit_blank.svg',
+          width: iconSize,
+          height: iconSize,
+          colorFilter: iconColor != null ? ColorFilter.mode(iconColor!, BlendMode.srcIn) : null,
+        ),
 
-          // Text overlay
-          // Scale font size proportionally to the icon size (64pt at 144px)
-          Text(
-            speedLimitData.speedLimit,
-            style: GoogleFonts.robotoCondensed(
-              fontWeight: FontWeight.bold,
-              fontSize: iconSize * (64 / 144), // Scale proportionally
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
+        // Text overlay
+        // Scale font size proportionally to the icon size (64pt at 144px)
+        Text(
+          speedLimit,
+          style: GoogleFonts.robotoCondensed(
+            fontWeight: FontWeight.bold,
+            fontSize: iconSize * (64 / 144), // Scale proportionally
+            color: Colors.black,
           ),
-        ],
-      );
-    }
-
-    // For pre-designed icons
-    return SvgPicture.asset(
-      'assets/icons/${speedLimitData.iconName}.svg',
-      width: iconSize,
-      height: iconSize,
-      colorFilter: iconColor != null ? ColorFilter.mode(iconColor!, BlendMode.srcIn) : null,
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -71,15 +62,16 @@ class RoadNameDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final speedLimitData = SpeedLimitSync.watch(context);
+    final roadName = context.select((NavigationCubit c) => c.state.currentStreetName);
+    final roadType = context.select((NavigationCubit c) => c.state.currentRoadType);
 
     // Don't show anything if there's no road name
-    if (speedLimitData.roadName.isEmpty) {
+    if (roadName == null || roadName.isEmpty) {
       return const SizedBox.shrink();
     }
 
     // Get styling based on German road sign standards for different road types
-    final (Color bgColor, Color textColor, BoxBorder? border) = _getRoadSignStyle(speedLimitData.roadType);
+    final (Color bgColor, Color textColor, BoxBorder? border) = _getRoadSignStyle(roadType ?? '');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -89,7 +81,7 @@ class RoadNameDisplay extends StatelessWidget {
         border: border,
       ),
       child: Text(
-        speedLimitData.roadName,
+        roadName,
         style: (textStyle ?? Theme.of(context).textTheme.bodyMedium)?.copyWith(
           color: textColor,
           fontWeight: FontWeight.w500,

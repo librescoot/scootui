@@ -30,6 +30,9 @@ abstract class NavigationState with _$NavigationState {
     @Default(false) bool isOffRoute,
     @Default(null) LatLng? snappedPosition,
     @Default([]) List<String> pendingConditions,
+    @Default(null) String? currentStreetName,
+    @Default(null) String? currentRoadType,
+    @Default(null) String? currentSpeedLimit,
   }) = _NavigationState;
 
   bool get isNavigating => status == NavigationStatus.navigating;

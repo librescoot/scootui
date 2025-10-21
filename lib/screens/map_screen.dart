@@ -67,8 +67,9 @@ class MapScreen extends StatelessWidget {
                           Expanded(
                             child: _buildWarningIndicators(context),
                           ),
-                          // Center bottom: street name display if available
-                          Expanded(
+                          // Center bottom: street name display
+                          Flexible(
+                            flex: 2,
                             child: _buildStreetNameDisplay(context),
                           ),
                           // Right side: north indicator space (map renders it)
@@ -278,31 +279,28 @@ class MapScreen extends StatelessWidget {
   }
 
   Widget _buildStreetNameDisplay(BuildContext context) {
-    final speedLimitData = SpeedLimitSync.watch(context);
-    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
-    
-    if (speedLimitData.roadName.isEmpty) {
+    final roadName = context.select((NavigationCubit c) => c.state.currentStreetName);
+    final ThemeState(:isDark) = ThemeCubit.watch(context);
+
+    if (roadName == null || roadName.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? Colors.white12 : Colors.black12,
-            width: 1,
-          ),
-        ),
-        child: RoadNameDisplay(
-          textStyle: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: isDark ? Colors.white70 : Colors.black54,
-          ),
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Allow full width but constrain to screen width
+          return ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: RoadNameDisplay(
+              textStyle: TextStyle(
+                fontSize: 14,
+                letterSpacing: roadName.length > 20 ? -0.5 : 0,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -46,7 +46,7 @@ class MapCubit extends Cubit<MapState> {
   static const double _zoomMax = 17.5; // Maximum zoom for complex turns (~150m look-ahead)
 
   // Vehicle positioning - public so VehicleIndicator can use the same value
-  static const Offset mapCenterOffset = Offset(0, 140); // Vehicle positioned toward bottom for better look-ahead
+  static const Offset mapCenterOffset = Offset(0, 120); // Vehicle positioned toward bottom for better look-ahead (reduced for street name display)
 
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
