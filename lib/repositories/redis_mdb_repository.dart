@@ -321,6 +321,8 @@ class RedisMDBRepository implements MDBRepository {
   Future<void> hdel(String key, String field) {
     return _withConnection((cmd) async {
       await cmd.send_object(["HDEL", key, field]);
+      // Publish notification so subscribers know the field was deleted
+      await cmd.send_object(["PUBLISH", key, field]);
     });
   }
 

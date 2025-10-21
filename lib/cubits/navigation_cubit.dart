@@ -21,7 +21,8 @@ class NavigationCubit extends Cubit<NavigationState> {
   final NavigationSync _navigationSync;
   VehicleData _vehicleData;
 
-  static const double _arrivalProximityMeters = 25.0;
+  static const double _arrivalProximityMeters = 50.0;
+  static const double _shutdownProximityMeters = 250.0;
   static const double _offRouteTolerance = 40.0; // meters
   DateTime? _lastReroute;
   LatLng? _currentPosition;
@@ -54,13 +55,13 @@ class NavigationCubit extends Cubit<NavigationState> {
       print("NavigationCubit: Clearing destination on shutdown since we've arrived.");
       await clearNavigation();
     }
-    // If the scooter shuts down and the current location is within 100m of the GPS destination,
+    // If the scooter shuts down and the current location is within 250m of the GPS destination,
     // then CLEAR THE GPS navigation destination.
     else if (_vehicleData.state == ScooterState.shuttingDown &&
         state.destination != null &&
         _currentPosition != null &&
-        distanceCalculator.as(LengthUnit.Meter, _currentPosition!, state.destination!) < 100.0) {
-      print("NavigationCubit: Clearing destination due to shutdown within 100m of destination.");
+        distanceCalculator.as(LengthUnit.Meter, _currentPosition!, state.destination!) < _shutdownProximityMeters) {
+      print("NavigationCubit: Clearing destination due to shutdown within ${_shutdownProximityMeters}m of destination.");
       await clearNavigation();
     }
 
