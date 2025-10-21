@@ -39,6 +39,10 @@ class GpsData extends Equatable with $GpsData {
 
   @override
   @StateField()
+  final String updated;
+
+  @override
+  @StateField()
   final String timestamp;
 
   @override
@@ -47,17 +51,25 @@ class GpsData extends Equatable with $GpsData {
 
   LatLng get latLng => LatLng(latitude, longitude);
   double get courseRadians => course * (math.pi / 180);
-  
+
+  /// Returns the most recent timestamp, preferring 'updated' over legacy 'timestamp'
+  String get lastUpdated => updated.isNotEmpty ? updated : timestamp;
+
   bool get hasRecentFix {
-    if (timestamp.isEmpty) return false;
-    try {
-      final gpsTime = DateTime.parse(timestamp);
-      final now = DateTime.now();
-      final diff = now.difference(gpsTime).inSeconds;
-      return diff <= 10; // GPS fix is recent if within 10 seconds
-    } catch (e) {
-      return false;
+    // If 'updated' exists, use it for staleness detection
+    if (updated.isNotEmpty) {
+      try {
+        final gpsTime = DateTime.parse(updated);
+        final now = DateTime.now();
+        final diff = now.difference(gpsTime).inSeconds;
+        return diff <= 10; // GPS fix is recent if within 10 seconds
+      } catch (e) {
+        return false;
+      }
     }
+
+    // If only 'timestamp' exists (old modem-service), assume GPS is fresh
+    return timestamp.isNotEmpty;
   }
 
   GpsData({
@@ -66,6 +78,7 @@ class GpsData extends Equatable with $GpsData {
     this.course = 0,
     this.latitude = 0,
     this.longitude = 0,
+    this.updated = "",
     this.timestamp = "",
     this.state = GpsState.off,
   });

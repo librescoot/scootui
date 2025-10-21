@@ -19,6 +19,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
   double get course;
   double get speed;
   double get altitude;
+  String get updated;
   String get timestamp;
   GpsState get state;
   get syncSettings => SyncSettings(
@@ -61,6 +62,13 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
             defaultValue: null,
             interval: null),
         SyncFieldSettings(
+            name: "updated",
+            variable: "updated",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: null,
+            interval: null),
+        SyncFieldSettings(
             name: "timestamp",
             variable: "timestamp",
             type: SyncFieldType.string,
@@ -86,6 +94,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
       course: "course" != name ? course : double.parse(value),
       speed: "speed" != name ? speed : double.parse(value),
       altitude: "altitude" != name ? altitude : double.parse(value),
+      updated: "updated" != name ? updated : value,
       timestamp: "timestamp" != name ? timestamp : value,
       state: "state" != name ? state : $_GpsStateMap[value] ?? GpsState.off,
     );
@@ -99,13 +108,14 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
       course: course,
       speed: speed,
       altitude: altitude,
+      updated: updated,
       timestamp: timestamp,
       state: state,
     );
   }
 
   List<Object?> get props =>
-      [latitude, longitude, course, speed, altitude, timestamp, state];
+      [latitude, longitude, course, speed, altitude, updated, timestamp, state];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -116,6 +126,7 @@ abstract mixin class $GpsData implements Syncable<GpsData> {
     buf.writeln("	course = $course");
     buf.writeln("	speed = $speed");
     buf.writeln("	altitude = $altitude");
+    buf.writeln("	updated = $updated");
     buf.writeln("	timestamp = $timestamp");
     buf.writeln("	state = $state");
     buf.writeln(")");
