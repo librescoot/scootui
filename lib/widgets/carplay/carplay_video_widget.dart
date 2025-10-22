@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../cubits/carplay_cubit.dart';
+import 'mjpeg_stream_widget.dart';
 
 class CarPlayVideoWidget extends StatelessWidget {
-  final VideoPlayerController controller;
-
   const CarPlayVideoWidget({
     super.key,
-    required this.controller,
   });
 
   // CarPlay resolution constants
@@ -24,6 +21,8 @@ class CarPlayVideoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final streamUrl = context.read<CarPlayCubit>().streamUrl;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return GestureDetector(
@@ -37,7 +36,7 @@ class CarPlayVideoWidget extends StatelessWidget {
             child: Center(
               child: AspectRatio(
                 aspectRatio: aspectRatio,
-                child: VideoPlayer(controller),
+                child: MjpegStreamWidget(streamUrl: streamUrl),
               ),
             ),
           ),

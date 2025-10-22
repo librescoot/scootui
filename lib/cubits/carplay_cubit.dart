@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
-import 'package:video_player/video_player.dart';
 
 part 'carplay_state.dart';
 part 'carplay_cubit.freezed.dart';
@@ -16,13 +15,15 @@ class CarPlayCubit extends Cubit<CarPlayState> {
   static const String touchEndpoint = '/touch';
   static const String statusEndpoint = '/status';
 
-  VideoPlayerController? _controller;
   final http.Client _httpClient = http.Client();
 
   CarPlayCubit() : super(const CarPlayState.disconnected());
 
-  /// Connect to the CarPlay backend and initialize video player
-  Future<void> connect() async {
+  /// Get the MJPEG stream URL
+  String get streamUrl => '$backendUrl$streamEndpoint';
+
+  /// Connect to the CarPlay backend
+  Future<void> connect() async{
     try {
       emit(const CarPlayState.connecting());
 
@@ -65,34 +66,11 @@ class CarPlayCubit extends Cubit<CarPlayState> {
             'Server not ready after $maxRetries attempts. Is the backend running?');
       }
 
-      // Step 2: Initialize video player with H.264 stream
-      debugPrint('Initializing video player...');
-      _controller = VideoPlayerController.network(
-        '$backendUrl$streamEndpoint',
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-      );
-
-      await _controller!.initialize();
-      await _controller!.play();
-
-      debugPrint('Video player initialized and playing');
-
-      // Monitor player errors
-      _controller!.addListener(() {
-        if (_controller!.value.hasError) {
-          debugPrint('Video player error: ${_controller!.value.errorDescription}');
-          emit(CarPlayState.error(
-            message: 'Video playback error: ${_controller!.value.errorDescription}',
-          ));
-        }
-      });
-
-      emit(CarPlayState.connected(controller: _controller!));
+      debugPrint('CarPlay connection established');
+      emit(const CarPlayState.connected());
     } catch (e, stackTrace) {
       debugPrint('CarPlay connection error: $e');
       debugPrint('Stack trace: $stackTrace');
-
-      await _cleanup();
 
       String errorMessage = 'Failed to connect to CarPlay backend';
       if (e is TimeoutException) {
@@ -132,29 +110,16 @@ class CarPlayCubit extends Cubit<CarPlayState> {
 
   /// Disconnect from the CarPlay backend
   Future<void> disconnect() async {
-    await _cleanup();
     emit(const CarPlayState.disconnected());
   }
 
   /// Retry connection after an error
   Future<void> retry() async {
-    await _cleanup();
     await connect();
-  }
-
-  Future<void> _cleanup() async {
-    try {
-      await _controller?.pause();
-      await _controller?.dispose();
-      _controller = null;
-    } catch (e) {
-      debugPrint('Error during cleanup: $e');
-    }
   }
 
   @override
   Future<void> close() async {
-    await _cleanup();
     _httpClient.close();
     return super.close();
   }

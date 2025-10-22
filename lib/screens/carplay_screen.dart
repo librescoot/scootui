@@ -166,10 +166,10 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
       CarPlayConnecting() => _buildStatusMessage(
           context,
           'Connecting to CarPlay...',
-          'Initializing video stream',
+          'Initializing MJPEG stream',
           showSpinner: true,
         ),
-      CarPlayConnected(:final controller) => CarPlayVideoWidget(controller: controller),
+      CarPlayConnected() => const CarPlayVideoWidget(),
       CarPlayError(:final message) => _buildErrorMessage(context, message),
     };
   }

@@ -93,72 +93,25 @@ class CarPlayConnecting with DiagnosticableTreeMixin implements CarPlayState {
 /// @nodoc
 
 class CarPlayConnected with DiagnosticableTreeMixin implements CarPlayState {
-  const CarPlayConnected({required this.controller});
-
-  final VideoPlayerController controller;
-
-  /// Create a copy of CarPlayState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  $CarPlayConnectedCopyWith<CarPlayConnected> get copyWith =>
-      _$CarPlayConnectedCopyWithImpl<CarPlayConnected>(this, _$identity);
+  const CarPlayConnected();
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    properties
-      ..add(DiagnosticsProperty('type', 'CarPlayState.connected'))
-      ..add(DiagnosticsProperty('controller', controller));
+    properties..add(DiagnosticsProperty('type', 'CarPlayState.connected'));
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is CarPlayConnected &&
-            (identical(other.controller, controller) ||
-                other.controller == controller));
+        (other.runtimeType == runtimeType && other is CarPlayConnected);
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, controller);
+  int get hashCode => runtimeType.hashCode;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'CarPlayState.connected(controller: $controller)';
-  }
-}
-
-/// @nodoc
-abstract mixin class $CarPlayConnectedCopyWith<$Res>
-    implements $CarPlayStateCopyWith<$Res> {
-  factory $CarPlayConnectedCopyWith(
-          CarPlayConnected value, $Res Function(CarPlayConnected) _then) =
-      _$CarPlayConnectedCopyWithImpl;
-  @useResult
-  $Res call({VideoPlayerController controller});
-}
-
-/// @nodoc
-class _$CarPlayConnectedCopyWithImpl<$Res>
-    implements $CarPlayConnectedCopyWith<$Res> {
-  _$CarPlayConnectedCopyWithImpl(this._self, this._then);
-
-  final CarPlayConnected _self;
-  final $Res Function(CarPlayConnected) _then;
-
-  /// Create a copy of CarPlayState
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? controller = null,
-  }) {
-    return _then(CarPlayConnected(
-      controller: null == controller
-          ? _self.controller
-          : controller // ignore: cast_nullable_to_non_nullable
-              as VideoPlayerController,
-    ));
+    return 'CarPlayState.connected()';
   }
 }
 
