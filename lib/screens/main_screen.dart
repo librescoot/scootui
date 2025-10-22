@@ -6,6 +6,7 @@ import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
+import '../env_config.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/menu/menu_overlay.dart';
@@ -38,8 +39,8 @@ class MainScreen extends StatelessWidget {
     // If debug mode is set to full, show the debug screen regardless of current screen state
     if (debugMode == DebugMode.full) {
       return SizedBox(
-        width: 480,
-        height: 480,
+        width: EnvConfig.resolution.width,
+        height: EnvConfig.resolution.height,
         child: Stack(
           children: [
             const DebugScreen(),
@@ -53,8 +54,8 @@ class MainScreen extends StatelessWidget {
     }
 
     return SizedBox(
-      width: 480,
-      height: 480,
+      width: EnvConfig.resolution.width,
+      height: EnvConfig.resolution.height,
       child: OKToast(
         child: Stack(
           children: [
