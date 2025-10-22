@@ -67,8 +67,9 @@ class CarPlayCubit extends Cubit<CarPlayState> {
 
       // Step 2: Initialize video player with H.264 stream
       debugPrint('Initializing video player...');
-      _controller = VideoPlayerController.networkUrl(
-        Uri.parse('$backendUrl$streamEndpoint'),
+      _controller = VideoPlayerController.network(
+        '$backendUrl$streamEndpoint',
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
       );
 
       await _controller!.initialize();
