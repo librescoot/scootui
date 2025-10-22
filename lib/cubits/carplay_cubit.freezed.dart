@@ -93,9 +93,9 @@ class CarPlayConnecting with DiagnosticableTreeMixin implements CarPlayState {
 /// @nodoc
 
 class CarPlayConnected with DiagnosticableTreeMixin implements CarPlayState {
-  const CarPlayConnected({required this.renderer});
+  const CarPlayConnected({required this.controller});
 
-  final RTCVideoRenderer renderer;
+  final VideoPlayerController controller;
 
   /// Create a copy of CarPlayState
   /// with the given fields replaced by the non-null parameter values.
@@ -108,7 +108,7 @@ class CarPlayConnected with DiagnosticableTreeMixin implements CarPlayState {
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     properties
       ..add(DiagnosticsProperty('type', 'CarPlayState.connected'))
-      ..add(DiagnosticsProperty('renderer', renderer));
+      ..add(DiagnosticsProperty('controller', controller));
   }
 
   @override
@@ -116,16 +116,16 @@ class CarPlayConnected with DiagnosticableTreeMixin implements CarPlayState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is CarPlayConnected &&
-            (identical(other.renderer, renderer) ||
-                other.renderer == renderer));
+            (identical(other.controller, controller) ||
+                other.controller == controller));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, renderer);
+  int get hashCode => Object.hash(runtimeType, controller);
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'CarPlayState.connected(renderer: $renderer)';
+    return 'CarPlayState.connected(controller: $controller)';
   }
 }
 
@@ -136,7 +136,7 @@ abstract mixin class $CarPlayConnectedCopyWith<$Res>
           CarPlayConnected value, $Res Function(CarPlayConnected) _then) =
       _$CarPlayConnectedCopyWithImpl;
   @useResult
-  $Res call({RTCVideoRenderer renderer});
+  $Res call({VideoPlayerController controller});
 }
 
 /// @nodoc
@@ -151,13 +151,13 @@ class _$CarPlayConnectedCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   $Res call({
-    Object? renderer = null,
+    Object? controller = null,
   }) {
     return _then(CarPlayConnected(
-      renderer: null == renderer
-          ? _self.renderer
-          : renderer // ignore: cast_nullable_to_non_nullable
-              as RTCVideoRenderer,
+      controller: null == controller
+          ? _self.controller
+          : controller // ignore: cast_nullable_to_non_nullable
+              as VideoPlayerController,
     ));
   }
 }

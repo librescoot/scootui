@@ -166,10 +166,10 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
       CarPlayConnecting() => _buildStatusMessage(
           context,
           'Connecting to CarPlay...',
-          'Establishing WebRTC connection',
+          'Initializing video stream',
           showSpinner: true,
         ),
-      CarPlayConnected(:final renderer) => CarPlayVideoWidget(renderer: renderer),
+      CarPlayConnected(:final controller) => CarPlayVideoWidget(controller: controller),
       CarPlayError(:final message) => _buildErrorMessage(context, message),
     };
   }

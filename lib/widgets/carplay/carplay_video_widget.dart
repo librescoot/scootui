@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../cubits/carplay_cubit.dart';
 
 class CarPlayVideoWidget extends StatelessWidget {
-  final RTCVideoRenderer renderer;
+  final VideoPlayerController controller;
 
   const CarPlayVideoWidget({
     super.key,
-    required this.renderer,
+    required this.controller,
   });
 
   // CarPlay resolution constants
@@ -37,11 +37,7 @@ class CarPlayVideoWidget extends StatelessWidget {
             child: Center(
               child: AspectRatio(
                 aspectRatio: aspectRatio,
-                child: RTCVideoView(
-                  renderer,
-                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitContain,
-                  mirror: false,
-                ),
+                child: VideoPlayer(controller),
               ),
             ),
           ),
