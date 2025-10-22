@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../cubits/mdb_cubits.dart';
 import '../services/settings_service.dart';
+import '../env_config.dart';
 
 part 'screen_cubit.freezed.dart';
 part 'screen_state.dart';
@@ -33,6 +34,11 @@ class ScreenCubit extends Cubit<ScreenState> {
   }
 
   static ScreenState _getInitialState(String mode) {
+    // If CarPlay mode is enabled via environment variable, always start in CarPlay
+    if (EnvConfig.isCarPlayMode) {
+      return const ScreenState.carplay();
+    }
+
     switch (mode) {
       case 'navigation': // Map OEM 'navigation' to our 'map'
         return const ScreenState.map();

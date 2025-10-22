@@ -14,6 +14,7 @@ import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
 import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
+import 'carplay_screen.dart';
 import 'cluster_screen.dart';
 import 'debug_screen.dart';
 import 'map_screen.dart';
@@ -63,6 +64,7 @@ class MainScreen extends StatelessWidget {
               // only map and cluster should trigger the menu
               ScreenMap() => menuTrigger(const MapScreen()),
               ScreenCluster() => menuTrigger(const ClusterScreen()),
+              ScreenCarPlay() => const CarPlayScreen(), // CarPlay locked mode - no menu
               ScreenAddressSelection() => const AddressSelectionScreen(),
               ScreenOtaBackground() => const OtaBackgroundScreen(),
               ScreenOta() => const OtaScreen(),

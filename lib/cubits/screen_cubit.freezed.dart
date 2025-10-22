@@ -157,6 +157,26 @@ class ScreenDebug implements ScreenState {
 
 /// @nodoc
 
+class ScreenCarPlay implements ScreenState {
+  const ScreenCarPlay();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ScreenCarPlay);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() {
+    return 'ScreenState.carplay()';
+  }
+}
+
+/// @nodoc
+
 class ScreenShuttingDown implements ScreenState {
   const ScreenShuttingDown();
 
