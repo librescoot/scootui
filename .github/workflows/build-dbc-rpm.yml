@@ -77,19 +77,19 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' build.sh
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
-          
+
           # Add SCOOTUI_VERSION_UPDATE environment variable to Docker run command
           sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE=${SCOOTUI_VERSION_UPDATE}/' build.sh
-          
+
           echo "=== DEBUG: Environment variables to be passed ==="
           echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
-          echo "SCOOTUI_VERSION_UPDATE=0.4.7+git${{ needs.generate-timestamp.outputs.timestamp }}"
-          
+          echo "SCOOTUI_VERSION_UPDATE=0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}"
+
           echo "=== DEBUG: Modified build.sh content ==="
           grep "docker run" build.sh
 
           # Build only the scootui package for DBC target with version update
-          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" SCOOTUI_VERSION_UPDATE="0.4.7+git${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
+          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
 
       - name: Extract ScootUI RPM
         run: |
