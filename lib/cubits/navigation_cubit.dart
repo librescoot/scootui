@@ -34,6 +34,10 @@ class NavigationCubit extends Cubit<NavigationState> {
   DateTime? _lastStreetLog;
   LatLng? _currentPosition;
 
+  // Toast deduplication - only show each toast once per state
+  bool _arrivalToastShown = false;
+  String? _lastShownError;
+
   final distanceCalculator = Distance();
 
   NavigationCubit({
@@ -122,7 +126,10 @@ class NavigationCubit extends Cubit<NavigationState> {
 
       if (route.waypoints.isEmpty) {
         const errorMsg = 'Could not calculate route';
-        ToastService.showError(errorMsg);
+        if (_lastShownError != errorMsg) {
+          ToastService.showError(errorMsg);
+          _lastShownError = errorMsg;
+        }
         emit(state.copyWith(
           status: NavigationStatus.error,
           error: errorMsg,
@@ -145,8 +152,22 @@ class NavigationCubit extends Cubit<NavigationState> {
         error: null,
       ));
     } catch (e) {
-      final errorMsg = 'Failed to calculate route: $e';
-      ToastService.showError(errorMsg);
+      final errorMsg = e.toString();
+      // Clear destination if it's invalid (unreachable)
+      if (errorMsg.contains('400') || errorMsg.contains('Invalid route request')) {
+        print("NavigationCubit: Destination is unreachable, clearing navigation.");
+        await clearNavigation();
+        const clearMsg = 'Destination is unreachable. Please select a different location.';
+        if (_lastShownError != clearMsg) {
+          ToastService.showError(clearMsg);
+          _lastShownError = clearMsg;
+        }
+        return;
+      }
+      if (_lastShownError != errorMsg) {
+        ToastService.showError(errorMsg);
+        _lastShownError = errorMsg;
+      }
       emit(state.copyWith(
         status: NavigationStatus.error,
         error: errorMsg,
@@ -155,6 +176,8 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   Future<void> clearNavigation() async {
+    _arrivalToastShown = false;
+    _lastShownError = null;
     emit(const NavigationState());
     await _navigationSync.clearDestination();
   }
@@ -295,6 +318,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         distanceToDestination >= _arrivalProximityMeters &&
         _vehicleData.state != ScooterState.shuttingDown) {
       print("NavigationCubit: Resuming navigation after moving away from destination.");
+      _arrivalToastShown = false;
       ToastService.showInfo('Resuming navigation.');
       emit(state.copyWith(
         status: NavigationStatus.navigating,
@@ -305,7 +329,10 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     // Check if we've arrived
     if (distanceToDestination < _arrivalProximityMeters) {
-      ToastService.showSuccess('You have arrived at your destination!');
+      if (!_arrivalToastShown) {
+        ToastService.showSuccess('You have arrived at your destination!');
+        _arrivalToastShown = true;
+      }
       emit(state.copyWith(
         status: NavigationStatus.arrived,
         distanceToDestination: distanceToDestination,
@@ -367,7 +394,10 @@ class NavigationCubit extends Cubit<NavigationState> {
 
       if (route.waypoints.isEmpty) {
         const errorMsg = 'Could not calculate new route';
-        ToastService.showError(errorMsg);
+        if (_lastShownError != errorMsg) {
+          ToastService.showError(errorMsg);
+          _lastShownError = errorMsg;
+        }
         emit(state.copyWith(
           status: NavigationStatus.error,
           error: errorMsg,
@@ -384,8 +414,11 @@ class NavigationCubit extends Cubit<NavigationState> {
       // Recalculate navigation state with the new route
       _updateNavigationState(position);
     } catch (e) {
-      final errorMsg = 'Failed to reroute: $e';
-      ToastService.showError(errorMsg);
+      final errorMsg = e.toString();
+      if (_lastShownError != errorMsg) {
+        ToastService.showError(errorMsg);
+        _lastShownError = errorMsg;
+      }
       emit(state.copyWith(
         status: NavigationStatus.error,
         error: errorMsg,
