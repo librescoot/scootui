@@ -44,41 +44,48 @@ class MapScreen extends StatelessWidget {
                 _buildMap(context, state, theme),
 
                 // Overlay content in Column layout (top to bottom)
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      // Navigation info, if navigation is active (full width, no padding)
-                      TurnByTurnWidget(),
-                      const SizedBox(height: 8),
+                Column(
+                  children: [
+                    // Navigation info, if navigation is active (full width, flush to edges)
+                    TurnByTurnWidget(),
+                    const SizedBox(height: 8),
 
-                      // Blinker overlay (BELOW turn by turn)
-                      _buildBlinkerRow(context),
+                    // Padded content below
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            // Blinker overlay (BELOW turn by turn)
+                            _buildBlinkerRow(context),
 
-                      // Free space (expand)
-                      const Expanded(child: SizedBox()),
+                            // Free space (expand)
+                            const Expanded(child: SizedBox()),
 
-                      // Bottom row
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // Left side: warning indicators
-                          Expanded(
-                            child: _buildWarningIndicators(context),
-                          ),
-                          // Center bottom: street name display
-                          Flexible(
-                            flex: 2,
-                            child: _buildStreetNameDisplay(context),
-                          ),
-                          // Right side: north indicator space (map renders it)
-                          const Expanded(
-                            child: SizedBox(),
-                          ),
-                        ],
+                            // Bottom row
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                // Left side: warning indicators
+                                Expanded(
+                                  child: _buildWarningIndicators(context),
+                                ),
+                                // Center bottom: street name display
+                                Flexible(
+                                  flex: 2,
+                                  child: _buildStreetNameDisplay(context),
+                                ),
+                                // Right side: north indicator space (map renders it)
+                                const Expanded(
+                                  child: SizedBox(),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
                 // Navigation status overlay (GPS waiting, rerouting, arrival)
