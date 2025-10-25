@@ -931,11 +931,17 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         _buildSegmentedButton(
           '',
           [
+            'stand-by',
             'parked',
             'ready-to-drive',
-            'stand-by',
+            'shutting-down',
             'booting',
-            'shutting-down'
+            'updating',
+            'off',
+            'hibernating',
+            'hibernating-imminent',
+            'suspending',
+            'suspending-imminent'
           ],
           _vehicleState,
           (value) {
@@ -943,52 +949,18 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'state', value);
           },
         ),
-        if (_vehicleStateExpanded)
-          _buildSegmentedButton(
-            '',
-            [
-              'hibernating',
-              'hibernating-imminent',
-              'suspending',
-              'suspending-imminent',
-              'off'
-            ],
-            _vehicleState,
-            (value) {
-              setState(() => _vehicleState = value);
-              _publishEvent('vehicle', 'state', value);
-            },
-          ),
-        TextButton(
-          onPressed: () {
-            setState(() => _vehicleStateExpanded = !_vehicleStateExpanded);
-          },
-          child: Text(_vehicleStateExpanded ? 'Show Less' : 'Show More'),
-        ),
         _groupSpacer,
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Odometer (km)', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              controller: TextEditingController(
-                  text: _simulatedOdometer.toStringAsFixed(1)),
-              onSubmitted: (value) {
-                final parsedValue = double.tryParse(value);
-                if (parsedValue != null) {
-                  setState(() => _simulatedOdometer = parsedValue);
-                  _updateEngineValues();
-                }
-              },
-            ),
-          ],
+        _buildTextField(
+          label: 'Odometer (km)',
+          value: _simulatedOdometer.toStringAsFixed(1),
+          keyboardType: TextInputType.number,
+          onSubmitted: (value) {
+            final parsedValue = double.tryParse(value);
+            if (parsedValue != null) {
+              setState(() => _simulatedOdometer = parsedValue);
+              _updateEngineValues();
+            }
+          },
         ),
       ],
     );
@@ -1116,8 +1088,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('internet', 'status', value);
           },
         ),
-        const SizedBox(height: 8),
-        _buildSmallLabel('Access Tech'),
+        _groupSpacer,
+        _buildGroupHeading('Signal Quality'),
         _buildSegmentedButton(
           '',
           ['UNKNOWN', '2G', '3G', '4G', '5G'],
@@ -1128,7 +1100,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _buildSlider(
-          'Signal Quality',
+          '',
           _signalQuality,
           0,
           100,
@@ -1175,52 +1147,30 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         ),
         _groupSpacer,
         _buildGroupHeading('Position'),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildLabel('Latitude'),
-            TextField(
-              keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              controller: TextEditingController(
-                  text: _gpsLatitude.toStringAsFixed(6)),
-              onSubmitted: (value) {
-                final parsedValue = double.tryParse(value);
-                if (parsedValue != null) {
-                  setState(() => _gpsLatitude = parsedValue);
-                  _updateGpsValues();
-                }
-              },
-            ),
-          ],
+        _buildTextField(
+          label: 'Latitude',
+          value: _gpsLatitude.toStringAsFixed(6),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+          onSubmitted: (value) {
+            final parsedValue = double.tryParse(value);
+            if (parsedValue != null) {
+              setState(() => _gpsLatitude = parsedValue);
+              _updateGpsValues();
+            }
+          },
         ),
         const SizedBox(height: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildLabel('Longitude'),
-            TextField(
-              keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              controller: TextEditingController(
-                  text: _gpsLongitude.toStringAsFixed(6)),
-              onSubmitted: (value) {
-                final parsedValue = double.tryParse(value);
-                if (parsedValue != null) {
-                  setState(() => _gpsLongitude = parsedValue);
-                  _updateGpsValues();
-                }
-              },
-            ),
-          ],
+        _buildTextField(
+          label: 'Longitude',
+          value: _gpsLongitude.toStringAsFixed(6),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+          onSubmitted: (value) {
+            final parsedValue = double.tryParse(value);
+            if (parsedValue != null) {
+              setState(() => _gpsLongitude = parsedValue);
+              _updateGpsValues();
+            }
+          },
         ),
       ],
     );
@@ -1230,17 +1180,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Navigation',
       [
-        _buildSmallLabel('Destination (lat,lon)'),
-        const SizedBox(height: 4),
-        TextField(
-          keyboardType: TextInputType.text,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            hintText: '48.123456,11.123456',
-          ),
-          controller: TextEditingController(text: _navigationDestination),
+        _buildTextField(
+          label: 'Destination (lat,lon)',
+          value: _navigationDestination,
+          hintText: '48.123456,11.123456',
           onSubmitted: (value) {
             setState(() => _navigationDestination = value);
             _updateNavigationValues();
@@ -1521,7 +1464,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(label),
+        if (label.isNotEmpty) _buildLabel(label),
         Row(
           children: [
             Expanded(
@@ -1660,6 +1603,51 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         await _updateBatteryValues();
       },
       child: Text(label, style: const TextStyle(fontSize: 10)),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String value,
+    required ValueChanged<String> onSubmitted,
+    TextInputType? keyboardType,
+    String? hintText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 4),
+        TextField(
+          keyboardType: keyboardType ?? TextInputType.text,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surface,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            hintText: hintText,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+          ),
+          controller: TextEditingController(text: value),
+          onSubmitted: onSubmitted,
+        ),
+      ],
     );
   }
 
