@@ -208,7 +208,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SpeedLimitIndicator(iconSize: 24),
+                  const SpeedLimitIndicator(iconSize: 25),
                   const SizedBox(width: 4),
                   SizedBox(
                     width: 140,

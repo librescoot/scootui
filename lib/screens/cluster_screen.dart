@@ -233,52 +233,59 @@ class _ClusterScreenState extends State<ClusterScreen> {
                 SpeedometerDisplay(),
 
                 // Overlay content in Column layout (top to bottom)
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      // Turn-by-turn navigation (top priority)
-                      TurnByTurnWidget(),
+                Column(
+                  children: [
+                    // Turn-by-turn navigation (top priority, no padding)
+                    TurnByTurnWidget(),
 
-                      // Conditional spacing (only if turn-by-turn is active)
-                      BlocBuilder<NavigationCubit, NavigationState>(
-                        builder: (context, navState) {
-                          final hasNavContent = (navState.status ==
-                                      NavigationStatus.idle &&
-                                  navState.hasDestination &&
-                                  navState.hasPendingConditions) ||
-                              (navState.hasInstructions &&
-                                  navState.status != NavigationStatus.idle) ||
-                              navState.status == NavigationStatus.arrived;
+                    // Conditional spacing (only if turn-by-turn is active)
+                    BlocBuilder<NavigationCubit, NavigationState>(
+                      builder: (context, navState) {
+                        final hasNavContent = (navState.status ==
+                                    NavigationStatus.idle &&
+                                navState.hasDestination &&
+                                navState.hasPendingConditions) ||
+                            (navState.hasInstructions &&
+                                navState.status != NavigationStatus.idle) ||
+                            navState.status == NavigationStatus.arrived;
 
-                          return hasNavContent
-                              ? const SizedBox(height: 8)
-                              : const SizedBox.shrink();
-                        },
+                        return hasNavContent
+                            ? const SizedBox(height: 8)
+                            : const SizedBox.shrink();
+                      },
+                    ),
+
+                    // Blinker row and remaining content (with padding)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            // Blinker row (below turn-by-turn)
+                            Row(
+                              children: [
+                                // Left blinker
+                                _buildLeftBlinker(context),
+
+                                // Spacer
+                                const Expanded(child: SizedBox()),
+
+                                // Right blinker
+                                _buildRightBlinker(context),
+                              ],
+                            ),
+
+                            // Free space (expand)
+                            const Expanded(child: SizedBox()),
+
+                            // Bottom row with telltales or power display
+                            _buildBottomRow(context, VehicleSync.watch(context),
+                                theme, isDark, powerOutput),
+                          ],
+                        ),
                       ),
-
-                      // Blinker row (below turn-by-turn)
-                      Row(
-                        children: [
-                          // Left blinker
-                          _buildLeftBlinker(context),
-
-                          // Spacer
-                          const Expanded(child: SizedBox()),
-
-                          // Right blinker
-                          _buildRightBlinker(context),
-                        ],
-                      ),
-
-                      // Free space (expand)
-                      const Expanded(child: SizedBox()),
-
-                      // Bottom row with telltales or power display
-                      _buildBottomRow(context, VehicleSync.watch(context),
-                          theme, isDark, powerOutput),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
                 // Error message overlay
