@@ -16,9 +16,11 @@ import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
 import 'cluster_screen.dart';
 import 'debug_screen.dart';
+import 'maintenance_screen.dart';
 import 'map_screen.dart';
 import 'ota_background_screen.dart';
 import 'ota_screen.dart';
+import '../state/vehicle.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -29,6 +31,22 @@ class MainScreen extends StatelessWidget {
     final state = context.watch<ScreenCubit>().state;
     final menu = context.watch<MenuCubit>();
     final debugMode = context.watch<DebugOverlayCubit>().state;
+    final vehicleState = context.watch<VehicleSync>().state.state;
+
+    // Show maintenance screen if vehicle is not in normal operating states
+    const allowedStates = {
+      ScooterState.parked,
+      ScooterState.readyToDrive,
+      ScooterState.shuttingDown,
+    };
+
+    if (!allowedStates.contains(vehicleState)) {
+      return SizedBox(
+        width: EnvConfig.resolution.width,
+        height: EnvConfig.resolution.height,
+        child: const MaintenanceScreen(),
+      );
+    }
 
     Widget menuTrigger(Widget child) => ControlGestureDetector(
           stream: context.read<VehicleSync>().stream,
