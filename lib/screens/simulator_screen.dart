@@ -880,56 +880,40 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         ),
         _groupSpacer,
         _buildGroupHeading('Seatbox'),
-        _buildSegmentedButton(
-          '',
-          ['open', 'closed'],
-          _seatboxLockState,
-          (value) {
-            setState(() => _seatboxLockState = value);
-            _publishEvent('vehicle', 'seatbox:lock', value);
-          },
-        ),
-        const SizedBox(height: 8),
-        Listener(
-          onPointerDown: (_) => _seatboxButtonDown(),
-          onPointerUp: (_) => _seatboxButtonUp(),
-          onPointerCancel: (_) => _seatboxButtonUp(),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              minimumSize: Size(double.infinity, 40),
-              backgroundColor: _seatboxButtonState == 'on'
-                  ? Colors.green.shade700
-                  : Colors.blue.shade700,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {},
-            child: Text(
-              'Press & Hold',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
         Row(
           children: [
-            _buildSmallLabel('State:'),
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: _seatboxButtonState == 'on' ? Colors.green : Colors.grey,
-                borderRadius: BorderRadius.circular(8),
+            Expanded(
+              child: _buildSegmentedButton(
+                '',
+                ['open', 'closed'],
+                _seatboxLockState,
+                (value) {
+                  setState(() => _seatboxLockState = value);
+                  _publishEvent('vehicle', 'seatbox:lock', value);
+                },
               ),
-              child: Text(
-                _seatboxButtonState.toUpperCase(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
+            ),
+            const SizedBox(width: 4),
+            Listener(
+              onPointerDown: (_) => _seatboxButtonDown(),
+              onPointerUp: (_) => _seatboxButtonUp(),
+              onPointerCancel: (_) => _seatboxButtonUp(),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: const Size(0, 32),
+                  backgroundColor: _seatboxButtonState == 'on'
+                      ? Colors.green.shade700
+                      : Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {},
+                child: Text(
+                  'Hold',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),
@@ -1014,82 +998,94 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Brakes',
       [
-        _buildGroupHeading('Left Brake'),
-        _buildSegmentedButton(
-          '',
-          ['off', 'on'],
-          _leftBrakeState,
-          (value) {
-            setState(() => _leftBrakeState = value);
-            if (value == 'on') {
-              print('SIM: Left brake pressed via UI button');
-            } else {
-              print('SIM: Left brake released via UI button');
-            }
-            _publishEvent('vehicle', 'brake:left', value);
-            _publishButtonEvent('brake:left:$value');
-          },
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeTap('left'),
-          child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(height: 4),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeDoubleTap('left'),
-          child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Left'),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSegmentedButton(
+                '',
+                ['off', 'on'],
+                _leftBrakeState,
+                (value) {
+                  setState(() => _leftBrakeState = value);
+                  if (value == 'on') {
+                    print('SIM: Left brake pressed via UI button');
+                  } else {
+                    print('SIM: Left brake released via UI button');
+                  }
+                  _publishEvent('vehicle', 'brake:left', value);
+                  _publishButtonEvent('brake:left:$value');
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeTap('left'),
+              child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeDoubleTap('left'),
+              child: const Text('2x', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ],
         ),
         _groupSpacer,
-        _buildGroupHeading('Right Brake'),
-        _buildSegmentedButton(
-          '',
-          ['off', 'on'],
-          _rightBrakeState,
-          (value) {
-            setState(() => _rightBrakeState = value);
-            if (value == 'on') {
-              print('SIM: Right brake pressed via UI button');
-            } else {
-              print('SIM: Right brake released via UI button');
-            }
-            _publishEvent('vehicle', 'brake:right', value);
-            _publishButtonEvent('brake:right:$value');
-          },
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeTap('right'),
-          child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(height: 4),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeDoubleTap('right'),
-          child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Right'),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSegmentedButton(
+                '',
+                ['off', 'on'],
+                _rightBrakeState,
+                (value) {
+                  setState(() => _rightBrakeState = value);
+                  if (value == 'on') {
+                    print('SIM: Right brake pressed via UI button');
+                  } else {
+                    print('SIM: Right brake released via UI button');
+                  }
+                  _publishEvent('vehicle', 'brake:right', value);
+                  _publishButtonEvent('brake:right:$value');
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeTap('right'),
+              child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeDoubleTap('right'),
+              child: const Text('2x', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ],
         ),
       ],
     );
@@ -1121,7 +1117,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        _buildSmallLabel('Access Tech:'),
+        _buildSmallLabel('Access Tech'),
         _buildSegmentedButton(
           '',
           ['UNKNOWN', '2G', '3G', '4G', '5G'],
@@ -1682,5 +1678,5 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Text(text, style: const TextStyle(fontSize: 12));
   }
 
-  Widget get _groupSpacer => const SizedBox(height: 16);
+  Widget get _groupSpacer => const SizedBox(height: 12);
 }
