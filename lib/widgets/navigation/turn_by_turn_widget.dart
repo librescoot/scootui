@@ -614,7 +614,7 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   String _formatDistance(double distance) {
-    if (distance > 500) {
+    if (distance > 1000) {
       return '${((((distance + 99) ~/ 100) * 100) / 1000).toStringAsFixed(1)} km';
     } else if (distance > 100) {
       return '${(((distance + 99) ~/ 100) * 100)} m';
