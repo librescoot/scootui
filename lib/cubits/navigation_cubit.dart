@@ -102,9 +102,10 @@ class NavigationCubit extends Cubit<NavigationState> {
     }
   }
 
-  Future<void> _calculateRoute(LatLng destination) async {
+  Future<void> _calculateRoute(LatLng destination, {String? address}) async {
     emit(state.copyWith(
       destination: destination,
+      destinationAddress: address,
       status: NavigationStatus.calculating,
       error: null,
     ));
@@ -221,6 +222,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         // Store pending destination and show conditions that need to be met
         emit(state.copyWith(
             destination: destination,
+            destinationAddress: data.address.isNotEmpty ? data.address : null,
             status: NavigationStatus.idle,
             error: "Waiting for recent GPS fix to calculate route.",
             pendingConditions: ["Waiting for GPS fix"]));
@@ -245,7 +247,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         ToastService.showInfo('New navigation destination received. Calculating route...');
         // Clear pending conditions since we can now calculate route
         emit(state.copyWith(pendingConditions: []));
-        _calculateRoute(destination);
+        _calculateRoute(destination, address: data.address.isNotEmpty ? data.address : null);
       } else {
         // This case should be covered by the earlier _currentPosition == null check,
         // but kept for clarity if logic changes.
@@ -298,7 +300,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         }
 
         print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
-        _calculateRoute(currentState.destination!);
+        _calculateRoute(currentState.destination!, address: currentState.destinationAddress);
         return; // Exit because _calculateRoute will emit the next state.
       }
     }
@@ -459,7 +461,7 @@ class NavigationCubit extends Cubit<NavigationState> {
     _lastStreetLog = DateTime.now();
 
     // If we're navigating and on-route, use the snapped position (more accurate)
-    final queryPosition = (state.route != null && state.snappedPosition != null && !(state.isOffRoute ?? false))
+    final queryPosition = (state.route != null && state.snappedPosition != null && !state.isOffRoute)
         ? state.snappedPosition!
         : position;
 

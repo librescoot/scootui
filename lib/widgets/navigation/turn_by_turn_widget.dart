@@ -64,18 +64,11 @@ class TurnByTurnWidget extends StatelessWidget {
 
       // Calculate time remaining: adjust first instruction's time based on progress
       if (firstOriginal.distance > 0) {
-        // How much of the first segment have we completed?
-        // We haven't reached the maneuver yet, so we're still in the PREVIOUS segment
-        // But upcoming instruction's distance is distance TO the maneuver, not progress THROUGH segment
-        // So we need to estimate time to reach first maneuver + time through first segment + subsequent segments
-        final distanceToFirstManeuver = firstUpcoming.distance;
-        final firstSegmentLength = firstOriginal.distance;
-
         // Estimate time to first maneuver (assume same speed as first segment)
         final speedInSegment = firstOriginal.distance > 0
             ? firstOriginal.duration.inSeconds / firstOriginal.distance
             : 0.0;
-        final timeToFirstManeuver = Duration(seconds: (distanceToFirstManeuver * speedInSegment).round());
+        final timeToFirstManeuver = Duration(seconds: (firstUpcoming.distance * speedInSegment).round());
 
         // Total time = time to first maneuver + duration of first segment + subsequent segments
         timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
@@ -88,40 +81,65 @@ class TurnByTurnWidget extends StatelessWidget {
     final now = DateTime.now();
     final eta = now.add(timeRemaining);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
-          width: 1.0,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+            width: 1.0,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTimeInfoItem(
-            icon: Icons.straighten,
-            label: 'Distance',
-            value: _formatDistanceKm(remainingDistance),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 8),
-          _buildTimeInfoItem(
-            icon: Icons.timer,
-            label: 'Remaining',
-            value: _formatDuration(timeRemaining),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 8),
-          _buildTimeInfoItem(
-            icon: Icons.flag,
-            label: 'ETA',
-            value: _formatTime(eta),
-            isDark: isDark,
-          ),
-        ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Destination address (if available)
+            if (state.destinationAddress != null && state.destinationAddress!.isNotEmpty) ...[
+              Icon(
+                Icons.place,
+                size: 14,
+                color: isDark ? Colors.white54 : Colors.black54,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  state.destinationAddress!,
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontSize: 12,
+                    fontWeight: FontWeight.normal,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            _buildTimeInfoItem(
+              icon: Icons.straighten,
+              label: 'Distance',
+              value: _formatDistanceKm(remainingDistance),
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildTimeInfoItem(
+              icon: Icons.timer,
+              label: 'Remaining',
+              value: _formatDuration(timeRemaining),
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildTimeInfoItem(
+              icon: Icons.flag,
+              label: 'ETA',
+              value: _formatTime(eta),
+              isDark: isDark,
+            ),
+          ],
+        ),
       ),
     );
   }
