@@ -105,15 +105,13 @@ class TurnByTurnWidget extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Flexible(
-                child: Text(
-                  state.destinationAddress!,
+                child: _AutoScrollText(
+                  text: state.destinationAddress!,
                   style: TextStyle(
                     color: isDark ? Colors.white70 : Colors.black87,
                     fontSize: 12,
                     fontWeight: FontWeight.normal,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 12),
@@ -608,6 +606,99 @@ class TurnByTurnWidget extends StatelessWidget {
           isDark: isDark,
           size: size,
         ),
+      ),
+    );
+  }
+}
+
+class _AutoScrollText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+
+  const _AutoScrollText({
+    required this.text,
+    required this.style,
+  });
+
+  @override
+  State<_AutoScrollText> createState() => _AutoScrollTextState();
+}
+
+class _AutoScrollTextState extends State<_AutoScrollText> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoScroll());
+  }
+
+  @override
+  void didUpdateWidget(_AutoScrollText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _scrollController.jumpTo(0);
+      _isScrolling = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoScroll());
+    }
+  }
+
+  void _startAutoScroll() async {
+    if (!mounted || _isScrolling) return;
+
+    // Wait a bit to ensure the text is rendered
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    // Check if text overflows
+    final maxScrollExtent = _scrollController.position.maxScrollExtent;
+    if (maxScrollExtent <= 0) return;
+
+    _isScrolling = true;
+
+    while (mounted && _isScrolling) {
+      // Pause at start
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted || !_isScrolling) break;
+
+      // Scroll to end
+      await _scrollController.animateTo(
+        maxScrollExtent,
+        duration: Duration(milliseconds: (maxScrollExtent * 20).toInt()),
+        curve: Curves.linear,
+      );
+      if (!mounted || !_isScrolling) break;
+
+      // Pause at end
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted || !_isScrolling) break;
+
+      // Scroll back to start
+      await _scrollController.animateTo(
+        0,
+        duration: Duration(milliseconds: (maxScrollExtent * 20).toInt()),
+        curve: Curves.linear,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _isScrolling = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      child: Text(
+        widget.text,
+        style: widget.style,
+        maxLines: 1,
       ),
     );
   }
