@@ -448,7 +448,7 @@ class TurnByTurnWidget extends StatelessWidget {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
+                color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.8),
                 border: Border(
                   bottom: BorderSide(
                     color: isDark ? Colors.white10 : Colors.black12,
@@ -456,31 +456,33 @@ class TurnByTurnWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Icon box (shrink-wrapped)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon box (top-aligned)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.8),
+                      ),
+                      child: _buildInstructionIcon(iconInstruction, size: 64, isDark: isDark),
                     ),
-                    child: _buildInstructionIcon(iconInstruction, size: 64, isDark: isDark),
-                  ),
-                  // Instruction text (expands to fill remaining space)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8, right: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                    // Instruction text (expands to fill remaining space)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                           // Distance indicator
                           Text(
                             _formatDistance(instruction.distance),
                             style: TextStyle(
                               color: isDark ? Colors.white : Colors.black87,
-                              fontSize: 15,
+                              fontSize: 18,
                               height: 1.0,
                               fontWeight: FontWeight.bold,
                             ),
@@ -515,11 +517,12 @@ class TurnByTurnWidget extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             // Compact time info bar (always show in corner)
