@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
@@ -22,8 +23,16 @@ import 'ota_background_screen.dart';
 import 'ota_screen.dart';
 import '../state/vehicle.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  ScooterState? _lastVehicleState;
+  bool _poweroffScheduled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +41,43 @@ class MainScreen extends StatelessWidget {
     final menu = context.watch<MenuCubit>();
     final debugMode = context.watch<DebugOverlayCubit>().state;
     final vehicleState = context.watch<VehicleSync>().state.state;
+    final otaData = context.watch<OtaSync>().state;
+
+    // Check if we should initiate poweroff
+    if (vehicleState == ScooterState.shuttingDown &&
+        _lastVehicleState != ScooterState.shuttingDown &&
+        !_poweroffScheduled) {
+      // State just changed to shutting down
+      final dbcUpdating = otaData.dbcStatus != "idle";
+
+      debugPrint('Poweroff check: state=shuttingDown, dbcUpdating=$dbcUpdating, platform=${Platform.operatingSystem}');
+
+      if (!dbcUpdating) {
+        // Check if running as root (UID 0)
+        Process.run('id', ['-u']).then((result) {
+          final uid = result.stdout.toString().trim();
+          debugPrint('Poweroff check: UID=$uid');
+
+          if (uid == '0') {
+            debugPrint('Poweroff: Scheduling poweroff in 2 seconds...');
+            _poweroffScheduled = true;
+            Future.delayed(const Duration(seconds: 2), () {
+              if (Platform.isLinux) {
+                debugPrint('Poweroff: Executing poweroff command');
+                Process.run('poweroff', []);
+              } else {
+                debugPrint('Poweroff: Would execute poweroff (skipped on ${Platform.operatingSystem})');
+              }
+            });
+          } else {
+            debugPrint('Poweroff: Not running as root, skipping poweroff');
+          }
+        });
+      }
+    }
+
+    // Update last known state
+    _lastVehicleState = vehicleState;
 
     // Show maintenance screen if vehicle is not in normal operating states
     const allowedStates = {
