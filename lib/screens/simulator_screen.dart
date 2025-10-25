@@ -639,13 +639,18 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _buildSlider(
-          'Motor Voltage (mV)',
+          'Motor Voltage (V)',
           _motorVoltage,
           35000,
           60000,
           (value) {
             setState(() => _motorVoltage = value.toInt());
             _publishEvent('engine-ecu', 'motor:voltage', value.toInt().toString());
+          },
+          formatter: (v) => (v / 1000.0).toStringAsFixed(1),
+          parser: (s) {
+            final d = double.tryParse(s);
+            return d != null ? (d * 1000).round() : null;
           },
         ),
       ],
@@ -823,13 +828,18 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _buildSlider(
-          'Voltage (mV)',
+          'Voltage (V)',
           _auxBatteryVoltage,
           9000,
           15000,
           (value) {
             setState(() => _auxBatteryVoltage = value.toInt());
             _updateAuxBatteryValues();
+          },
+          formatter: (v) => (v / 1000.0).toStringAsFixed(1),
+          parser: (s) {
+            final d = double.tryParse(s);
+            return d != null ? (d * 1000).round() : null;
           },
         ),
         _buildSegmentedButton(
@@ -887,7 +897,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _groupSpacer,
-        _buildGroupHeading('Seatbox Lock'),
+        _buildGroupHeading('Seatbox'),
         _buildSegmentedButton(
           '',
           ['open', 'closed'],
@@ -897,9 +907,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'seatbox:lock', value);
           },
         ),
-        _groupSpacer,
-        _buildGroupHeading('Seatbox Button'),
-        const SizedBox(height: 4),
+        const SizedBox(height: 8),
         Listener(
           onPointerDown: (_) => _seatboxButtonDown(),
           onPointerUp: (_) => _seatboxButtonUp(),
@@ -1402,7 +1410,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        _buildSmallLabel('KERS Reason Off:'),
+        _buildSmallLabel('KERS Reason Off'),
         _buildSegmentedButton(
           '',
           ['none', 'cold', 'hot'],
@@ -1450,7 +1458,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                       children: [
                         for (final builder in _cardBuilders)
                           SizedBox(
-                            width: 220,
+                            width: 258,
                             child: builder(),
                           ),
                       ],
@@ -1489,7 +1497,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(4.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1512,8 +1520,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     int value,
     int min,
     int max,
-    ValueChanged<double> onChanged,
-  ) {
+    ValueChanged<double> onChanged, {
+    String Function(int)? formatter,
+    int? Function(String)? parser,
+  }) {
+    final displayFormatter = formatter ?? (v) => v.toString();
+    final displayParser = parser ?? (s) => int.tryParse(s);
+    final displayText = displayFormatter(value);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1533,20 +1547,37 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             SizedBox(
               width: 60,
               child: TextField(
-                controller: TextEditingController(text: value.toString())
+                controller: TextEditingController(text: displayText)
                   ..selection = TextSelection.fromPosition(
-                    TextPosition(offset: value.toString().length),
+                    TextPosition(offset: displayText.length),
                   ),
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
                 textAlign: TextAlign.right,
-                style: const TextStyle(fontSize: 12),
-                decoration: const InputDecoration(
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
                   isDense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 onSubmitted: (text) {
-                  final newValue = int.tryParse(text);
+                  final newValue = displayParser(text);
                   if (newValue != null && newValue >= min && newValue <= max) {
                     onChanged(newValue.toDouble());
                   }
