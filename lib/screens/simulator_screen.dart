@@ -44,6 +44,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   // Navigation values
   String _navigationDestination = '';
+  String _navigationLatitude = '';
+  String _navigationLongitude = '';
+  String _navigationAddress = '';
+  String _navigationTimestamp = '';
 
   // Current states
   String _blinkerState = 'off';
@@ -255,6 +259,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
       // Load navigation values
       final navigationDestination = await widget.repository.get('navigation', 'destination');
+      final navigationLatitude = await widget.repository.get('navigation', 'latitude');
+      final navigationLongitude = await widget.repository.get('navigation', 'longitude');
+      final navigationAddress = await widget.repository.get('navigation', 'address');
+      final navigationTimestamp = await widget.repository.get('navigation', 'timestamp');
 
       // Update state with loaded values
       setState(() {
@@ -350,6 +358,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (gpsAltitude != null) _gpsAltitude = double.tryParse(gpsAltitude) ?? 0.0;
 
         if (navigationDestination != null) _navigationDestination = navigationDestination;
+        if (navigationLatitude != null) _navigationLatitude = navigationLatitude;
+        if (navigationLongitude != null) _navigationLongitude = navigationLongitude;
+        if (navigationAddress != null) _navigationAddress = navigationAddress;
+        if (navigationTimestamp != null) _navigationTimestamp = navigationTimestamp;
       });
     } catch (e) {
       setState(() {
@@ -499,7 +511,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   Future<void> _updateNavigationValues() async {
-    await _publishEvent('navigation', 'destination', _navigationDestination);
+    final futures = [
+      _publishEvent('navigation', 'destination', _navigationDestination),
+      _publishEvent('navigation', 'latitude', _navigationLatitude),
+      _publishEvent('navigation', 'longitude', _navigationLongitude),
+      _publishEvent('navigation', 'address', _navigationAddress),
+      _publishEvent('navigation', 'timestamp', _navigationTimestamp),
+    ];
+    await Future.wait(futures);
   }
 
   Future<void> _updateOtaValues() async {
@@ -1146,31 +1165,38 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _groupSpacer,
-        _buildGroupHeading('Position'),
-        _buildTextField(
-          label: 'Latitude',
-          value: _gpsLatitude.toStringAsFixed(6),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-          onSubmitted: (value) {
-            final parsedValue = double.tryParse(value);
-            if (parsedValue != null) {
-              setState(() => _gpsLatitude = parsedValue);
-              _updateGpsValues();
-            }
-          },
-        ),
-        const SizedBox(height: 8),
-        _buildTextField(
-          label: 'Longitude',
-          value: _gpsLongitude.toStringAsFixed(6),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-          onSubmitted: (value) {
-            final parsedValue = double.tryParse(value);
-            if (parsedValue != null) {
-              setState(() => _gpsLongitude = parsedValue);
-              _updateGpsValues();
-            }
-          },
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                label: 'Latitude',
+                value: _gpsLatitude.toStringAsFixed(6),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  final parsedValue = double.tryParse(value);
+                  if (parsedValue != null) {
+                    setState(() => _gpsLatitude = parsedValue);
+                    _updateGpsValues();
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildTextField(
+                label: 'Longitude',
+                value: _gpsLongitude.toStringAsFixed(6),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  final parsedValue = double.tryParse(value);
+                  if (parsedValue != null) {
+                    setState(() => _gpsLongitude = parsedValue);
+                    _updateGpsValues();
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1180,14 +1206,187 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Navigation',
       [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: _buildTextField(
+                label: 'Latitude',
+                value: _navigationLatitude,
+                hintText: '52.5200',
+                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  setState(() => _navigationLatitude = value);
+                  _updateNavigationValues();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildTextField(
+                label: 'Longitude',
+                value: _navigationLongitude,
+                hintText: '13.4050',
+                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  setState(() => _navigationLongitude = value);
+                  _updateNavigationValues();
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              height: 32,
+              width: 32,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed: () {
+                  if (_navigationLatitude.isNotEmpty && _navigationLongitude.isNotEmpty) {
+                    setState(() => _navigationDestination = '$_navigationLatitude,$_navigationLongitude');
+                    _updateNavigationValues();
+                  }
+                },
+                child: const Text('↓', style: TextStyle(fontSize: 11)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         _buildTextField(
-          label: 'Destination (lat,lon)',
-          value: _navigationDestination,
-          hintText: '48.123456,11.123456',
+          label: 'Address',
+          value: _navigationAddress,
+          hintText: 'Alexanderplatz, Berlin',
           onSubmitted: (value) {
-            setState(() => _navigationDestination = value);
+            setState(() => _navigationAddress = value);
             _updateNavigationValues();
           },
+        ),
+        const SizedBox(height: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLabel('Timestamp'),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      hintText: '2025-10-25T12:00:00Z',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                      ),
+                    ),
+                    controller: TextEditingController(text: _navigationTimestamp),
+                    onSubmitted: (value) {
+                      setState(() => _navigationTimestamp = value);
+                      _updateNavigationValues();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  height: 32,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onPressed: () {
+                      final now = DateTime.now().toUtc();
+                      final timestamp = now.toIso8601String().split('.')[0] + 'Z';
+                      setState(() => _navigationTimestamp = timestamp);
+                      _updateNavigationValues();
+                    },
+                    child: const Text('Now', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLabel('Destination (legacy)'),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      hintText: '48.123456,11.123456',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                      ),
+                    ),
+                    controller: TextEditingController(text: _navigationDestination),
+                    onSubmitted: (value) {
+                      setState(() => _navigationDestination = value);
+                      _updateNavigationValues();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  height: 32,
+                  width: 32,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: () {
+                      final parts = _navigationDestination.split(',');
+                      if (parts.length == 2) {
+                        setState(() {
+                          _navigationLatitude = parts[0].trim();
+                          _navigationLongitude = parts[1].trim();
+                        });
+                        _updateNavigationValues();
+                      }
+                    },
+                    child: const Text('↑', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         ElevatedButton(
@@ -1195,10 +1394,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             minimumSize: Size(double.infinity, 36),
           ),
           onPressed: () {
-            setState(() => _navigationDestination = '');
+            setState(() {
+              _navigationDestination = '';
+              _navigationLatitude = '';
+              _navigationLongitude = '';
+              _navigationAddress = '';
+              _navigationTimestamp = '';
+            });
             _updateNavigationValues();
           },
-          child: _buildLabel('Clear Destination'),
+          child: _buildLabel('Clear All'),
         ),
       ],
     );
@@ -1627,6 +1832,11 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             fillColor: Theme.of(context).colorScheme.surface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             hintText: hintText,
+            hintStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
             ),

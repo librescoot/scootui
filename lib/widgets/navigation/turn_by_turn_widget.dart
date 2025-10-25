@@ -64,18 +64,11 @@ class TurnByTurnWidget extends StatelessWidget {
 
       // Calculate time remaining: adjust first instruction's time based on progress
       if (firstOriginal.distance > 0) {
-        // How much of the first segment have we completed?
-        // We haven't reached the maneuver yet, so we're still in the PREVIOUS segment
-        // But upcoming instruction's distance is distance TO the maneuver, not progress THROUGH segment
-        // So we need to estimate time to reach first maneuver + time through first segment + subsequent segments
-        final distanceToFirstManeuver = firstUpcoming.distance;
-        final firstSegmentLength = firstOriginal.distance;
-
         // Estimate time to first maneuver (assume same speed as first segment)
         final speedInSegment = firstOriginal.distance > 0
             ? firstOriginal.duration.inSeconds / firstOriginal.distance
             : 0.0;
-        final timeToFirstManeuver = Duration(seconds: (distanceToFirstManeuver * speedInSegment).round());
+        final timeToFirstManeuver = Duration(seconds: (firstUpcoming.distance * speedInSegment).round());
 
         // Total time = time to first maneuver + duration of first segment + subsequent segments
         timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
@@ -88,40 +81,63 @@ class TurnByTurnWidget extends StatelessWidget {
     final now = DateTime.now();
     final eta = now.add(timeRemaining);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
-          width: 1.0,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
+            width: 1.0,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTimeInfoItem(
-            icon: Icons.straighten,
-            label: 'Distance',
-            value: _formatDistanceKm(remainingDistance),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 8),
-          _buildTimeInfoItem(
-            icon: Icons.timer,
-            label: 'Remaining',
-            value: _formatDuration(timeRemaining),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 8),
-          _buildTimeInfoItem(
-            icon: Icons.flag,
-            label: 'ETA',
-            value: _formatTime(eta),
-            isDark: isDark,
-          ),
-        ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Destination address (if available)
+            if (state.destinationAddress != null && state.destinationAddress!.isNotEmpty) ...[
+              Icon(
+                Icons.place,
+                size: 14,
+                color: isDark ? Colors.white54 : Colors.black54,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: _AutoScrollText(
+                  text: state.destinationAddress!,
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    fontSize: 12,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            _buildTimeInfoItem(
+              icon: Icons.straighten,
+              label: 'Distance',
+              value: _formatDistanceKm(remainingDistance),
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildTimeInfoItem(
+              icon: Icons.timer,
+              label: 'Remaining',
+              value: _formatDuration(timeRemaining),
+              isDark: isDark,
+            ),
+            const SizedBox(width: 8),
+            _buildTimeInfoItem(
+              icon: Icons.flag,
+              label: 'ETA',
+              value: _formatTime(eta),
+              isDark: isDark,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -590,6 +606,99 @@ class TurnByTurnWidget extends StatelessWidget {
           isDark: isDark,
           size: size,
         ),
+      ),
+    );
+  }
+}
+
+class _AutoScrollText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+
+  const _AutoScrollText({
+    required this.text,
+    required this.style,
+  });
+
+  @override
+  State<_AutoScrollText> createState() => _AutoScrollTextState();
+}
+
+class _AutoScrollTextState extends State<_AutoScrollText> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoScroll());
+  }
+
+  @override
+  void didUpdateWidget(_AutoScrollText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _scrollController.jumpTo(0);
+      _isScrolling = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoScroll());
+    }
+  }
+
+  void _startAutoScroll() async {
+    if (!mounted || _isScrolling) return;
+
+    // Wait a bit to ensure the text is rendered
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+
+    // Check if text overflows
+    final maxScrollExtent = _scrollController.position.maxScrollExtent;
+    if (maxScrollExtent <= 0) return;
+
+    _isScrolling = true;
+
+    while (mounted && _isScrolling) {
+      // Pause at start
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted || !_isScrolling) break;
+
+      // Scroll to end
+      await _scrollController.animateTo(
+        maxScrollExtent,
+        duration: Duration(milliseconds: (maxScrollExtent * 20).toInt()),
+        curve: Curves.linear,
+      );
+      if (!mounted || !_isScrolling) break;
+
+      // Pause at end
+      await Future.delayed(const Duration(seconds: 2));
+      if (!mounted || !_isScrolling) break;
+
+      // Scroll back to start
+      await _scrollController.animateTo(
+        0,
+        duration: Duration(milliseconds: (maxScrollExtent * 20).toInt()),
+        curve: Curves.linear,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _isScrolling = false;
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      child: Text(
+        widget.text,
+        style: widget.style,
+        maxLines: 1,
       ),
     );
   }

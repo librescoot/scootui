@@ -43,11 +43,13 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         onSubmit: (code) {
           final address = addresses[code];
           if (address != null) {
-            final mdbRepo = context.read<MDBRepository>();
-            final coordinates = "${address.coordinates.latitude},${address.coordinates.longitude}";
-            // Set destination via Redis, NavigationCubit will pick it up
-            mdbRepo.set("navigation", "destination", coordinates);
-            // context.read<NavigationCubit>().setDestination(address.coordinates); // Removed
+            // Set destination via NavigationSync with address ID as label
+            final navigationSync = context.read<NavigationSync>();
+            navigationSync.setDestination(
+              address.coordinates.latitude,
+              address.coordinates.longitude,
+              address: code, // Use the address code/ID as the address
+            );
           }
           screenCubit.showMap();
         },

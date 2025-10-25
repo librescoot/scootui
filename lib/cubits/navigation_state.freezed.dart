@@ -19,6 +19,7 @@ mixin _$NavigationState {
   RouteInstruction? get currentInstruction;
   List<RouteInstruction> get upcomingInstructions;
   LatLng? get destination;
+  String? get destinationAddress;
   NavigationStatus get status;
   String? get error;
   double get distanceToDestination;
@@ -50,6 +51,8 @@ mixin _$NavigationState {
                 .equals(other.upcomingInstructions, upcomingInstructions) &&
             (identical(other.destination, destination) ||
                 other.destination == destination) &&
+            (identical(other.destinationAddress, destinationAddress) ||
+                other.destinationAddress == destinationAddress) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.distanceToDestination, distanceToDestination) ||
@@ -77,6 +80,7 @@ mixin _$NavigationState {
       currentInstruction,
       const DeepCollectionEquality().hash(upcomingInstructions),
       destination,
+      destinationAddress,
       status,
       error,
       distanceToDestination,
@@ -90,7 +94,7 @@ mixin _$NavigationState {
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions, currentStreetName: $currentStreetName, currentRoadType: $currentRoadType, currentSpeedLimit: $currentSpeedLimit)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, destinationAddress: $destinationAddress, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions, currentStreetName: $currentStreetName, currentRoadType: $currentRoadType, currentSpeedLimit: $currentSpeedLimit)';
   }
 }
 
@@ -105,6 +109,7 @@ abstract mixin class $NavigationStateCopyWith<$Res> {
       RouteInstruction? currentInstruction,
       List<RouteInstruction> upcomingInstructions,
       LatLng? destination,
+      String? destinationAddress,
       NavigationStatus status,
       String? error,
       double distanceToDestination,
@@ -137,6 +142,7 @@ class _$NavigationStateCopyWithImpl<$Res>
     Object? currentInstruction = freezed,
     Object? upcomingInstructions = null,
     Object? destination = freezed,
+    Object? destinationAddress = freezed,
     Object? status = null,
     Object? error = freezed,
     Object? distanceToDestination = null,
@@ -165,6 +171,10 @@ class _$NavigationStateCopyWithImpl<$Res>
           ? _self.destination
           : destination // ignore: cast_nullable_to_non_nullable
               as LatLng?,
+      destinationAddress: freezed == destinationAddress
+          ? _self.destinationAddress
+          : destinationAddress // ignore: cast_nullable_to_non_nullable
+              as String?,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable
@@ -245,6 +255,7 @@ class _NavigationState extends NavigationState {
       this.currentInstruction = null,
       final List<RouteInstruction> upcomingInstructions = const [],
       this.destination = null,
+      this.destinationAddress = null,
       this.status = NavigationStatus.idle,
       this.error = null,
       this.distanceToDestination = 0.0,
@@ -278,6 +289,9 @@ class _NavigationState extends NavigationState {
   @override
   @JsonKey()
   final LatLng? destination;
+  @override
+  @JsonKey()
+  final String? destinationAddress;
   @override
   @JsonKey()
   final NavigationStatus status;
@@ -336,6 +350,8 @@ class _NavigationState extends NavigationState {
                 .equals(other._upcomingInstructions, _upcomingInstructions) &&
             (identical(other.destination, destination) ||
                 other.destination == destination) &&
+            (identical(other.destinationAddress, destinationAddress) ||
+                other.destinationAddress == destinationAddress) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.error, error) || other.error == error) &&
             (identical(other.distanceToDestination, distanceToDestination) ||
@@ -363,6 +379,7 @@ class _NavigationState extends NavigationState {
       currentInstruction,
       const DeepCollectionEquality().hash(_upcomingInstructions),
       destination,
+      destinationAddress,
       status,
       error,
       distanceToDestination,
@@ -376,7 +393,7 @@ class _NavigationState extends NavigationState {
 
   @override
   String toString() {
-    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions, currentStreetName: $currentStreetName, currentRoadType: $currentRoadType, currentSpeedLimit: $currentSpeedLimit)';
+    return 'NavigationState(route: $route, currentInstruction: $currentInstruction, upcomingInstructions: $upcomingInstructions, destination: $destination, destinationAddress: $destinationAddress, status: $status, error: $error, distanceToDestination: $distanceToDestination, distanceFromRoute: $distanceFromRoute, isOffRoute: $isOffRoute, snappedPosition: $snappedPosition, pendingConditions: $pendingConditions, currentStreetName: $currentStreetName, currentRoadType: $currentRoadType, currentSpeedLimit: $currentSpeedLimit)';
   }
 }
 
@@ -393,6 +410,7 @@ abstract mixin class _$NavigationStateCopyWith<$Res>
       RouteInstruction? currentInstruction,
       List<RouteInstruction> upcomingInstructions,
       LatLng? destination,
+      String? destinationAddress,
       NavigationStatus status,
       String? error,
       double distanceToDestination,
@@ -427,6 +445,7 @@ class __$NavigationStateCopyWithImpl<$Res>
     Object? currentInstruction = freezed,
     Object? upcomingInstructions = null,
     Object? destination = freezed,
+    Object? destinationAddress = freezed,
     Object? status = null,
     Object? error = freezed,
     Object? distanceToDestination = null,
@@ -455,6 +474,10 @@ class __$NavigationStateCopyWithImpl<$Res>
           ? _self.destination
           : destination // ignore: cast_nullable_to_non_nullable
               as LatLng?,
+      destinationAddress: freezed == destinationAddress
+          ? _self.destinationAddress
+          : destinationAddress // ignore: cast_nullable_to_non_nullable
+              as String?,
       status: null == status
           ? _self.status
           : status // ignore: cast_nullable_to_non_nullable

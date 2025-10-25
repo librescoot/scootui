@@ -269,6 +269,13 @@ class RedisMDBRepository implements MDBRepository {
   }
 
   @override
+  Future<void> publish(String channel, String message) {
+    return _withConnection((cmd) async {
+      await cmd.send_object(["PUBLISH", channel, message]);
+    });
+  }
+
+  @override
   Future<List<(String, String)>> getAll(String cluster) {
     return _withConnection((cmd) async {
       final result = await cmd.send_object(["HGETALL", cluster]);

@@ -97,14 +97,15 @@ class NavigationCubit extends Cubit<NavigationState> {
 
   void _processInitialNavigationData() {
     final initialData = _navigationSync.state;
-    if (initialData.destination.isNotEmpty) {
+    if (initialData.hasDestination) {
       _onNavigationData(initialData);
     }
   }
 
-  Future<void> _calculateRoute(LatLng destination) async {
+  Future<void> _calculateRoute(LatLng destination, {String? address}) async {
     emit(state.copyWith(
       destination: destination,
+      destinationAddress: address,
       status: NavigationStatus.calculating,
       error: null,
     ));
@@ -183,24 +184,45 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onNavigationData(NavigationData data) {
-    print("NavigationCubit: Received NavigationData: ${data.destination}");
+    print("NavigationCubit: Received NavigationData: lat=${data.latitude}, lng=${data.longitude}, address=${data.address}, destination=${data.destination}");
     try {
-      if (data.destination.isEmpty) {
+      // Check if destination is cleared (no latitude/longitude)
+      if (!data.hasDestination) {
         print("NavigationCubit: Destination is empty, clearing navigation state.");
         // Clear navigation if destination is empty
         emit(const NavigationState());
         return;
       }
 
-      final coordinates = data.destination.split(",").map(double.parse).toList();
-      final destination = LatLng(coordinates[0], coordinates[1]);
-      print("NavigationCubit: Parsed destination: $destination");
+      // Parse latitude and longitude from new fields, or fall back to legacy destination
+      double? lat = data.latitudeDouble;
+      double? lng = data.longitudeDouble;
+
+      // If new fields are empty but legacy destination is set, parse it
+      if ((lat == null || lng == null) && data.destination.isNotEmpty) {
+        print("NavigationCubit: New fields empty, parsing legacy destination: ${data.destination}");
+        final parts = data.destination.split(',');
+        if (parts.length == 2) {
+          lat = double.tryParse(parts[0].trim());
+          lng = double.tryParse(parts[1].trim());
+          print("NavigationCubit: Parsed legacy destination: lat=$lat, lng=$lng");
+        }
+      }
+
+      if (lat == null || lng == null) {
+        print("NavigationCubit: Invalid latitude or longitude, ignoring.");
+        return;
+      }
+
+      final destination = LatLng(lat, lng);
+      print("NavigationCubit: Parsed destination: $destination${data.address.isNotEmpty ? ' (${data.address})' : ''}");
 
       if (_currentPosition == null) {
         print("NavigationCubit: Current position is null, cannot calculate route yet.");
         // Store pending destination and show conditions that need to be met
         emit(state.copyWith(
             destination: destination,
+            destinationAddress: data.address.isNotEmpty ? data.address : null,
             status: NavigationStatus.idle,
             error: "Waiting for recent GPS fix to calculate route.",
             pendingConditions: ["Waiting for GPS fix"]));
@@ -225,7 +247,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         ToastService.showInfo('New navigation destination received. Calculating route...');
         // Clear pending conditions since we can now calculate route
         emit(state.copyWith(pendingConditions: []));
-        _calculateRoute(destination);
+        _calculateRoute(destination, address: data.address.isNotEmpty ? data.address : null);
       } else {
         // This case should be covered by the earlier _currentPosition == null check,
         // but kept for clarity if logic changes.
@@ -278,7 +300,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         }
 
         print("NavigationCubit (_onGpsData): Destination is pending and GPS is now available. Calculating route.");
-        _calculateRoute(currentState.destination!);
+        _calculateRoute(currentState.destination!, address: currentState.destinationAddress);
         return; // Exit because _calculateRoute will emit the next state.
       }
     }
@@ -439,7 +461,7 @@ class NavigationCubit extends Cubit<NavigationState> {
     _lastStreetLog = DateTime.now();
 
     // If we're navigating and on-route, use the snapped position (more accurate)
-    final queryPosition = (state.route != null && state.snappedPosition != null && !(state.isOffRoute ?? false))
+    final queryPosition = (state.route != null && state.snappedPosition != null && !state.isOffRoute)
         ? state.snappedPosition!
         : position;
 
