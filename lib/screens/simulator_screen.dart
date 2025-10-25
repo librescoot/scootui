@@ -111,17 +111,17 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     _buildMotorCard,
     _buildBattery0Card,
     _buildBattery1Card,
-    _buildCbBatteryCard,
-    _buildAuxBatteryCard,
-    _buildVehicleSwitchesCard,
     _buildVehicleStateCard,
+    _buildVehicleSwitchesCard,
     _buildBrakesCard,
     _buildConnectivityCard,
     _buildGpsCard,
     _buildNavigationCard,
-    _buildOtaDbcCard,
-    _buildOtaMdbCard,
+    _buildCbBatteryCard,
+    _buildAuxBatteryCard,
     _buildEcuExtendedCard,
+    _buildOtaMdbCard,
+    _buildOtaDbcCard,
   ];
 
   @override
