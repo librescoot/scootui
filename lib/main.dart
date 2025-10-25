@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
@@ -12,7 +13,7 @@ import 'repositories/all.dart';
 import 'screens/main_screen.dart';
 import 'widgets/toast_listener_wrapper.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kDebugMode) {
@@ -22,12 +23,12 @@ void main() {
   // Initialize environment configuration
   EnvConfig.initialize();
 
-  _setupPlatformConfigurations();
+  await _setupPlatformConfigurations();
 
   runApp(const ScooterClusterApp());
 }
 
-void _setupPlatformConfigurations() {
+Future<void> _setupPlatformConfigurations() async {
   if (kIsWeb) {
     // Web-specific setup
     SystemChrome.setPreferredOrientations([
@@ -40,18 +41,13 @@ void _setupPlatformConfigurations() {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-
-    // Use resolution from environment configuration
-    final windowSize = EnvConfig.resolution;
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SystemChannels.platform.invokeMethod('Window.setSize', {
-        'width': windowSize.width,
-        'height': windowSize.height,
-      });
-      SystemChannels.platform.invokeMethod('Window.center');
-    });
+    // Use window_manager to set window size
+    await windowManager.ensureInitialized();
+    await windowManager.setSize(const Size(480, 480));
+    await windowManager.setResizable(false);
+    await windowManager.center();
   } else {
     // Mobile/embedded setup
     SystemChrome.setPreferredOrientations([

@@ -628,66 +628,25 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _updateEngineValues();
           },
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Motor Current (A)'),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _simulatedMotorCurrent.toDouble(),
-                    min: -10,
-                    max: 100,
-                    divisions: 110,
-                    label: _simulatedMotorCurrent.toString(),
-                    onChanged: (value) {
-                      setState(
-                          () => _simulatedMotorCurrent = value.toInt());
-                      _updateEngineValues();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 60,
-                  child: Text(
-                    _simulatedMotorCurrent.toString(),
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        _buildSlider(
+          'Motor Current (A)',
+          _simulatedMotorCurrent,
+          -10,
+          100,
+          (value) {
+            setState(() => _simulatedMotorCurrent = value.toInt());
+            _updateEngineValues();
+          },
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Motor Voltage (mV)'),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _motorVoltage.toDouble(),
-                    min: 35000,
-                    max: 60000,
-                    divisions: 250,
-                    label: _motorVoltage.toString(),
-                    onChanged: (value) {
-                      setState(() => _motorVoltage = value.toInt());
-                      _publishEvent('engine-ecu', 'motor:voltage', value.toInt().toString());
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    '${(_motorVoltage / 1000).toStringAsFixed(1)}V',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        _buildSlider(
+          'Motor Voltage (mV)',
+          _motorVoltage,
+          35000,
+          60000,
+          (value) {
+            setState(() => _motorVoltage = value.toInt());
+            _publishEvent('engine-ecu', 'motor:voltage', value.toInt().toString());
+          },
         ),
       ],
     );
@@ -699,7 +658,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       [
         Row(
           children: [
-            const Text('Present'),
+            _buildLabel('Present'),
             const SizedBox(width: 8),
             Checkbox(
               value: _battery0Present,
@@ -757,7 +716,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       [
         Row(
           children: [
-            const Text('Present'),
+            _buildLabel('Present'),
             const SizedBox(width: 8),
             Checkbox(
               value: _battery1Present,
@@ -815,7 +774,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       [
         Row(
           children: [
-            const Text('Present'),
+            _buildLabel('Present'),
             const SizedBox(width: 8),
             Checkbox(
               value: _cbBatteryPresent,
@@ -863,36 +822,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _updateAuxBatteryValues();
           },
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Voltage (V)'),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _auxBatteryVoltage.toDouble(),
-                    min: 9000,
-                    max: 15000,
-                    divisions: 50,
-                    label:
-                        '${(_auxBatteryVoltage / 1000.0).toStringAsFixed(1)}V',
-                    onChanged: (value) {
-                      setState(() => _auxBatteryVoltage = value.toInt());
-                      _updateAuxBatteryValues();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    '${(_auxBatteryVoltage / 1000.0).toStringAsFixed(1)}V',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        _buildSlider(
+          'Voltage (mV)',
+          _auxBatteryVoltage,
+          9000,
+          15000,
+          (value) {
+            setState(() => _auxBatteryVoltage = value.toInt());
+            _updateAuxBatteryValues();
+          },
         ),
         _buildSegmentedButton(
           'Charge Status',
@@ -916,7 +854,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Vehicle Switches',
       [
-        Text('Blinker:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Blinker'),
         _buildSegmentedButton(
           '',
           ['off', 'left', 'right', 'both'],
@@ -926,8 +864,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'blinker:state', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Handlebar:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Handlebar'),
         _buildSegmentedButton(
           '',
           ['unlocked', 'locked'],
@@ -937,8 +875,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'handlebar:position', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Kickstand:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Kickstand'),
         _buildSegmentedButton(
           '',
           ['up', 'down'],
@@ -948,8 +886,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'kickstand', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Seatbox Lock:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Seatbox Lock'),
         _buildSegmentedButton(
           '',
           ['open', 'closed'],
@@ -959,8 +897,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'seatbox:lock', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Seatbox Button:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Seatbox Button'),
         const SizedBox(height: 4),
         Listener(
           onPointerDown: (_) => _seatboxButtonDown(),
@@ -988,7 +926,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         const SizedBox(height: 4),
         Row(
           children: [
-            const Text('State:', style: TextStyle(fontSize: 12)),
+            _buildSmallLabel('State:'),
             const SizedBox(width: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -1015,7 +953,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Vehicle State',
       [
-        Text('State:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('State'),
         _buildSegmentedButton(
           '',
           [
@@ -1053,7 +991,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
           child: Text(_vehicleStateExpanded ? 'Show Less' : 'Show More'),
         ),
-        const SizedBox(height: 16),
+        _groupSpacer,
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1086,7 +1024,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Brakes',
       [
-        Text('Left Brake:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Left Brake'),
         _buildSegmentedButton(
           '',
           ['off', 'on'],
@@ -1124,8 +1062,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           onPressed: () => _simulateBrakeDoubleTap('left'),
           child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
         ),
-        const SizedBox(height: 16),
-        Text('Right Brake:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Right Brake'),
         _buildSegmentedButton(
           '',
           ['off', 'on'],
@@ -1171,7 +1109,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Connectivity',
       [
-        Text('Bluetooth:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Bluetooth'),
         _buildSegmentedButton(
           '',
           ['disconnected', 'connected'],
@@ -1181,8 +1119,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('ble', 'status', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Internet:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Internet'),
         _buildSegmentedButton(
           '',
           ['disconnected', 'connected'],
@@ -1193,7 +1131,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Access Tech:', style: TextStyle(fontSize: 12)),
+        _buildSmallLabel('Access Tech:'),
         _buildSegmentedButton(
           '',
           ['UNKNOWN', '2G', '3G', '4G', '5G'],
@@ -1214,8 +1152,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 'internet', 'signal-quality', value.toInt().toString());
           },
         ),
-        const SizedBox(height: 16),
-        Text('Cloud:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Cloud'),
         _buildSegmentedButton(
           '',
           ['disconnected', 'connected'],
@@ -1233,7 +1171,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'GPS',
       [
-        Text('GPS Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('GPS Status'),
         _buildSegmentedButton(
           '',
           ['off', 'searching', 'fix-established', 'error'],
@@ -1249,12 +1187,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             }
           },
         ),
-        const SizedBox(height: 16),
-        Text('Position:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Position'),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Latitude'),
+            _buildLabel('Latitude'),
             TextField(
               keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
               decoration: InputDecoration(
@@ -1278,7 +1216,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Longitude'),
+            _buildLabel('Longitude'),
             TextField(
               keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
               decoration: InputDecoration(
@@ -1306,7 +1244,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Navigation',
       [
-        Text('Destination (lat,lon)', style: TextStyle(fontSize: 12)),
+        _buildSmallLabel('Destination (lat,lon)'),
         const SizedBox(height: 4),
         TextField(
           keyboardType: TextInputType.text,
@@ -1331,7 +1269,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             setState(() => _navigationDestination = '');
             _updateNavigationValues();
           },
-          child: const Text('Clear Destination'),
+          child: _buildLabel('Clear Destination'),
         ),
       ],
     );
@@ -1341,7 +1279,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'OTA - DBC',
       [
-        Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Status'),
         _buildSegmentedButton(
           '',
           ['idle', 'downloading', 'installing', 'rebooting', 'error'],
@@ -1363,7 +1301,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Update Method'),
         _buildSegmentedButton(
           '',
           ['', 'full', 'delta'],
@@ -1381,7 +1319,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'OTA - MDB',
       [
-        Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Status'),
         _buildSegmentedButton(
           '',
           ['idle', 'downloading', 'installing', 'rebooting', 'error'],
@@ -1403,7 +1341,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Update Method'),
         _buildSegmentedButton(
           '',
           ['', 'full', 'delta'],
@@ -1442,7 +1380,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Throttle:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Throttle'),
         _buildSegmentedButton(
           '',
           ['off', 'on'],
@@ -1453,7 +1391,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('KERS:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('KERS'),
         _buildSegmentedButton(
           '',
           ['off', 'on'],
@@ -1464,7 +1402,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('KERS Reason Off:', style: TextStyle(fontSize: 12)),
+        _buildSmallLabel('KERS Reason Off:'),
         _buildSegmentedButton(
           '',
           ['none', 'cold', 'hot'],
@@ -1484,25 +1422,30 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       body: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Dashboard cluster - fixed, doesn't scroll
                 SizedBox(
                   width: 480,
-                  height: 560,
-                  child: _buildSection("Screen", [MainScreen()]),
+                  child: _buildSection("Screen", [
+                    SizedBox(
+                      width: 480,
+                      height: 480,
+                      child: MainScreen(),
+                    ),
+                  ]),
                 ),
 
-                const SizedBox(width: 16),
+                const SizedBox(width: 4),
 
                 // Control cards - scrollable independently
                 Expanded(
                   child: SingleChildScrollView(
                     child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 4,
+                      runSpacing: 4,
                       alignment: WrapAlignment.start,
                       children: [
                         for (final builder in _cardBuilders)
@@ -1519,12 +1462,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           ),
           if (_errorMessage != null)
             Positioned(
-              bottom: 16,
+              bottom: 8,
               left: 0,
               right: 0,
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
@@ -1542,16 +1485,21 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   Widget _buildSection(String title, List<Widget> children) {
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(4.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             ...children,
           ],
         ),
@@ -1569,14 +1517,43 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
-        Slider(
-          value: value.toDouble(),
-          min: min.toDouble(),
-          max: max.toDouble(),
-          divisions: (max - min).toInt(),
-          label: value.toStringAsFixed(1),
-          onChanged: onChanged,
+        _buildLabel(label),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: value.toDouble(),
+                min: min.toDouble(),
+                max: max.toDouble(),
+                divisions: (max - min).toInt(),
+                label: value.toStringAsFixed(1),
+                onChanged: onChanged,
+              ),
+            ),
+            SizedBox(
+              width: 60,
+              child: TextField(
+                controller: TextEditingController(text: value.toString())
+                  ..selection = TextSelection.fromPosition(
+                    TextPosition(offset: value.toString().length),
+                  ),
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontSize: 12),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (text) {
+                  final newValue = int.tryParse(text);
+                  if (newValue != null && newValue >= min && newValue <= max) {
+                    onChanged(newValue.toDouble());
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1591,7 +1568,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (label.isNotEmpty) Text(label),
+        if (label.isNotEmpty) _buildLabel(label),
         if (label.isNotEmpty) const SizedBox(height: 4),
         Wrap(
           spacing: 4,
@@ -1664,4 +1641,21 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       child: Text(label, style: const TextStyle(fontSize: 10)),
     );
   }
+
+  Widget _buildGroupHeading(String text) {
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(text, style: const TextStyle(fontSize: 12));
+  }
+
+  Widget _buildSmallLabel(String text) {
+    return Text(text, style: const TextStyle(fontSize: 12));
+  }
+
+  Widget get _groupSpacer => const SizedBox(height: 16);
 }

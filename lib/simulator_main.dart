@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
@@ -12,18 +13,18 @@ import 'repositories/all.dart';
 import 'repositories/mdb_repository.dart';
 import 'screens/simulator_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize environment configuration
   EnvConfig.initialize();
 
-  _setupPlatformConfigurations();
+  await _setupPlatformConfigurations();
 
   runApp(const SimulatorApp());
 }
 
-void _setupPlatformConfigurations() {
+Future<void> _setupPlatformConfigurations() async {
   if (kIsWeb) {
     // Web-specific setup
     SystemChrome.setPreferredOrientations([
@@ -36,17 +37,12 @@ void _setupPlatformConfigurations() {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-
-    const windowSize = Size(800.0, 600.0);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      SystemChannels.platform.invokeMethod('Window.setSize', {
-        'width': windowSize.width,
-        'height': windowSize.height,
-      });
-      SystemChannels.platform.invokeMethod('Window.center');
-    });
+    // Use window_manager to set window size
+    await windowManager.ensureInitialized();
+    await windowManager.setSize(const Size(1280, 720));
+    await windowManager.center();
   } else {
     // Mobile/embedded setup
     SystemChrome.setPreferredOrientations([

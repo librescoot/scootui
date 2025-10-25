@@ -3,6 +3,8 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - screen_retriever_macos (0.0.1):
+    - FlutterMacOS
   - sqlite3 (3.49.1):
     - sqlite3/common (= 3.49.1)
   - sqlite3/common (3.49.1)
@@ -25,11 +27,15 @@ PODS:
     - sqlite3/math
     - sqlite3/perf-threadsafe
     - sqlite3/rtree
+  - window_manager (0.2.0):
+    - FlutterMacOS
 
 DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+  - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
   - sqlite3_flutter_libs (from `Flutter/ephemeral/.symlinks/plugins/sqlite3_flutter_libs/darwin`)
+  - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
 SPEC REPOS:
   trunk:
@@ -40,14 +46,20 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+  screen_retriever_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
   sqlite3_flutter_libs:
     :path: Flutter/ephemeral/.symlinks/plugins/sqlite3_flutter_libs/darwin
+  window_manager:
+    :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
-  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  screen_retriever_macos: 452e51764a9e1cdb74b3c541238795849f21557f
   sqlite3: fc1400008a9b3525f5914ed715a5d1af0b8f4983
   sqlite3_flutter_libs: f6acaa2172e6bb3e2e70c771661905080e8ebcf2
+  window_manager: 1d01fa7ac65a6e6f83b965471b1a7fdd3f06166c
 
 PODFILE CHECKSUM: 9ebaf0ce3d369aaa26a9ea0e159195ed94724cf3
 
