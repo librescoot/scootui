@@ -661,19 +661,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Battery 0',
       [
-        Row(
-          children: [
-            _buildLabel('Present'),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: _battery0Present,
-              onChanged: (value) {
-                setState(() => _battery0Present = value ?? false);
-                _updateBatteryValues();
-              },
-            ),
-          ],
-        ),
         if (_battery0Present)
           _buildSlider(
             'Charge (%)',
@@ -712,6 +699,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           ],
         ),
       ],
+      titleTrailing: Checkbox(
+        value: _battery0Present,
+        onChanged: (value) {
+          setState(() => _battery0Present = value ?? false);
+          _updateBatteryValues();
+        },
+      ),
     );
   }
 
@@ -719,19 +713,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Battery 1',
       [
-        Row(
-          children: [
-            _buildLabel('Present'),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: _battery1Present,
-              onChanged: (value) {
-                setState(() => _battery1Present = value ?? false);
-                _updateBatteryValues();
-              },
-            ),
-          ],
-        ),
         if (_battery1Present)
           _buildSlider(
             'Charge (%)',
@@ -770,6 +751,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           ],
         ),
       ],
+      titleTrailing: Checkbox(
+        value: _battery1Present,
+        onChanged: (value) {
+          setState(() => _battery1Present = value ?? false);
+          _updateBatteryValues();
+        },
+      ),
     );
   }
 
@@ -777,19 +765,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'CB Battery',
       [
-        Row(
-          children: [
-            _buildLabel('Present'),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: _cbBatteryPresent,
-              onChanged: (value) {
-                setState(() => _cbBatteryPresent = value ?? false);
-                _updateCbBatteryValues();
-              },
-            ),
-          ],
-        ),
         if (_cbBatteryPresent)
           _buildSlider(
             'Charge (%)',
@@ -811,6 +786,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
       ],
+      titleTrailing: Checkbox(
+        value: _cbBatteryPresent,
+        onChanged: (value) {
+          setState(() => _cbBatteryPresent = value ?? false);
+          _updateCbBatteryValues();
+        },
+      ),
     );
   }
 
@@ -1491,7 +1473,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(String title, List<Widget> children, {Widget? titleTrailing}) {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -1502,11 +1484,23 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            if (titleTrailing != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  titleTrailing,
+                ],
+              )
+            else
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             const SizedBox(height: 4),
             ...children,
           ],
