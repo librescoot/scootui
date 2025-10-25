@@ -97,7 +97,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
   void _processInitialNavigationData() {
     final initialData = _navigationSync.state;
-    if (initialData.destination.isNotEmpty) {
+    if (initialData.hasDestination) {
       _onNavigationData(initialData);
     }
   }
@@ -183,7 +183,7 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onNavigationData(NavigationData data) {
-    print("NavigationCubit: Received NavigationData: lat=${data.latitude}, lng=${data.longitude}, address=${data.address}");
+    print("NavigationCubit: Received NavigationData: lat=${data.latitude}, lng=${data.longitude}, address=${data.address}, destination=${data.destination}");
     try {
       // Check if destination is cleared (no latitude/longitude)
       if (!data.hasDestination) {
@@ -193,9 +193,20 @@ class NavigationCubit extends Cubit<NavigationState> {
         return;
       }
 
-      // Parse latitude and longitude from new fields
-      final lat = data.latitudeDouble;
-      final lng = data.longitudeDouble;
+      // Parse latitude and longitude from new fields, or fall back to legacy destination
+      double? lat = data.latitudeDouble;
+      double? lng = data.longitudeDouble;
+
+      // If new fields are empty but legacy destination is set, parse it
+      if ((lat == null || lng == null) && data.destination.isNotEmpty) {
+        print("NavigationCubit: New fields empty, parsing legacy destination: ${data.destination}");
+        final parts = data.destination.split(',');
+        if (parts.length == 2) {
+          lat = double.tryParse(parts[0].trim());
+          lng = double.tryParse(parts[1].trim());
+          print("NavigationCubit: Parsed legacy destination: lat=$lat, lng=$lng");
+        }
+      }
 
       if (lat == null || lng == null) {
         print("NavigationCubit: Invalid latitude or longitude, ignoring.");

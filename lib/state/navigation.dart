@@ -36,7 +36,8 @@ class NavigationData extends Equatable with $NavigationData {
   });
 
   /// Check if navigation has a valid destination
-  bool get hasDestination => latitude.isNotEmpty && longitude.isNotEmpty;
+  bool get hasDestination =>
+      (latitude.isNotEmpty && longitude.isNotEmpty) || destination.isNotEmpty;
 
   /// Get latitude as double
   double? get latitudeDouble {
