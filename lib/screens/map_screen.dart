@@ -60,6 +60,7 @@ class MapScreen extends StatelessWidget {
 
                       // Bottom row
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           // Left side: warning indicators
                           Expanded(
