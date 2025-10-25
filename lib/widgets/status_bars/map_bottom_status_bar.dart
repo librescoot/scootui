@@ -90,7 +90,7 @@ class MapBottomStatusBar extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SpeedLimitIndicator(iconSize: 36),
+                const SpeedLimitIndicator(iconSize: 35),
                 Text(
                   speed.toStringAsFixed(0),
                   style: TextStyle(
