@@ -43,11 +43,17 @@ Future<void> _setupPlatformConfigurations() async {
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
 
-    // Use window_manager to set window size
-    await windowManager.ensureInitialized();
-    await windowManager.setSize(const Size(480, 480));
-    await windowManager.setResizable(false);
-    await windowManager.center();
+    // Try to use window_manager for desktop environments
+    // This will gracefully fail on embedded devices (DRM/GBM backend)
+    try {
+      await windowManager.ensureInitialized();
+      await windowManager.setSize(const Size(480, 480));
+      await windowManager.setResizable(false);
+      await windowManager.center();
+    } on MissingPluginException {
+      // Running on embedded device or environment without window manager support
+      // Continue without window manager functionality
+    }
   } else {
     // Mobile/embedded setup
     SystemChrome.setPreferredOrientations([
