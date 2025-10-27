@@ -1,0 +1,211 @@
+{
+    "trip": {
+        "locations": [
+            {
+                "type": "break",
+                "lat": 52.52,
+                "lon": 13.405,
+                "original_index": 0
+            },
+            {
+                "type": "break",
+                "lat": 52.525902,
+                "lon": 13.36618,
+                "side_of_street": "right",
+                "original_index": 1
+            }
+        ],
+        "legs": [
+            {
+                "maneuvers": [
+                    {
+                        "type": 1,
+                        "instruction": "Drive northwest on Spandauer Stra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Drive northwest. Then Turn right onto Anna-Louisa-Karsch-Stra\u00dfe.",
+                        "verbal_pre_transition_instruction": "Drive northwest on Spandauer Stra\u00dfe. Then Turn right onto Anna-Louisa-Karsch-Stra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 200 meters.",
+                        "street_names": [
+                            "Spandauer Stra\u00dfe"
+                        ],
+                        "bearing_after": 324,
+                        "time": 28.263,
+                        "length": 0.206,
+                        "cost": 90.495,
+                        "begin_shape_index": 0,
+                        "end_shape_index": 15,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 10,
+                        "instruction": "Turn right onto Anna-Louisa-Karsch-Stra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Turn right onto Anna-Louisa-Karsch-Stra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Turn right.",
+                        "verbal_pre_transition_instruction": "Turn right onto Anna-Louisa-Karsch-Stra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 400 meters.",
+                        "street_names": [
+                            "Anna-Louisa-Karsch-Stra\u00dfe"
+                        ],
+                        "bearing_before": 324,
+                        "bearing_after": 61,
+                        "time": 61.382,
+                        "length": 0.367,
+                        "cost": 183.825,
+                        "begin_shape_index": 15,
+                        "end_shape_index": 62,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 16,
+                        "instruction": "Bear left onto Hackescher Markt.",
+                        "verbal_transition_alert_instruction": "Bear left onto Hackescher Markt.",
+                        "verbal_succinct_transition_instruction": "Bear left. Then Bear right onto Rosenthaler Stra\u00dfe.",
+                        "verbal_pre_transition_instruction": "Bear left onto Hackescher Markt. Then Bear right onto Rosenthaler Stra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 30 meters.",
+                        "street_names": [
+                            "Hackescher Markt"
+                        ],
+                        "bearing_before": 306,
+                        "bearing_after": 271,
+                        "time": 4.842,
+                        "length": 0.032,
+                        "cost": 27.987,
+                        "begin_shape_index": 62,
+                        "end_shape_index": 77,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 9,
+                        "instruction": "Bear right onto Rosenthaler Stra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Bear right onto Rosenthaler Stra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Bear right.",
+                        "verbal_pre_transition_instruction": "Bear right onto Rosenthaler Stra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 1 kilometer.",
+                        "street_names": [
+                            "Rosenthaler Stra\u00dfe"
+                        ],
+                        "bearing_before": 256,
+                        "bearing_after": 267,
+                        "time": 149.039,
+                        "length": 1.049,
+                        "cost": 361.769,
+                        "begin_shape_index": 77,
+                        "end_shape_index": 149,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 10,
+                        "instruction": "Turn right onto Friedrichstra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Turn right onto Friedrichstra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Turn right. Then Turn left onto Hannoversche Stra\u00dfe.",
+                        "verbal_pre_transition_instruction": "Turn right onto Friedrichstra\u00dfe. Then Turn left onto Hannoversche Stra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 90 meters.",
+                        "street_names": [
+                            "Friedrichstra\u00dfe"
+                        ],
+                        "bearing_before": 289,
+                        "bearing_after": 355,
+                        "time": 12.637,
+                        "length": 0.087,
+                        "cost": 30.665,
+                        "begin_shape_index": 149,
+                        "end_shape_index": 154,
+                        "verbal_multi_cue": true,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 15,
+                        "instruction": "Turn left onto Hannoversche Stra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Turn left onto Hannoversche Stra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Turn left.",
+                        "verbal_pre_transition_instruction": "Turn left onto Hannoversche Stra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 700 meters.",
+                        "street_names": [
+                            "Hannoversche Stra\u00dfe"
+                        ],
+                        "bearing_before": 8,
+                        "bearing_after": 257,
+                        "time": 100.347,
+                        "length": 0.654,
+                        "cost": 202.336,
+                        "begin_shape_index": 154,
+                        "end_shape_index": 196,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 15,
+                        "instruction": "Turn left onto Invalidenstra\u00dfe.",
+                        "verbal_transition_alert_instruction": "Turn left onto Invalidenstra\u00dfe.",
+                        "verbal_succinct_transition_instruction": "Turn left.",
+                        "verbal_pre_transition_instruction": "Turn left onto Invalidenstra\u00dfe.",
+                        "verbal_post_transition_instruction": "Continue for 1 kilometer.",
+                        "street_names": [
+                            "Invalidenstra\u00dfe"
+                        ],
+                        "bearing_before": 324,
+                        "bearing_after": 238,
+                        "time": 147.278,
+                        "length": 0.981,
+                        "cost": 300.57,
+                        "begin_shape_index": 196,
+                        "end_shape_index": 253,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    },
+                    {
+                        "type": 5,
+                        "instruction": "Your destination is on the right.",
+                        "verbal_transition_alert_instruction": "Your destination will be on the right.",
+                        "verbal_pre_transition_instruction": "Your destination is on the right.",
+                        "bearing_before": 243,
+                        "time": 0.0,
+                        "length": 0.0,
+                        "cost": 0.0,
+                        "begin_shape_index": 253,
+                        "end_shape_index": 253,
+                        "travel_mode": "drive",
+                        "travel_type": "motor_scooter"
+                    }
+                ],
+                "summary": {
+                    "has_time_restrictions": false,
+                    "has_toll": false,
+                    "has_highway": false,
+                    "has_ferry": false,
+                    "min_lat": 52.520013,
+                    "min_lon": 13.366395,
+                    "max_lat": 52.529492,
+                    "max_lon": 13.404987,
+                    "time": 503.792,
+                    "length": 3.378,
+                    "cost": 1197.648
+                },
+                "shape": "ycqdcBurdqX{E|FIHu@jAOTiF~Ha@l@}A~ByHhLoC|D{GvJiG~IaMpQmOxT{@z@wDvEwBaJu@eD_DgNqIq_@yAuGgBwH}@}BkA}@kABm@Hk@H_Ap@yFhE}ErDiClB{DxC{MvJUPk@ZiAh@cBr@y@ZkAh@m@\\{@l@_An@{@n@a@`@y@`Ae@v@_AhBc@jA]dA]vAc@jBc@tBe@hB_AbDkI~VcBfF_@dAg@tAiBjFITaDlJ_@hAw@~BQx@Mr@G|@CjA?lA@hADz@JfALx@VtAP~@F`@DTHv@Bv@B|ADlC@~DFfRAl@EdP?dAYzk@Y`\\CfCC~B?v@?T@v@@t@BxA@hA?nA]pUC~BIzFEbDKjDIpCUrOM~HSlHSbKQvHmCxQmJhk@cAdGgJfi@mDfS_B|IcA~Fq@zDwCzRsBbNcHtc@mGr`@{DbW]~BaB~JsAxI]vBaBnKaOv`Ae@`Dg@|Cy@nFmCfQiH|d@{ArJm@fEuBpNmCvPi@~CsCxRk@jAgDdHoClQeAbHoEvZk@xDS~AM`AM~@[bC_@|CkBtNK~@q@Duc@fDaA?yC[wBc@XlEHxAXbEd@jGFxADl@t@pNR`FRxDPjDfBl]v@xOLnCbBp]NpCLlEE~Dk@|GaAxGcBjLmMb|@mAvH}Gtb@yB~McFdIoD|FaCnD{FzIiKfOcCdNkBxL_BvBuAnB}GjI}EhGiN`QoMlPoGfIgLpOuAdBaD`EGHlBdHx@zCfAzEbF`Wp@fDdAhFJ~GHzAHnAfEpS^pBf@lCT|APvA\\nCTnB\\jDVpCn@bF`@rCPdArNdu@f@|Bn@lBf@`BtD~KtFrVhLrk@dFpUfA|Fh@lCbB|I\\nB~FhZj@hC`@jB~AfHfX`qA~Nxr@d@zCdEz]`@`CdAdGjAxGb@fCpPxw@bB~Hf@bCTdApCvM|Kvh@tAvFxB`JvDtOlCxKnOdu@z@~D"
+            }
+        ],
+        "summary": {
+            "has_time_restrictions": false,
+            "has_toll": false,
+            "has_highway": false,
+            "has_ferry": false,
+            "min_lat": 52.520013,
+            "min_lon": 13.366395,
+            "max_lat": 52.529492,
+            "max_lon": 13.404987,
+            "time": 503.792,
+            "length": 3.378,
+            "cost": 1197.648
+        },
+        "status_message": "Found route between points",
+        "status": 0,
+        "units": "kilometers",
+        "language": "en-US"
+    }
+}

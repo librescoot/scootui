@@ -44,6 +44,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   // Navigation values
   String _navigationDestination = '';
+  String _navigationLatitude = '';
+  String _navigationLongitude = '';
+  String _navigationAddress = '';
+  String _navigationTimestamp = '';
 
   // Current states
   String _blinkerState = 'off';
@@ -107,17 +111,17 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     _buildMotorCard,
     _buildBattery0Card,
     _buildBattery1Card,
-    _buildCbBatteryCard,
-    _buildAuxBatteryCard,
-    _buildVehicleSwitchesCard,
     _buildVehicleStateCard,
+    _buildVehicleSwitchesCard,
     _buildBrakesCard,
     _buildConnectivityCard,
     _buildGpsCard,
     _buildNavigationCard,
-    _buildOtaDbcCard,
-    _buildOtaMdbCard,
+    _buildCbBatteryCard,
+    _buildAuxBatteryCard,
     _buildEcuExtendedCard,
+    _buildOtaMdbCard,
+    _buildOtaDbcCard,
   ];
 
   @override
@@ -255,6 +259,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
       // Load navigation values
       final navigationDestination = await widget.repository.get('navigation', 'destination');
+      final navigationLatitude = await widget.repository.get('navigation', 'latitude');
+      final navigationLongitude = await widget.repository.get('navigation', 'longitude');
+      final navigationAddress = await widget.repository.get('navigation', 'address');
+      final navigationTimestamp = await widget.repository.get('navigation', 'timestamp');
 
       // Update state with loaded values
       setState(() {
@@ -350,6 +358,10 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (gpsAltitude != null) _gpsAltitude = double.tryParse(gpsAltitude) ?? 0.0;
 
         if (navigationDestination != null) _navigationDestination = navigationDestination;
+        if (navigationLatitude != null) _navigationLatitude = navigationLatitude;
+        if (navigationLongitude != null) _navigationLongitude = navigationLongitude;
+        if (navigationAddress != null) _navigationAddress = navigationAddress;
+        if (navigationTimestamp != null) _navigationTimestamp = navigationTimestamp;
       });
     } catch (e) {
       setState(() {
@@ -499,7 +511,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   }
 
   Future<void> _updateNavigationValues() async {
-    await _publishEvent('navigation', 'destination', _navigationDestination);
+    final futures = [
+      _publishEvent('navigation', 'destination', _navigationDestination),
+      _publishEvent('navigation', 'latitude', _navigationLatitude),
+      _publishEvent('navigation', 'longitude', _navigationLongitude),
+      _publishEvent('navigation', 'address', _navigationAddress),
+      _publishEvent('navigation', 'timestamp', _navigationTimestamp),
+    ];
+    await Future.wait(futures);
   }
 
   Future<void> _updateOtaValues() async {
@@ -628,66 +647,30 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _updateEngineValues();
           },
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Motor Current (A)'),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _simulatedMotorCurrent.toDouble(),
-                    min: -10,
-                    max: 100,
-                    divisions: 110,
-                    label: _simulatedMotorCurrent.toString(),
-                    onChanged: (value) {
-                      setState(
-                          () => _simulatedMotorCurrent = value.toInt());
-                      _updateEngineValues();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 60,
-                  child: Text(
-                    _simulatedMotorCurrent.toString(),
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        _buildSlider(
+          'Motor Current (A)',
+          _simulatedMotorCurrent,
+          -10,
+          100,
+          (value) {
+            setState(() => _simulatedMotorCurrent = value.toInt());
+            _updateEngineValues();
+          },
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Motor Voltage (mV)'),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _motorVoltage.toDouble(),
-                    min: 35000,
-                    max: 60000,
-                    divisions: 250,
-                    label: _motorVoltage.toString(),
-                    onChanged: (value) {
-                      setState(() => _motorVoltage = value.toInt());
-                      _publishEvent('engine-ecu', 'motor:voltage', value.toInt().toString());
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    '${(_motorVoltage / 1000).toStringAsFixed(1)}V',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        _buildSlider(
+          'Motor Voltage (V)',
+          _motorVoltage,
+          35000,
+          60000,
+          (value) {
+            setState(() => _motorVoltage = value.toInt());
+            _publishEvent('engine-ecu', 'motor:voltage', value.toInt().toString());
+          },
+          formatter: (v) => (v / 1000.0).toStringAsFixed(1),
+          parser: (s) {
+            final d = double.tryParse(s);
+            return d != null ? (d * 1000).round() : null;
+          },
         ),
       ],
     );
@@ -697,19 +680,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Battery 0',
       [
-        Row(
-          children: [
-            const Text('Present'),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: _battery0Present,
-              onChanged: (value) {
-                setState(() => _battery0Present = value ?? false);
-                _updateBatteryValues();
-              },
-            ),
-          ],
-        ),
         if (_battery0Present)
           _buildSlider(
             'Charge (%)',
@@ -748,6 +718,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           ],
         ),
       ],
+      titleTrailing: Checkbox(
+        value: _battery0Present,
+        onChanged: (value) {
+          setState(() => _battery0Present = value ?? false);
+          _updateBatteryValues();
+        },
+      ),
     );
   }
 
@@ -755,19 +732,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Battery 1',
       [
-        Row(
-          children: [
-            const Text('Present'),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: _battery1Present,
-              onChanged: (value) {
-                setState(() => _battery1Present = value ?? false);
-                _updateBatteryValues();
-              },
-            ),
-          ],
-        ),
         if (_battery1Present)
           _buildSlider(
             'Charge (%)',
@@ -806,6 +770,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           ],
         ),
       ],
+      titleTrailing: Checkbox(
+        value: _battery1Present,
+        onChanged: (value) {
+          setState(() => _battery1Present = value ?? false);
+          _updateBatteryValues();
+        },
+      ),
     );
   }
 
@@ -813,19 +784,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'CB Battery',
       [
-        Row(
-          children: [
-            const Text('Present'),
-            const SizedBox(width: 8),
-            Checkbox(
-              value: _cbBatteryPresent,
-              onChanged: (value) {
-                setState(() => _cbBatteryPresent = value ?? false);
-                _updateCbBatteryValues();
-              },
-            ),
-          ],
-        ),
         if (_cbBatteryPresent)
           _buildSlider(
             'Charge (%)',
@@ -847,6 +805,13 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
       ],
+      titleTrailing: Checkbox(
+        value: _cbBatteryPresent,
+        onChanged: (value) {
+          setState(() => _cbBatteryPresent = value ?? false);
+          _updateCbBatteryValues();
+        },
+      ),
     );
   }
 
@@ -863,36 +828,20 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _updateAuxBatteryValues();
           },
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Voltage (V)'),
-            Row(
-              children: [
-                Expanded(
-                  child: Slider(
-                    value: _auxBatteryVoltage.toDouble(),
-                    min: 9000,
-                    max: 15000,
-                    divisions: 50,
-                    label:
-                        '${(_auxBatteryVoltage / 1000.0).toStringAsFixed(1)}V',
-                    onChanged: (value) {
-                      setState(() => _auxBatteryVoltage = value.toInt());
-                      _updateAuxBatteryValues();
-                    },
-                  ),
-                ),
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    '${(_auxBatteryVoltage / 1000.0).toStringAsFixed(1)}V',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        _buildSlider(
+          'Voltage (V)',
+          _auxBatteryVoltage,
+          9000,
+          15000,
+          (value) {
+            setState(() => _auxBatteryVoltage = value.toInt());
+            _updateAuxBatteryValues();
+          },
+          formatter: (v) => (v / 1000.0).toStringAsFixed(1),
+          parser: (s) {
+            final d = double.tryParse(s);
+            return d != null ? (d * 1000).round() : null;
+          },
         ),
         _buildSegmentedButton(
           'Charge Status',
@@ -916,7 +865,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Vehicle Switches',
       [
-        Text('Blinker:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Blinker'),
         _buildSegmentedButton(
           '',
           ['off', 'left', 'right', 'both'],
@@ -926,8 +875,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'blinker:state', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Handlebar:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Handlebar'),
         _buildSegmentedButton(
           '',
           ['unlocked', 'locked'],
@@ -937,8 +886,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'handlebar:position', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Kickstand:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Kickstand'),
         _buildSegmentedButton(
           '',
           ['up', 'down'],
@@ -948,60 +897,42 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'kickstand', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Seatbox Lock:', style: TextStyle(fontWeight: FontWeight.bold)),
-        _buildSegmentedButton(
-          '',
-          ['open', 'closed'],
-          _seatboxLockState,
-          (value) {
-            setState(() => _seatboxLockState = value);
-            _publishEvent('vehicle', 'seatbox:lock', value);
-          },
-        ),
-        const SizedBox(height: 16),
-        Text('Seatbox Button:', style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Listener(
-          onPointerDown: (_) => _seatboxButtonDown(),
-          onPointerUp: (_) => _seatboxButtonUp(),
-          onPointerCancel: (_) => _seatboxButtonUp(),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              minimumSize: Size(double.infinity, 40),
-              backgroundColor: _seatboxButtonState == 'on'
-                  ? Colors.green.shade700
-                  : Colors.blue.shade700,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {},
-            child: Text(
-              'Press & Hold',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
+        _groupSpacer,
+        _buildGroupHeading('Seatbox'),
         Row(
           children: [
-            const Text('State:', style: TextStyle(fontSize: 12)),
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: _seatboxButtonState == 'on' ? Colors.green : Colors.grey,
-                borderRadius: BorderRadius.circular(8),
+            Expanded(
+              child: _buildSegmentedButton(
+                '',
+                ['open', 'closed'],
+                _seatboxLockState,
+                (value) {
+                  setState(() => _seatboxLockState = value);
+                  _publishEvent('vehicle', 'seatbox:lock', value);
+                },
               ),
-              child: Text(
-                _seatboxButtonState.toUpperCase(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
+            ),
+            const SizedBox(width: 4),
+            Listener(
+              onPointerDown: (_) => _seatboxButtonDown(),
+              onPointerUp: (_) => _seatboxButtonUp(),
+              onPointerCancel: (_) => _seatboxButtonUp(),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: const Size(0, 32),
+                  backgroundColor: _seatboxButtonState == 'on'
+                      ? Colors.green.shade700
+                      : Colors.blue.shade700,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {},
+                child: Text(
+                  'Hold',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),
@@ -1015,15 +946,21 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Vehicle State',
       [
-        Text('State:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('State'),
         _buildSegmentedButton(
           '',
           [
+            'stand-by',
             'parked',
             'ready-to-drive',
-            'stand-by',
+            'shutting-down',
             'booting',
-            'shutting-down'
+            'updating',
+            'off',
+            'hibernating',
+            'hibernating-imminent',
+            'suspending',
+            'suspending-imminent'
           ],
           _vehicleState,
           (value) {
@@ -1031,52 +968,18 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('vehicle', 'state', value);
           },
         ),
-        if (_vehicleStateExpanded)
-          _buildSegmentedButton(
-            '',
-            [
-              'hibernating',
-              'hibernating-imminent',
-              'suspending',
-              'suspending-imminent',
-              'off'
-            ],
-            _vehicleState,
-            (value) {
-              setState(() => _vehicleState = value);
-              _publishEvent('vehicle', 'state', value);
-            },
-          ),
-        TextButton(
-          onPressed: () {
-            setState(() => _vehicleStateExpanded = !_vehicleStateExpanded);
+        _groupSpacer,
+        _buildTextField(
+          label: 'Odometer (km)',
+          value: _simulatedOdometer.toStringAsFixed(1),
+          keyboardType: TextInputType.number,
+          onSubmitted: (value) {
+            final parsedValue = double.tryParse(value);
+            if (parsedValue != null) {
+              setState(() => _simulatedOdometer = parsedValue);
+              _updateEngineValues();
+            }
           },
-          child: Text(_vehicleStateExpanded ? 'Show Less' : 'Show More'),
-        ),
-        const SizedBox(height: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Odometer (km)', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              controller: TextEditingController(
-                  text: _simulatedOdometer.toStringAsFixed(1)),
-              onSubmitted: (value) {
-                final parsedValue = double.tryParse(value);
-                if (parsedValue != null) {
-                  setState(() => _simulatedOdometer = parsedValue);
-                  _updateEngineValues();
-                }
-              },
-            ),
-          ],
         ),
       ],
     );
@@ -1086,82 +989,94 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Brakes',
       [
-        Text('Left Brake:', style: TextStyle(fontWeight: FontWeight.bold)),
-        _buildSegmentedButton(
-          '',
-          ['off', 'on'],
-          _leftBrakeState,
-          (value) {
-            setState(() => _leftBrakeState = value);
-            if (value == 'on') {
-              print('SIM: Left brake pressed via UI button');
-            } else {
-              print('SIM: Left brake released via UI button');
-            }
-            _publishEvent('vehicle', 'brake:left', value);
-            _publishButtonEvent('brake:left:$value');
-          },
+        _buildGroupHeading('Left'),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSegmentedButton(
+                '',
+                ['off', 'on'],
+                _leftBrakeState,
+                (value) {
+                  setState(() => _leftBrakeState = value);
+                  if (value == 'on') {
+                    print('SIM: Left brake pressed via UI button');
+                  } else {
+                    print('SIM: Left brake released via UI button');
+                  }
+                  _publishEvent('vehicle', 'brake:left', value);
+                  _publishButtonEvent('brake:left:$value');
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeTap('left'),
+              child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeDoubleTap('left'),
+              child: const Text('2x', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeTap('left'),
-          child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(height: 4),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeDoubleTap('left'),
-          child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(height: 16),
-        Text('Right Brake:', style: TextStyle(fontWeight: FontWeight.bold)),
-        _buildSegmentedButton(
-          '',
-          ['off', 'on'],
-          _rightBrakeState,
-          (value) {
-            setState(() => _rightBrakeState = value);
-            if (value == 'on') {
-              print('SIM: Right brake pressed via UI button');
-            } else {
-              print('SIM: Right brake released via UI button');
-            }
-            _publishEvent('vehicle', 'brake:right', value);
-            _publishButtonEvent('brake:right:$value');
-          },
-        ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeTap('right'),
-          child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(height: 4),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 32),
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            backgroundColor: Colors.blue.shade700,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () => _simulateBrakeDoubleTap('right'),
-          child: const Text('Double-Tap', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Right'),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSegmentedButton(
+                '',
+                ['off', 'on'],
+                _rightBrakeState,
+                (value) {
+                  setState(() => _rightBrakeState = value);
+                  if (value == 'on') {
+                    print('SIM: Right brake pressed via UI button');
+                  } else {
+                    print('SIM: Right brake released via UI button');
+                  }
+                  _publishEvent('vehicle', 'brake:right', value);
+                  _publishButtonEvent('brake:right:$value');
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeTap('right'),
+              child: const Text('Tap', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: const Size(0, 32),
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => _simulateBrakeDoubleTap('right'),
+              child: const Text('2x', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            ),
+          ],
         ),
       ],
     );
@@ -1171,7 +1086,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Connectivity',
       [
-        Text('Bluetooth:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Bluetooth'),
         _buildSegmentedButton(
           '',
           ['disconnected', 'connected'],
@@ -1181,8 +1096,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('ble', 'status', value);
           },
         ),
-        const SizedBox(height: 16),
-        Text('Internet:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Internet'),
         _buildSegmentedButton(
           '',
           ['disconnected', 'connected'],
@@ -1192,8 +1107,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             _publishEvent('internet', 'status', value);
           },
         ),
-        const SizedBox(height: 8),
-        Text('Access Tech:', style: TextStyle(fontSize: 12)),
+        _groupSpacer,
+        _buildGroupHeading('Signal Quality'),
         _buildSegmentedButton(
           '',
           ['UNKNOWN', '2G', '3G', '4G', '5G'],
@@ -1204,7 +1119,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _buildSlider(
-          'Signal Quality',
+          '',
           _signalQuality,
           0,
           100,
@@ -1214,8 +1129,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 'internet', 'signal-quality', value.toInt().toString());
           },
         ),
-        const SizedBox(height: 16),
-        Text('Cloud:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _groupSpacer,
+        _buildGroupHeading('Cloud'),
         _buildSegmentedButton(
           '',
           ['disconnected', 'connected'],
@@ -1233,7 +1148,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'GPS',
       [
-        Text('GPS Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('GPS Status'),
         _buildSegmentedButton(
           '',
           ['off', 'searching', 'fix-established', 'error'],
@@ -1249,52 +1164,37 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             }
           },
         ),
-        const SizedBox(height: 16),
-        Text('Position:', style: TextStyle(fontWeight: FontWeight.bold)),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        _groupSpacer,
+        Row(
           children: [
-            Text('Latitude'),
-            TextField(
-              keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            Expanded(
+              child: _buildTextField(
+                label: 'Latitude',
+                value: _gpsLatitude.toStringAsFixed(6),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  final parsedValue = double.tryParse(value);
+                  if (parsedValue != null) {
+                    setState(() => _gpsLatitude = parsedValue);
+                    _updateGpsValues();
+                  }
+                },
               ),
-              controller: TextEditingController(
-                  text: _gpsLatitude.toStringAsFixed(6)),
-              onSubmitted: (value) {
-                final parsedValue = double.tryParse(value);
-                if (parsedValue != null) {
-                  setState(() => _gpsLatitude = parsedValue);
-                  _updateGpsValues();
-                }
-              },
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Longitude'),
-            TextField(
-              keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildTextField(
+                label: 'Longitude',
+                value: _gpsLongitude.toStringAsFixed(6),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  final parsedValue = double.tryParse(value);
+                  if (parsedValue != null) {
+                    setState(() => _gpsLongitude = parsedValue);
+                    _updateGpsValues();
+                  }
+                },
               ),
-              controller: TextEditingController(
-                  text: _gpsLongitude.toStringAsFixed(6)),
-              onSubmitted: (value) {
-                final parsedValue = double.tryParse(value);
-                if (parsedValue != null) {
-                  setState(() => _gpsLongitude = parsedValue);
-                  _updateGpsValues();
-                }
-              },
             ),
           ],
         ),
@@ -1306,21 +1206,187 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'Navigation',
       [
-        Text('Destination (lat,lon)', style: TextStyle(fontSize: 12)),
-        const SizedBox(height: 4),
-        TextField(
-          keyboardType: TextInputType.text,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            hintText: '48.123456,11.123456',
-          ),
-          controller: TextEditingController(text: _navigationDestination),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: _buildTextField(
+                label: 'Latitude',
+                value: _navigationLatitude,
+                hintText: '52.5200',
+                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  setState(() => _navigationLatitude = value);
+                  _updateNavigationValues();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildTextField(
+                label: 'Longitude',
+                value: _navigationLongitude,
+                hintText: '13.4050',
+                keyboardType: TextInputType.numberWithOptions(decimal: true, signed: true),
+                onSubmitted: (value) {
+                  setState(() => _navigationLongitude = value);
+                  _updateNavigationValues();
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              height: 32,
+              width: 32,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed: () {
+                  if (_navigationLatitude.isNotEmpty && _navigationLongitude.isNotEmpty) {
+                    setState(() => _navigationDestination = '$_navigationLatitude,$_navigationLongitude');
+                    _updateNavigationValues();
+                  }
+                },
+                child: const Text('↓', style: TextStyle(fontSize: 11)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _buildTextField(
+          label: 'Address',
+          value: _navigationAddress,
+          hintText: 'Alexanderplatz, Berlin',
           onSubmitted: (value) {
-            setState(() => _navigationDestination = value);
+            setState(() => _navigationAddress = value);
             _updateNavigationValues();
           },
+        ),
+        const SizedBox(height: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLabel('Timestamp'),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      hintText: '2025-10-25T12:00:00Z',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                      ),
+                    ),
+                    controller: TextEditingController(text: _navigationTimestamp),
+                    onSubmitted: (value) {
+                      setState(() => _navigationTimestamp = value);
+                      _updateNavigationValues();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  height: 32,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    onPressed: () {
+                      final now = DateTime.now().toUtc();
+                      final timestamp = now.toIso8601String().split('.')[0] + 'Z';
+                      setState(() => _navigationTimestamp = timestamp);
+                      _updateNavigationValues();
+                    },
+                    child: const Text('Now', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLabel('Destination (legacy)'),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.text,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      hintText: '48.123456,11.123456',
+                      hintStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                      ),
+                    ),
+                    controller: TextEditingController(text: _navigationDestination),
+                    onSubmitted: (value) {
+                      setState(() => _navigationDestination = value);
+                      _updateNavigationValues();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  height: 32,
+                  width: 32,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: () {
+                      final parts = _navigationDestination.split(',');
+                      if (parts.length == 2) {
+                        setState(() {
+                          _navigationLatitude = parts[0].trim();
+                          _navigationLongitude = parts[1].trim();
+                        });
+                        _updateNavigationValues();
+                      }
+                    },
+                    child: const Text('↑', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         ElevatedButton(
@@ -1328,10 +1394,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             minimumSize: Size(double.infinity, 36),
           ),
           onPressed: () {
-            setState(() => _navigationDestination = '');
+            setState(() {
+              _navigationDestination = '';
+              _navigationLatitude = '';
+              _navigationLongitude = '';
+              _navigationAddress = '';
+              _navigationTimestamp = '';
+            });
             _updateNavigationValues();
           },
-          child: const Text('Clear Destination'),
+          child: _buildLabel('Clear All'),
         ),
       ],
     );
@@ -1341,7 +1413,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'OTA - DBC',
       [
-        Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Status'),
         _buildSegmentedButton(
           '',
           ['idle', 'downloading', 'installing', 'rebooting', 'error'],
@@ -1363,7 +1435,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Update Method'),
         _buildSegmentedButton(
           '',
           ['', 'full', 'delta'],
@@ -1381,7 +1453,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return _buildSection(
       'OTA - MDB',
       [
-        Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Status'),
         _buildSegmentedButton(
           '',
           ['idle', 'downloading', 'installing', 'rebooting', 'error'],
@@ -1403,7 +1475,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Update Method:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Update Method'),
         _buildSegmentedButton(
           '',
           ['', 'full', 'delta'],
@@ -1442,7 +1514,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('Throttle:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('Throttle'),
         _buildSegmentedButton(
           '',
           ['off', 'on'],
@@ -1453,7 +1525,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('KERS:', style: TextStyle(fontWeight: FontWeight.bold)),
+        _buildGroupHeading('KERS'),
         _buildSegmentedButton(
           '',
           ['off', 'on'],
@@ -1464,7 +1536,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text('KERS Reason Off:', style: TextStyle(fontSize: 12)),
+        _buildSmallLabel('KERS Reason Off'),
         _buildSegmentedButton(
           '',
           ['none', 'cold', 'hot'],
@@ -1484,30 +1556,35 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       body: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Dashboard cluster - fixed, doesn't scroll
                 SizedBox(
                   width: 480,
-                  height: 560,
-                  child: _buildSection("Screen", [MainScreen()]),
+                  child: _buildSection("Screen", [
+                    SizedBox(
+                      width: 480,
+                      height: 480,
+                      child: MainScreen(),
+                    ),
+                  ]),
                 ),
 
-                const SizedBox(width: 16),
+                const SizedBox(width: 4),
 
                 // Control cards - scrollable independently
                 Expanded(
                   child: SingleChildScrollView(
                     child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 4,
+                      runSpacing: 4,
                       alignment: WrapAlignment.start,
                       children: [
                         for (final builder in _cardBuilders)
                           SizedBox(
-                            width: 220,
+                            width: 258,
                             child: builder(),
                           ),
                       ],
@@ -1519,12 +1596,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           ),
           if (_errorMessage != null)
             Positioned(
-              bottom: 16,
+              bottom: 8,
               left: 0,
               right: 0,
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
@@ -1540,18 +1617,35 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(String title, List<Widget> children, {Widget? titleTrailing}) {
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(8.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
+            if (titleTrailing != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  titleTrailing,
+                ],
+              )
+            else
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            const SizedBox(height: 4),
             ...children,
           ],
         ),
@@ -1564,19 +1658,71 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     int value,
     int min,
     int max,
-    ValueChanged<double> onChanged,
-  ) {
+    ValueChanged<double> onChanged, {
+    String Function(int)? formatter,
+    int? Function(String)? parser,
+  }) {
+    final displayFormatter = formatter ?? (v) => v.toString();
+    final displayParser = parser ?? (s) => int.tryParse(s);
+    final displayText = displayFormatter(value);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
-        Slider(
-          value: value.toDouble(),
-          min: min.toDouble(),
-          max: max.toDouble(),
-          divisions: (max - min).toInt(),
-          label: value.toStringAsFixed(1),
-          onChanged: onChanged,
+        if (label.isNotEmpty) _buildLabel(label),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: value.toDouble(),
+                min: min.toDouble(),
+                max: max.toDouble(),
+                divisions: (max - min).toInt(),
+                label: value.toStringAsFixed(1),
+                onChanged: onChanged,
+              ),
+            ),
+            SizedBox(
+              width: 60,
+              child: TextField(
+                controller: TextEditingController(text: displayText)
+                  ..selection = TextSelection.fromPosition(
+                    TextPosition(offset: displayText.length),
+                  ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  isDense: true,
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surface,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                onSubmitted: (text) {
+                  final newValue = displayParser(text);
+                  if (newValue != null && newValue >= min && newValue <= max) {
+                    onChanged(newValue.toDouble());
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1591,7 +1737,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (label.isNotEmpty) Text(label),
+        if (label.isNotEmpty) _buildLabel(label),
         if (label.isNotEmpty) const SizedBox(height: 4),
         Wrap(
           spacing: 4,
@@ -1664,4 +1810,71 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       child: Text(label, style: const TextStyle(fontSize: 10)),
     );
   }
+
+  Widget _buildTextField({
+    required String label,
+    required String value,
+    required ValueChanged<String> onSubmitted,
+    TextInputType? keyboardType,
+    String? hintText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 4),
+        TextField(
+          keyboardType: keyboardType ?? TextInputType.text,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surface,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            hintText: hintText,
+            hintStyle: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            ),
+          ),
+          controller: TextEditingController(text: value),
+          onSubmitted: onSubmitted,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupHeading(String text) {
+    return Text(
+      text,
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(text, style: const TextStyle(fontSize: 12));
+  }
+
+  Widget _buildSmallLabel(String text) {
+    return Text(text, style: const TextStyle(fontSize: 12));
+  }
+
+  Widget get _groupSpacer => const SizedBox(height: 12);
 }

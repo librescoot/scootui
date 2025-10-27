@@ -11,6 +11,8 @@ abstract class MDBRepository {
   Future<void> set(String channel, String variable, String value,
       {bool publish = true});
 
+  Future<void> publish(String channel, String message);
+
   Stream<(String, String)> subscribe(String channel);
 
   Future<void> push(String channel, String command);
@@ -97,6 +99,16 @@ class InMemoryMDBRepository implements MDBRepository {
         for (var controller in _subscribers[channel]!) {
           controller.add((channel, variable));
         }
+      }
+    }
+  }
+
+  @override
+  Future<void> publish(String channel, String message) async {
+    // Notify subscribers with the message
+    if (_subscribers.containsKey(channel)) {
+      for (var controller in _subscribers[channel]!) {
+        controller.add((channel, message));
       }
     }
   }

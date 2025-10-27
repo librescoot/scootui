@@ -13,6 +13,7 @@ import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, Vect
 import 'package:vector_tile_renderer/vector_tile_renderer.dart' as vtr;
 
 import '../../cubits/map_cubit.dart';
+import '../../cubits/mdb_cubits.dart';
 import '../../repositories/mdb_repository.dart';
 import '../../routing/models.dart';
 import '../../utils/theme_aware_cache.dart';
@@ -561,10 +562,9 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
               mdbRepo.set("gps", "longitude", latLng.longitude.toString());
             },
             onSecondaryTap: (tapPosition, latLng) {
-              // Set destination via MDBRepository, NavigationCubit will pick it up
-              final mdbRepo = RepositoryProvider.of<MDBRepository>(context);
-              final coordinates = "${latLng.latitude},${latLng.longitude}";
-              mdbRepo.set("navigation", "destination", coordinates);
+              // Set destination via NavigationSync
+              final navigationSync = context.read<NavigationSync>();
+              navigationSync.setDestination(latLng.latitude, latLng.longitude);
             },
           ),
           mapController: widget.mapController,

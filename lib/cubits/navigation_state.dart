@@ -23,6 +23,7 @@ abstract class NavigationState with _$NavigationState {
     @Default(null) RouteInstruction? currentInstruction,
     @Default([]) List<RouteInstruction> upcomingInstructions,
     @Default(null) LatLng? destination,
+    @Default(null) String? destinationAddress,
     @Default(NavigationStatus.idle) NavigationStatus status,
     @Default(null) String? error,
     @Default(0.0) double distanceToDestination,

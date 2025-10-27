@@ -42,6 +42,7 @@ dependencies:
   google_polyline_algorithm: ^3.1.0
   oktoast: ^3.4.0
   http: ^1.3.0
+  window_manager: ^0.4.3
 
 dev_dependencies:
   flutter_test:

@@ -56,20 +56,16 @@ class GpsData extends Equatable with $GpsData {
   String get lastUpdated => updated.isNotEmpty ? updated : timestamp;
 
   bool get hasRecentFix {
-    // If 'updated' exists, use it for staleness detection
-    if (updated.isNotEmpty) {
-      try {
-        final gpsTime = DateTime.parse(updated);
-        final now = DateTime.now();
-        final diff = now.difference(gpsTime).inSeconds;
-        return diff <= 10; // GPS fix is recent if within 10 seconds
-      } catch (e) {
-        return false;
-      }
+    final ts = lastUpdated;
+    if (ts.isEmpty) return false;
+    try {
+      final gpsTime = DateTime.parse(ts);
+      final now = DateTime.now();
+      final diff = now.difference(gpsTime).inSeconds;
+      return diff <= 10; // GPS fix is recent if within 10 seconds
+    } catch (e) {
+      return false;
     }
-
-    // If only 'timestamp' exists (old modem-service), assume GPS is fresh
-    return timestamp.isNotEmpty;
   }
 
   GpsData({

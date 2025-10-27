@@ -5,7 +5,6 @@ import '../cubits/map_cubit.dart';
 import '../cubits/navigation_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../env_config.dart';
-import '../widgets/map/map_overlay_indicators.dart';
 import '../widgets/map/map_view.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
 import '../widgets/navigation/navigation_status_overlay.dart';
@@ -49,20 +48,19 @@ class MapScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   child: Column(
                     children: [
-                      // Navigation info, if navigation is active
+                      // Navigation info, if navigation is active (full width, no padding)
                       TurnByTurnWidget(),
-
-                      // 8px spacing
                       const SizedBox(height: 8),
 
                       // Blinker overlay (BELOW turn by turn)
                       _buildBlinkerRow(context),
-                      
+
                       // Free space (expand)
                       const Expanded(child: SizedBox()),
-                      
+
                       // Bottom row
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           // Left side: warning indicators
                           Expanded(
