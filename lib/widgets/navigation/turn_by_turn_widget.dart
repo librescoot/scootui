@@ -34,6 +34,184 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildDestinationAddressBar(NavigationState state, bool isDark) {
+    final route = state.route;
+    if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
+
+    final upcomingInstructions = state.upcomingInstructions;
+    final firstUpcomingIndex = route.instructions.indexWhere(
+      (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
+    );
+
+    double remainingDistance = 0.0;
+    Duration timeRemaining = Duration.zero;
+
+    if (firstUpcomingIndex >= 0) {
+      final firstUpcoming = upcomingInstructions.first;
+      final firstOriginal = route.instructions[firstUpcomingIndex];
+
+      remainingDistance = firstUpcoming.distance;
+      remainingDistance += firstOriginal.distance;
+
+      for (int i = firstUpcomingIndex + 1; i < route.instructions.length; i++) {
+        remainingDistance += route.instructions[i].distance;
+        timeRemaining += route.instructions[i].duration;
+      }
+
+      if (firstOriginal.distance > 0) {
+        final speedInSegment = firstOriginal.distance > 0
+            ? firstOriginal.duration.inSeconds / firstOriginal.distance
+            : 0.0;
+        final timeToFirstManeuver = Duration(seconds: (firstUpcoming.distance * speedInSegment).round());
+        timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
+      } else {
+        timeRemaining += firstOriginal.duration;
+      }
+    }
+
+    final now = DateTime.now();
+    final eta = now.add(timeRemaining);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.white10 : Colors.black12,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.place,
+            size: 14,
+            color: isDark ? Colors.white54 : Colors.black54,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _AutoScrollText(
+              text: state.destinationAddress!,
+              style: TextStyle(
+                color: isDark ? Colors.white70 : Colors.black87,
+                fontSize: 12,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _buildTimeInfoItem(
+            icon: Icons.straighten,
+            label: 'Distance',
+            value: _formatDistanceKm(remainingDistance),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.timer,
+            label: 'Remaining',
+            value: _formatDuration(timeRemaining),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.flag,
+            label: 'ETA',
+            value: _formatTime(eta),
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactTimeInfoBar(NavigationState state, bool isDark) {
+    final route = state.route;
+    if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
+
+    final upcomingInstructions = state.upcomingInstructions;
+    final firstUpcomingIndex = route.instructions.indexWhere(
+      (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
+    );
+
+    double remainingDistance = 0.0;
+    Duration timeRemaining = Duration.zero;
+
+    if (firstUpcomingIndex >= 0) {
+      final firstUpcoming = upcomingInstructions.first;
+      final firstOriginal = route.instructions[firstUpcomingIndex];
+
+      remainingDistance = firstUpcoming.distance;
+      remainingDistance += firstOriginal.distance;
+
+      for (int i = firstUpcomingIndex + 1; i < route.instructions.length; i++) {
+        remainingDistance += route.instructions[i].distance;
+        timeRemaining += route.instructions[i].duration;
+      }
+
+      if (firstOriginal.distance > 0) {
+        final speedInSegment = firstOriginal.distance > 0
+            ? firstOriginal.duration.inSeconds / firstOriginal.distance
+            : 0.0;
+        final timeToFirstManeuver = Duration(seconds: (firstUpcoming.distance * speedInSegment).round());
+        timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
+      } else {
+        timeRemaining += firstOriginal.duration;
+      }
+    }
+
+    final now = DateTime.now();
+    final eta = now.add(timeRemaining);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(8),
+        ),
+        border: Border(
+          left: BorderSide(
+            color: isDark ? Colors.white10 : Colors.black12,
+            width: 1.0,
+          ),
+          bottom: BorderSide(
+            color: isDark ? Colors.white10 : Colors.black12,
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildTimeInfoItem(
+            icon: Icons.straighten,
+            label: 'Distance',
+            value: _formatDistanceKm(remainingDistance),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.timer,
+            label: 'Remaining',
+            value: _formatDuration(timeRemaining),
+            isDark: isDark,
+          ),
+          const SizedBox(width: 8),
+          _buildTimeInfoItem(
+            icon: Icons.flag,
+            label: 'ETA',
+            value: _formatTime(eta),
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTimeInfoBar(NavigationState state, bool isDark) {
     final route = state.route;
     if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
@@ -256,105 +434,106 @@ class TurnByTurnWidget extends StatelessWidget {
       }
     }
 
-    return SizedBox(
-      width: double.infinity,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Background: Instruction text box (full width, behind icon box)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.only(left: 90, right: 12, top: 14, bottom: 14),
-            constraints: const BoxConstraints(minHeight: 80), // Ensure minimum height
-            decoration: BoxDecoration(
-              color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.15),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _getInstructionText(instruction, null),
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.black87,
-                    fontSize: 18,
-                    fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
-                    height: 1.2,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.fade,
-                  softWrap: true,
-                ),
-                // Only show next instruction preview if:
-                // 1. There is a next instruction that follows shortly (< 300m)
-                // 2. Current instruction doesn't have verbalMultiCue (which already includes "Then" in succinct form)
-                if (nextInstruction != null &&
-                    nextInstruction.distance < 300 &&
-                    !_hasMultiCueHint(instruction)) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Then ${_getShortInstructionText(nextInstruction)}',
-                    style: TextStyle(
-                      color: isDark ? Colors.white38 : Colors.black45,
-                      fontSize: 14,
-                      height: 1.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          // Foreground: Icon/distance box (layered on top, jutting out)
-          Positioned(
-            left: 0,
-            top: -6,
-            child: Container(
-              width: 72, // Fixed narrow width
-              constraints: const BoxConstraints(minHeight: 92), // Taller than instruction box
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+    final hasAddress = state.destinationAddress != null && state.destinationAddress!.isNotEmpty;
+
+    return Column(
+      children: [
+        // Full-width destination address bar (disabled for now)
+        if (false && hasAddress) _buildDestinationAddressBar(state, isDark),
+
+        // Turn-by-turn instruction box
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
-                  width: 1.5,
+                color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.8),
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark ? Colors.white10 : Colors.black12,
+                    width: 1,
+                  ),
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildInstructionIcon(iconInstruction, size: 48, isDark: isDark),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatDistance(instruction.distance),
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 15,
-                      height: 1.0,
-                      fontWeight: FontWeight.bold,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon box (top-aligned)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.8),
+                      ),
+                      child: _buildInstructionIcon(iconInstruction, size: 64, isDark: isDark),
                     ),
-                  ),
-                ],
+                    // Instruction text (expands to fill remaining space)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                          // Distance indicator
+                          Text(
+                            _formatDistance(instruction.distance),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 18,
+                              height: 1.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // Main instruction text
+                          Text(
+                            _getInstructionText(instruction, null),
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black87,
+                              fontSize: 18,
+                              fontWeight: isDark ? FontWeight.normal : FontWeight.w500,
+                              height: 1.2,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.fade,
+                            softWrap: true,
+                          ),
+                          // Next instruction preview
+                          if (nextInstruction != null &&
+                              nextInstruction.distance < 300 &&
+                              !_hasMultiCueHint(instruction)) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Then ${_getShortInstructionText(nextInstruction)}',
+                              style: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.black45,
+                                fontSize: 14,
+                                height: 1.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          // Time info bar (overlapping on bottom right)
-          Positioned(
-            right: -6,
-            top: -6,
-            child: _buildTimeInfoBar(state, isDark),
-          ),
-        ],
-      ),
+            // Compact time info bar (always show in corner)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: _buildCompactTimeInfoBar(state, isDark),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -438,7 +617,7 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   String _formatDistance(double distance) {
-    if (distance > 500) {
+    if (distance > 1000) {
       return '${((((distance + 99) ~/ 100) * 100) / 1000).toStringAsFixed(1)} km';
     } else if (distance > 100) {
       return '${(((distance + 99) ~/ 100) * 100)} m';

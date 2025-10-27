@@ -47,7 +47,7 @@ class SpeedCenterWidget extends StatelessWidget {
         // Position speed limit to the right of the speed
         Positioned(
           right: 0,
-          child: const SpeedLimitIndicator(iconSize: 36),
+          child: const SpeedLimitIndicator(iconSize: 35),
         ),
       ],
     );
