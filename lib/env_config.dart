@@ -10,16 +10,12 @@ class EnvConfig {
   static const Size defaultResolution = Size(480, 480);
   static Size _resolution = defaultResolution;
   static double _scaleFactor = 1.0;
-  static bool _isCarPlayMode = false;
 
   /// Get the configured resolution
   static Size get resolution => _resolution;
 
   /// Get the scale factor relative to the default 480x480 resolution
   static double get scaleFactor => _scaleFactor;
-
-  /// Check if CarPlay mode is enabled
-  static bool get isCarPlayMode => _isCarPlayMode;
 
   /// Initialize application configuration from environment variables
   static void initialize() {
@@ -31,13 +27,6 @@ class EnvConfig {
     if (configPath != null && configPath.isNotEmpty) {
       AppConfig.settingsFilePath = configPath;
       debugPrint('Using settings file from environment: $configPath');
-    }
-
-    // Check if CarPlay mode is enabled
-    final carplayEnv = Platform.environment['CARPLAY'];
-    if (carplayEnv == '1') {
-      _isCarPlayMode = true;
-      debugPrint('CarPlay mode enabled');
     }
 
     // Parse resolution from environment variable
