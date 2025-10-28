@@ -7,8 +7,8 @@ import '../../cubits/saved_locations_cubit.dart';
 import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
-import '../../repositories/mdb_repository.dart';
 import '../../services/toast_service.dart';
+import '../../state/carplay_availability.dart';
 import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
 
@@ -312,6 +312,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     TripCubit trip,
     ThemeCubit theme,
     VehicleSync vehicle,
+    CarPlayAvailabilityData carplayAvailability,
   ) {
     // If we're in a submenu, return the current submenu items
     if (_isInSubmenu && _menuStack.isNotEmpty) {
@@ -320,6 +321,16 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
     // Main menu items
     return [
+      // Show CarPlay/Android Auto menu entry when dongle is available
+      if (carplayAvailability.isDongleAvailable)
+        MenuItem(
+          title: carplayAvailability.displayName,
+          type: MenuItemType.action,
+          onChanged: (_) {
+            screen.showCarPlay();
+            menu.hideMenu();
+          },
+        ),
       MenuItem(
         title: 'Toggle Hazard Lights',
         type: MenuItemType.action,
@@ -390,6 +401,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final trip = context.read<TripCubit>();
     final theme = context.read<ThemeCubit>();
     final vehicle = context.read<VehicleSync>();
+    final carplayAvailability = context.watch<CarPlayAvailabilitySync>().state;
 
     // Watch for saved locations changes and refresh submenu if needed
     context.watch<SavedLocationsCubit>();
@@ -443,7 +455,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     // Use the proper isDark getter that handles auto mode
     final isDark = theme.state.isDark;
 
-    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle);
+    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle, carplayAvailability);
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,

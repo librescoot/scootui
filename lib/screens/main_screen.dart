@@ -15,6 +15,7 @@ import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
 import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
+import 'carplay_screen.dart';
 import 'cluster_screen.dart';
 import 'debug_screen.dart';
 import 'maintenance_screen.dart';
@@ -124,9 +125,10 @@ class _MainScreenState extends State<MainScreen> {
         child: Stack(
           children: [
             switch (state) {
-              // only map and cluster should trigger the menu
+              // Map, cluster, and CarPlay screens allow menu access
               ScreenMap() => menuTrigger(const MapScreen()),
               ScreenCluster() => menuTrigger(const ClusterScreen()),
+              ScreenCarPlay() => menuTrigger(const CarPlayScreen()),
               ScreenAddressSelection() => const AddressSelectionScreen(),
               ScreenOtaBackground() => const OtaBackgroundScreen(),
               ScreenOta() => const OtaScreen(),

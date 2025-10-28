@@ -68,6 +68,12 @@ class ScreenCubit extends Cubit<ScreenState> {
     // Debug mode should not be persisted
   }
 
+  void showCarPlay() {
+    // Directly emit the CarPlay state without persisting
+    emit(const ScreenState.carplay());
+    // CarPlay mode should not be persisted - app should return to normal mode on restart
+  }
+
   void _persistScreenMode(String mode) {
     _settingsService.updateScreenSetting(mode); // Use the provided mode string
   }

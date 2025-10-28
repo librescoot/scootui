@@ -5,6 +5,7 @@ import '../repositories/mdb_repository.dart';
 import '../state/aux_battery.dart';
 import '../state/battery.dart';
 import '../state/bluetooth.dart';
+import '../state/carplay_availability.dart';
 import '../state/cb_battery.dart';
 import '../state/engine.dart';
 import '../state/gps.dart';
@@ -203,4 +204,16 @@ class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
       }
     });
   }
+}
+
+class CarPlayAvailabilitySync extends SyncableCubit<CarPlayAvailabilityData> {
+  static CarPlayAvailabilityData watch(BuildContext context) => context.watch<CarPlayAvailabilitySync>().state;
+
+  static CarPlayAvailabilitySync create(BuildContext context) =>
+      CarPlayAvailabilitySync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  static T select<T>(BuildContext context, T Function(CarPlayAvailabilityData) selector) =>
+      selector(context.select((CarPlayAvailabilitySync e) => e.state));
+
+  CarPlayAvailabilitySync(MDBRepository repo) : super(redisRepository: repo, initialState: CarPlayAvailabilityData());
 }
