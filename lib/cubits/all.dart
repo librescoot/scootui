@@ -39,6 +39,7 @@ final List<SingleChildWidget> allCubits = [
             tilesRepository: context.read(),
           )),
   BlocProvider(create: SpeedLimitSync.create),
+  BlocProvider(create: CarPlayAvailabilitySync.create),
   BlocProvider(create: SettingsSync.create),
   BlocProvider(create: SystemCubit.create),
   BlocProvider(create: TripCubit.create),

@@ -125,10 +125,10 @@ class _MainScreenState extends State<MainScreen> {
         child: Stack(
           children: [
             switch (state) {
-              // only map and cluster should trigger the menu
+              // Map, cluster, and CarPlay screens allow menu access
               ScreenMap() => menuTrigger(const MapScreen()),
               ScreenCluster() => menuTrigger(const ClusterScreen()),
-              ScreenCarPlay() => const CarPlayScreen(), // CarPlay locked mode - no menu
+              ScreenCarPlay() => menuTrigger(const CarPlayScreen()),
               ScreenAddressSelection() => const AddressSelectionScreen(),
               ScreenOtaBackground() => const OtaBackgroundScreen(),
               ScreenOta() => const OtaScreen(),
