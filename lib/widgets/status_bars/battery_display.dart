@@ -366,20 +366,22 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
   }
 
   bool _shouldShowAuxLowVoltageWarning(
-      AuxBatteryData auxBattery, VehicleData vehicle) {
+      AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final lowVoltage = auxBattery.voltage < 11500;
     final notCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
+    final mainPresent = mainBattery.present;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    return lowVoltage && notCharging && seatboxClosed;
+    return lowVoltage && notCharging && mainPresent && seatboxClosed;
   }
 
   bool _shouldShowAuxCriticalVoltageWarning(
       AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final criticalVoltage = auxBattery.voltage < 11000; // 11.0V = 11000mV
+    final mainPresent = mainBattery.present;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    return criticalVoltage && seatboxClosed;
+    return criticalVoltage && mainPresent && seatboxClosed;
   }
 
   void _showToastIfNeeded(String message, bool wasShown, Function(bool) setShown) {
@@ -402,7 +404,7 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     final auxLowChargeCondition =
         _shouldShowAuxLowChargeWarning(auxBattery, mainBattery, vehicle);
     final auxLowVoltageCondition =
-        _shouldShowAuxLowVoltageWarning(auxBattery, vehicle);
+        _shouldShowAuxLowVoltageWarning(auxBattery, mainBattery, vehicle);
     final auxCriticalVoltageCondition =
         _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery, vehicle);
 
@@ -538,7 +540,15 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
   Set<int>? _lastBattery0Fault;
   Set<int>? _lastBattery1Fault;
 
-  void _checkBatteryWarnings(int soc) {
+  void _checkBatteryWarnings(BatteryData battery) {
+    final soc = battery.charge;
+
+    // Don't show warnings if battery is not present
+    if (!battery.present) {
+      _lastSoc = soc;
+      return;
+    }
+
     if (_lastSoc == null || _lastSoc == soc) {
       _lastSoc = soc;
       return;
@@ -626,13 +636,13 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
     final ThemeState(:isDark) = ThemeCubit.watch(context);
 
     // Check for battery warnings
-    _checkBatteryWarnings(battery0.charge);
+    _checkBatteryWarnings(battery0);
 
     // Check for battery faults
     _checkBatteryFaults(battery0, battery1);
 
-    // Show turtle icon when battery is ≤10% (critical)
-    final showTurtle = battery0.charge <= 10;
+    // Show turtle icon when battery is present and ≤20%
+    final showTurtle = battery0.present && battery0.charge <= 20;
     final iconColor = isDark ? Colors.white : Colors.black;
 
     // Show battery:1 only if present or explicitly requested
