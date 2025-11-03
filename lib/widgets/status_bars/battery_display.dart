@@ -35,20 +35,23 @@ class BatteryStatusDisplay extends StatelessWidget {
     // Get theme information
     final ThemeState(:isDark) = ThemeCubit.watch(context);
 
-    // Determine battery color based on charge level
-    Color getBatteryColor() {
-      if (battery.present) {
+    final normalColor = isDark ? Colors.white : Colors.black;
+
+    // Determine battery fill color based on charge level (only for battery:0)
+    Color getFillColor() {
+      if (battery.present && battery.id == "0") {
         if (battery.charge <= 10) {
           return const Color(0xFFFF0000); // Red for critical
         } else if (battery.charge <= 20) {
           return const Color(0xFFFF7900); // Orange for warning
         }
       }
-      return isDark ? Colors.white : Colors.black; // Normal
+      return normalColor;
     }
 
-    final iconColor = getBatteryColor();
-    final textColor = iconColor;
+    final iconColor = normalColor; // Outline always uses normal color
+    final fillColor = getFillColor(); // Fill bar uses low-battery color for battery:0
+    final textColor = fillColor; // Text matches fill color
     final backgroundColor = isDark ? Colors.black : Colors.white;
 
     // Check for battery fault
@@ -92,7 +95,7 @@ class BatteryStatusDisplay extends StatelessWidget {
                 child: Container(
                   width: chargeWidth,
                   height: kChargeRectHeight,
-                  color: iconColor,
+                  color: fillColor,
                 ),
               ),
             ],
@@ -142,7 +145,7 @@ class BatteryStatusDisplay extends StatelessWidget {
                 child: Container(
                   width: chargeWidth,
                   height: kChargeRectHeight,
-                  color: iconColor,
+                  color: fillColor,
                 ),
               ),
             ],
@@ -172,7 +175,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         'assets/icons/librescoot-main-battery-empty.svg',
         width: kBatteryIconWidth,
         height: kBatteryIconHeight,
-        colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+        colorFilter: ColorFilter.mode(fillColor, BlendMode.srcIn),
       );
       labelText = '${battery.charge}';
     } else {
@@ -197,7 +200,7 @@ class BatteryStatusDisplay extends StatelessWidget {
             child: Container(
               width: chargeWidth,
               height: kChargeRectHeight,
-              color: iconColor,
+              color: fillColor,
             ),
           ),
         ],
