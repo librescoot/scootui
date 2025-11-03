@@ -36,7 +36,9 @@ class CarPlayVideoWidget extends StatelessWidget {
             child: Center(
               child: AspectRatio(
                 aspectRatio: aspectRatio,
-                child: MjpegStreamWidget(streamUrl: streamUrl),
+                child: RepaintBoundary(
+                  child: MjpegStreamWidget(streamUrl: streamUrl),
+                ),
               ),
             ),
           ),

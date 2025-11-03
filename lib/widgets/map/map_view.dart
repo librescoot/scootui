@@ -105,11 +105,13 @@ class NorthIndicator extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: borderColor, width: 0.5),
         ),
-        child: CustomPaint(
-          painter: CompassNeedlePainter(
-            northColor: Colors.red,
-            southColor: southColor,
-            strokeColor: Colors.transparent,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            painter: CompassNeedlePainter(
+              northColor: Colors.red,
+              southColor: southColor,
+              strokeColor: Colors.transparent,
+            ),
           ),
         ),
       ),
@@ -247,12 +249,14 @@ class ScaleBar extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            child: CustomPaint(
-              size: Size(width, 8),
-              painter: ScaleBarPainter(
-                width: width,
-                fillColor: barColor,
-                strokeColor: Colors.transparent,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                size: Size(width, 8),
+                painter: ScaleBarPainter(
+                  width: width,
+                  fillColor: barColor,
+                  strokeColor: Colors.transparent,
+                ),
               ),
             ),
           ),

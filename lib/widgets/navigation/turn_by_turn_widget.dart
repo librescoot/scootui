@@ -775,15 +775,17 @@ class TurnByTurnWidget extends StatelessWidget {
   }
 
   Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double? bearingBefore, double size, bool isDark) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: RoundaboutIconPainter(
-          exitNumber: exitNumber,
-          bearingBefore: bearingBefore,
-          isDark: isDark,
-          size: size,
+    return RepaintBoundary(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: RoundaboutIconPainter(
+            exitNumber: exitNumber,
+            bearingBefore: bearingBefore,
+            isDark: isDark,
+            size: size,
+          ),
         ),
       ),
     );
