@@ -198,41 +198,6 @@ class RedisMDBRepository implements MDBRepository {
     }
   }
 
-  Stream<T> _withConnectionStream<T>(
-      Stream<T> Function(Command) action, {Duration? timeout}) async* {
-    Command? cmd;
-    try {
-      cmd = await _pool.getConnection().timeout(
-        timeout ?? _operationTimeout,
-        onTimeout: () => throw TimeoutException('Redis connection pool timeout for stream'),
-      );
-
-      // Connection succeeded - update state if needed
-      if (_connectionState != RedisConnectionState.connected) {
-        _updateConnectionState(RedisConnectionState.connected);
-      }
-
-      yield* action(cmd);
-    } on TimeoutException catch (e) {
-      // Only log if we're currently connected (unexpected timeout)
-      if (_connectionState == RedisConnectionState.connected) {
-        print('RedisMDBRepository: Stream connection timed out: $e');
-      }
-      _handleConnectionFailure();
-      // DON'T rethrow - just end the stream gracefully
-    } catch (e) {
-      // Only log if we're currently connected (unexpected error)
-      if (_connectionState == RedisConnectionState.connected) {
-        print('RedisMDBRepository: Stream operation failed: $e');
-      }
-      _handleConnectionFailure();
-      // DON'T rethrow - just end the stream gracefully
-    } finally {
-      if (cmd != null) {
-        _pool.releaseConnection(cmd);
-      }
-    }
-  }
 
   @override
   Future<void> dashboardReady() async {
@@ -306,8 +271,17 @@ class RedisMDBRepository implements MDBRepository {
   }
 
   @override
-  Stream<(String, String)> subscribe(String channel) {
-    return _withConnectionStream((cmd) async* {
+  Stream<(String, String)> subscribe(String channel) async* {
+    // Create a dedicated connection for pubsub - DO NOT use the pool
+    // Pubsub connections cannot be reused for regular commands
+    Command? cmd;
+    try {
+      final con = RedisConnection();
+      cmd = await con.connect(_pool.host, _pool.port).timeout(
+        _operationTimeout,
+        onTimeout: () => throw TimeoutException('Redis pubsub connection timeout'),
+      );
+
       final ps = PubSub(cmd);
       ps.subscribe([channel]);
 
@@ -321,7 +295,20 @@ class RedisMDBRepository implements MDBRepository {
           })
           .where((result) => result != null)
           .map((rec) => rec!);
-    });
+    } catch (e) {
+      if (_connectionState == RedisConnectionState.connected) {
+        print('RedisMDBRepository: Pubsub connection failed: $e');
+      }
+      _handleConnectionFailure();
+      rethrow;
+    } finally {
+      // Close the dedicated pubsub connection - DO NOT return to pool
+      if (cmd != null) {
+        try {
+          await cmd.get_connection().close();
+        } catch (_) {}
+      }
+    }
   }
 
   @override
