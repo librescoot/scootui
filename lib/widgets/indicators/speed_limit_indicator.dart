@@ -11,7 +11,7 @@ class SpeedLimitIndicator extends StatelessWidget {
 
   const SpeedLimitIndicator({
     super.key,
-    this.iconSize = 36,
+    this.iconSize = 35,
     this.iconColor,
   });
 
