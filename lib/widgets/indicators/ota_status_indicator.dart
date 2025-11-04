@@ -150,6 +150,30 @@ class OtaStatusIndicator extends StatelessWidget {
       }
     }
 
+    // Show install progress percentage when installing
+    if (dbcStatus == 'installing' && !hasError) {
+      final progress = int.tryParse(otaData.dbcInstallProgress) ?? 0;
+      if (progress > 0) {
+        result = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(width: 2),
+            Text(
+              '$progress',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
+                color: color,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        );
+      }
+    }
+
     return Tooltip(
       message: tooltipMessage,
       child: result,

@@ -13,12 +13,14 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
   String get dbcError;
   String get dbcErrorMessage;
   String get dbcDownloadProgress;
+  String get dbcInstallProgress;
   String get mdbStatus;
   String get mdbUpdateVersion;
   String get mdbUpdateMethod;
   String get mdbError;
   String get mdbErrorMessage;
   String get mdbDownloadProgress;
+  String get mdbInstallProgress;
   get syncSettings => SyncSettings(
       "ota",
       Duration(microseconds: 5000000),
@@ -66,6 +68,13 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             defaultValue: "0",
             interval: null),
         SyncFieldSettings(
+            name: "dbcInstallProgress",
+            variable: "install-progress:dbc",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "0",
+            interval: null),
+        SyncFieldSettings(
             name: "mdbStatus",
             variable: "status:mdb",
             type: SyncFieldType.string,
@@ -107,6 +116,13 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
             typeName: "String",
             defaultValue: "0",
             interval: null),
+        SyncFieldSettings(
+            name: "mdbInstallProgress",
+            variable: "install-progress:mdb",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "0",
+            interval: null),
       ],
       "null",
       []);
@@ -121,6 +137,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcErrorMessage: "error-message:dbc" != name ? dbcErrorMessage : value,
       dbcDownloadProgress:
           "download-progress:dbc" != name ? dbcDownloadProgress : value,
+      dbcInstallProgress:
+          "install-progress:dbc" != name ? dbcInstallProgress : value,
       mdbStatus: "status:mdb" != name ? mdbStatus : value,
       mdbUpdateVersion: "update-version:mdb" != name ? mdbUpdateVersion : value,
       mdbUpdateMethod: "update-method:mdb" != name ? mdbUpdateMethod : value,
@@ -128,6 +146,8 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       mdbErrorMessage: "error-message:mdb" != name ? mdbErrorMessage : value,
       mdbDownloadProgress:
           "download-progress:mdb" != name ? mdbDownloadProgress : value,
+      mdbInstallProgress:
+          "install-progress:mdb" != name ? mdbInstallProgress : value,
     );
   }
 
@@ -140,12 +160,14 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
       dbcError: dbcError,
       dbcErrorMessage: dbcErrorMessage,
       dbcDownloadProgress: dbcDownloadProgress,
+      dbcInstallProgress: dbcInstallProgress,
       mdbStatus: mdbStatus,
       mdbUpdateVersion: mdbUpdateVersion,
       mdbUpdateMethod: mdbUpdateMethod,
       mdbError: mdbError,
       mdbErrorMessage: mdbErrorMessage,
       mdbDownloadProgress: mdbDownloadProgress,
+      mdbInstallProgress: mdbInstallProgress,
     );
   }
 
@@ -156,12 +178,14 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
         dbcError,
         dbcErrorMessage,
         dbcDownloadProgress,
+        dbcInstallProgress,
         mdbStatus,
         mdbUpdateVersion,
         mdbUpdateMethod,
         mdbError,
         mdbErrorMessage,
-        mdbDownloadProgress
+        mdbDownloadProgress,
+        mdbInstallProgress
       ];
   @override
   String toString() {
@@ -174,12 +198,14 @@ abstract mixin class $OtaData implements Syncable<OtaData> {
     buf.writeln("	dbcError = $dbcError");
     buf.writeln("	dbcErrorMessage = $dbcErrorMessage");
     buf.writeln("	dbcDownloadProgress = $dbcDownloadProgress");
+    buf.writeln("	dbcInstallProgress = $dbcInstallProgress");
     buf.writeln("	mdbStatus = $mdbStatus");
     buf.writeln("	mdbUpdateVersion = $mdbUpdateVersion");
     buf.writeln("	mdbUpdateMethod = $mdbUpdateMethod");
     buf.writeln("	mdbError = $mdbError");
     buf.writeln("	mdbErrorMessage = $mdbErrorMessage");
     buf.writeln("	mdbDownloadProgress = $mdbDownloadProgress");
+    buf.writeln("	mdbInstallProgress = $mdbInstallProgress");
     buf.writeln(")");
 
     return buf.toString();

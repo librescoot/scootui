@@ -30,6 +30,10 @@ class OtaData with $OtaData {
   @StateField(name: "download-progress:dbc", defaultValue: "0")
   String dbcDownloadProgress;
 
+  @override
+  @StateField(name: "install-progress:dbc", defaultValue: "0")
+  String dbcInstallProgress;
+
   // MDB component fields
   @override
   @StateField(name: "status:mdb", defaultValue: "idle")
@@ -55,6 +59,10 @@ class OtaData with $OtaData {
   @StateField(name: "download-progress:mdb", defaultValue: "0")
   String mdbDownloadProgress;
 
+  @override
+  @StateField(name: "install-progress:mdb", defaultValue: "0")
+  String mdbInstallProgress;
+
   OtaData({
     this.dbcStatus = "idle",
     this.dbcUpdateVersion = "",
@@ -62,11 +70,13 @@ class OtaData with $OtaData {
     this.dbcError = "",
     this.dbcErrorMessage = "",
     this.dbcDownloadProgress = "0",
+    this.dbcInstallProgress = "0",
     this.mdbStatus = "idle",
     this.mdbUpdateVersion = "",
     this.mdbUpdateMethod = "",
     this.mdbError = "",
     this.mdbErrorMessage = "",
     this.mdbDownloadProgress = "0",
+    this.mdbInstallProgress = "0",
   });
 }
