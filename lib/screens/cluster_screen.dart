@@ -230,7 +230,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
             child: Stack(
               children: [
                 // Speedometer fills entire area as background
-                SpeedometerDisplay(),
+                RepaintBoundary(child: SpeedometerDisplay()),
 
                 // Overlay content in Column layout (top to bottom)
                 Column(
