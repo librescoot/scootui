@@ -358,6 +358,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
     final tileUrl = isDark
         ? 'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
         : 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
@@ -371,6 +372,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
             maxZoom: 18,
             initialCenter: widget.position,
             initialZoom: 17,
+            backgroundColor: theme.scaffoldBackgroundColor,
           ),
           mapController: widget.mapController,
           children: [
@@ -543,6 +545,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     final routeLayer = _routeLayer(context);
+    final theme = Theme.of(context);
 
     return Stack(
       children: [
@@ -555,6 +558,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
             maxZoom: 20,
             initialCenter: widget.position,
             initialZoom: 17,
+            backgroundColor: theme.scaffoldBackgroundColor,
             onTap: (tapPosition, latLng) {
               // Set GPS location via MDBRepository in simulator mode
               final mdbRepo = RepositoryProvider.of<MDBRepository>(context);
