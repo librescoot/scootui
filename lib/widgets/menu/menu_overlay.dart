@@ -502,6 +502,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                       itemBuilder: (context, index) {
                         final item = items[index];
                         return Padding(
+                          key: ValueKey(item.title),
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: MenuItemWidget(
                             item: item,
