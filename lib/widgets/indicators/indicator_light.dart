@@ -69,13 +69,13 @@ class IndicatorLight extends StatelessWidget {
                   .chain(CurveTween(curve: Curves.easeInOutExpo)),
               weight: 250,
             ),
-            // Stay dark: 500ms to 800ms
+            // Stay dark: 500ms to 728ms
             TweenSequenceItem(
               tween: ConstantTween<int>(0),
-              weight: 300,
+              weight: 228,
             ),
           ]),
-          duration: const Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 728),
           builder: (context, value, child) => render(activeColor.withAlpha(value)),
         ),
     ]);
