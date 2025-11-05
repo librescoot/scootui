@@ -48,6 +48,13 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       curve: Curves.easeOut,
     );
     _scrollController = ScrollController()..addListener(_updateScrollIndicators);
+
+    // Force rebuild when animation completes to ensure widget returns SizedBox.shrink()
+    _animController.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed && mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -459,11 +466,17 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
-      onLeftPress: () => setState(() {
-        _selectedIndex = (_selectedIndex + 1) % items.length;
-        _scrollToSelectedItem();
-      }),
+      onLeftPress: () {
+        // Ignore input if menu is hidden
+        if (menu.state is MenuHidden) return;
+        setState(() {
+          _selectedIndex = (_selectedIndex + 1) % items.length;
+          _scrollToSelectedItem();
+        });
+      },
       onRightPress: () {
+        // Ignore input if menu is hidden
+        if (menu.state is MenuHidden) return;
         final item = items[_selectedIndex];
         if (item.type == MenuItemType.submenu) {
           _enterSubmenu(item.submenuItems ?? [], item.submenuId ?? SubmenuType.other);
