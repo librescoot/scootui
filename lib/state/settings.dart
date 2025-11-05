@@ -27,6 +27,10 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   String? showInternet;
 
   @override
+  @StateField(name: 'dashboard.show-clock', defaultValue: 'always')
+  String? showClock;
+
+  @override
   @StateField(name: 'dashboard.map.type', defaultValue: 'offline')
   MapType mapType;
 
@@ -41,6 +45,7 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
     this.showBluetooth,
     this.showCloud,
     this.showInternet,
+    this.showClock,
     this.mapType = MapType.offline,
     this.mapRenderMode = MapRenderMode.raster,
   });
