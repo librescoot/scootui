@@ -16,6 +16,9 @@ import 'widgets/toast_listener_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Log startup marker for build verification
+  debugPrint('=== ScootUI starting - feat/manual-hibernation branch - with hibernation overlay support ===');
+
   if (kDebugMode) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   }
