@@ -90,18 +90,23 @@ jobs:
         run: |
           RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
 
-          # Replace git fetch with local directory
-          sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
+          # Use sudo to modify the recipe file if needed
+          if [ -f "$RECIPE_FILE" ]; then
+            sudo sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
+          else
+            echo "WARNING: Recipe file not found at $RECIPE_FILE, will be created during build"
+          fi
 
           echo "=== DEBUG: Patched scootui recipe ==="
-          cat "$RECIPE_FILE"
+          cat "$RECIPE_FILE" 2>/dev/null || echo "Recipe not yet available"
 
           # Copy the scootui checkout to where Yocto can access it
-          mkdir -p yocto/scootui
-          cp -r ../scootui/* yocto/scootui/
+          sudo mkdir -p yocto/scootui
+          sudo cp -r ../scootui/* yocto/scootui/
+          sudo chown -R 999:999 yocto/scootui
 
           echo "=== DEBUG: Scootui source copied to yocto/scootui ==="
-          ls -la yocto/scootui/
+          ls -la yocto/scootui/ | head -20
 
       - name: Build scootui package for DBC
         working-directory: librescoot
