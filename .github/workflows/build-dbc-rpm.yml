@@ -38,6 +38,7 @@ jobs:
       - name: Checkout scootui repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
           clean: false
           path: scootui
@@ -129,7 +130,7 @@ jobs:
       - name: Upload ScootUI RPM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: scootui-dbc-rpm-${{ needs.generate-timestamp.outputs.timestamp }}
+          name: scootui-dbc-rpm-${{ github.ref_name }}-${{ needs.generate-timestamp.outputs.timestamp }}
           path: artifacts/dbc-rpm/*.rpm
           retention-days: 30
           compression-level: 0
@@ -166,8 +167,8 @@ jobs:
       - name: Create Github release
         uses: softprops/action-gh-release@v1
         with:
-          name: ScootUI DBC RPM Build ${{ steps.date.outputs.value }}
-          tag_name: dbc-rpm-${{ steps.date.outputs.value }}
+          name: ScootUI DBC RPM Build ${{ github.ref_name }} ${{ steps.date.outputs.value }}
+          tag_name: dbc-rpm-${{ github.ref_name }}-${{ steps.date.outputs.value }}
           prerelease: true
           files: |
             artifacts/**/*.rpm
@@ -176,10 +177,12 @@ jobs:
 
             This build contains the ScootUI RPM package specifically built for the Dashboard Controller (DBC).
 
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+
             ## Changelog
             ${{ steps.changelog.outputs.content }}
 
             Build completed at: ${{ github.event.repository.updated_at }}
-            Commit: ${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
