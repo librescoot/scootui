@@ -67,7 +67,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
     return Stack(
       children: [
         Positioned(
-          top: 120,
+          top: 160,
           left: 0,
           right: 0,
           child: Center(
@@ -91,7 +91,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
         // Condensed blinker and brake indicators on left and right
         // Left side
         Positioned(
-          top: 10,
+          top: 50,
           left: 60,
           child: _buildDebugPanel(
             context,
@@ -112,7 +112,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Right side
         Positioned(
-          top: 10,
+          top: 50,
           right: 60,
           child: _buildDebugPanel(
             context,
@@ -134,7 +134,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Engine info moved to the side to avoid cluttering the speed display
         Positioned(
-          top: 220,
+          top: 260,
           left: 10,
           child: _buildDebugPanel(
             context,
@@ -156,7 +156,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // GPS on left - without icon
         Positioned(
-          top: 60,
+          top: 100,
           left: 10,
           child: _buildDebugPanel(
             context,
@@ -178,7 +178,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Internet on right
         Positioned(
-          top: 60,
+          top: 100,
           right: 10,
           child: _buildDebugPanel(
             context,
@@ -344,7 +344,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Motor details moved to the right side
         Positioned(
-          top: 220,
+          top: 260,
           right: 10,
           child: _buildDebugPanel(
             context,
@@ -366,7 +366,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Dashboard Info Panel
         Positioned(
-          top: 140,
+          top: 180, // Adjust position as needed
           left: 10,
           child: _buildDebugPanel(
             context,
@@ -468,6 +468,11 @@ class _DebugOverlayState extends State<DebugOverlay> {
       ScooterState.hibernatingImminent => Colors.pink,
       ScooterState.suspending => Colors.red,
       ScooterState.suspendingImminent => Colors.pink,
+      ScooterState.updating => Colors.yellow,
+      ScooterState.waitingHibernation => Colors.deepPurple,
+      ScooterState.waitingHibernationAdvanced => Colors.deepPurple[700]!,
+      ScooterState.waitingHibernationSeatbox => Colors.purple,
+      ScooterState.waitingHibernationConfirm => Colors.deepPurple[900]!,
     };
   }
 

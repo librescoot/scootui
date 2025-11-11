@@ -40,6 +40,11 @@ final $_ScooterStateMap = {
   "hibernating-imminent": ScooterState.hibernatingImminent,
   "suspending": ScooterState.suspending,
   "suspending-imminent": ScooterState.suspendingImminent,
+  "updating": ScooterState.updating,
+  "waiting-hibernation": ScooterState.waitingHibernation,
+  "waiting-hibernation-advanced": ScooterState.waitingHibernationAdvanced,
+  "waiting-hibernation-seatbox": ScooterState.waitingHibernationSeatbox,
+  "waiting-hibernation-confirm": ScooterState.waitingHibernationConfirm,
 };
 
 final $_HandleBarLockSensorMap = {
