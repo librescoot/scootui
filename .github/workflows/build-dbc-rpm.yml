@@ -55,20 +55,20 @@ jobs:
           # Copy custom entrypoint script from scootui repository
           cp ../scootui/docker-entrypoint-with-version-update.sh docker/entrypoint-with-version-update.sh
           chmod +x docker/entrypoint-with-version-update.sh
-          
+
           echo "=== DEBUG: Checking if custom entrypoint was copied ==="
           ls -la docker/entrypoint*
-          
+
           # Replace the original entrypoint with our custom one in the docker directory
           # This ensures the Docker build uses our custom script
           cp docker/entrypoint-with-version-update.sh docker/entrypoint.sh
-          
+
           echo "=== DEBUG: Verifying entrypoint.sh contains our custom logic ==="
           grep -n "SCOOTUI_VERSION_UPDATE" docker/entrypoint.sh || echo "ERROR: Custom logic not found in entrypoint.sh"
-          
+
           echo "=== DEBUG: Checking build.sh content before modification ==="
           grep "docker/entrypoint" build.sh || echo "No entrypoint references found"
-          
+
           echo "Custom entrypoint script setup complete"
 
       - name: Detect scootui branch and commit
@@ -80,10 +80,28 @@ jobs:
           echo "commit=$SCOOTUI_COMMIT" >> $GITHUB_OUTPUT
           echo "Detected scootui commit: $SCOOTUI_COMMIT"
 
-          # Get the current branch name
-          SCOOTUI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          # Get the branch name from GitHub context (handles detached HEAD in Actions)
+          SCOOTUI_BRANCH="${{ github.head_ref || github.ref_name }}"
           echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
           echo "Detected scootui branch: $SCOOTUI_BRANCH"
+
+      - name: Patch scootui recipe to use local branch checkout
+        working-directory: librescoot
+        run: |
+          RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+
+          # Replace git fetch with local directory
+          sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
+
+          echo "=== DEBUG: Patched scootui recipe ==="
+          cat "$RECIPE_FILE"
+
+          # Copy the scootui checkout to where Yocto can access it
+          mkdir -p yocto/scootui
+          cp -r ../scootui/* yocto/scootui/
+
+          echo "=== DEBUG: Scootui source copied to yocto/scootui ==="
+          ls -la yocto/scootui/
 
       - name: Build scootui package for DBC
         working-directory: librescoot
