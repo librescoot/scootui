@@ -10,6 +10,7 @@ import '../cubits/screen_cubit.dart';
 import '../env_config.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
+import '../widgets/hibernation/manual_hibernation_overlay.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
@@ -85,6 +86,10 @@ class _MainScreenState extends State<MainScreen> {
       ScooterState.parked,
       ScooterState.readyToDrive,
       ScooterState.shuttingDown,
+      ScooterState.waitingHibernation,
+      ScooterState.waitingHibernationAdvanced,
+      ScooterState.waitingHibernationSeatbox,
+      ScooterState.waitingHibernationConfirm,
     };
 
     if (!allowedStates.contains(vehicleState)) {
@@ -112,6 +117,7 @@ class _MainScreenState extends State<MainScreen> {
 
             // Overlay essential components that should always be visible
             ShutdownOverlay(),
+            const ManualHibernationOverlay(),
             BluetoothPinCodeOverlay(),
           ],
         ),
@@ -144,6 +150,9 @@ class _MainScreenState extends State<MainScreen> {
 
             // Shutdown overlay (with translucency over active screen)
             ShutdownOverlay(),
+
+            // Manual hibernation overlay
+            const ManualHibernationOverlay(),
 
             // Bluetooth pin code overlay
             BluetoothPinCodeOverlay(),
