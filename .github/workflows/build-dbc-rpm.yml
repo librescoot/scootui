@@ -183,6 +183,7 @@ jobs:
         with:
           name: ScootUI DBC RPM Build ${{ github.ref_name }} ${{ steps.date.outputs.value }}
           tag_name: dbc-rpm-${{ steps.sanitize-tag.outputs.branch }}-${{ steps.date.outputs.value }}
+          target_commitish: ${{ github.sha }}
           prerelease: true
           files: |
             artifacts/**/*.rpm
