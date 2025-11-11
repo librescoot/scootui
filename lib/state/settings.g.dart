@@ -22,6 +22,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   String? get showBluetooth;
   String? get showCloud;
   String? get showInternet;
+  String? get showClock;
   MapType get mapType;
   MapRenderMode get mapRenderMode;
   get syncSettings => SyncSettings(
@@ -64,6 +65,13 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             defaultValue: "always",
             interval: null),
         SyncFieldSettings(
+            name: "showClock",
+            variable: "dashboard.show-clock",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "always",
+            interval: null),
+        SyncFieldSettings(
             name: "mapType",
             variable: "dashboard.map.type",
             type: SyncFieldType.enum_,
@@ -89,6 +97,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       showBluetooth: "dashboard.show-bluetooth" != name ? showBluetooth : value,
       showCloud: "dashboard.show-cloud" != name ? showCloud : value,
       showInternet: "dashboard.show-internet" != name ? showInternet : value,
+      showClock: "dashboard.show-clock" != name ? showClock : value,
       mapType: "dashboard.map.type" != name
           ? mapType
           : $_MapTypeMap[value] ?? MapType.offline,
@@ -106,6 +115,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       showBluetooth: showBluetooth,
       showCloud: showCloud,
       showInternet: showInternet,
+      showClock: showClock,
       mapType: mapType,
       mapRenderMode: mapRenderMode,
     );
@@ -117,6 +127,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
         showBluetooth,
         showCloud,
         showInternet,
+        showClock,
         mapType,
         mapRenderMode
       ];
@@ -130,6 +141,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
     buf.writeln("	showBluetooth = $showBluetooth");
     buf.writeln("	showCloud = $showCloud");
     buf.writeln("	showInternet = $showInternet");
+    buf.writeln("	showClock = $showClock");
     buf.writeln("	mapType = $mapType");
     buf.writeln("	mapRenderMode = $mapRenderMode");
     buf.writeln(")");
