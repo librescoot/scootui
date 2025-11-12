@@ -10,7 +10,14 @@ class SystemState {
 
   const SystemState(this.currentTime);
 
-  String get formattedTime => DateFormat("HH:mm").format(currentTime);
+  String get formattedTime {
+    // If system clock is not set (before 2025-05-01), show placeholder
+    final minValidDate = DateTime(2025, 5, 1);
+    if (currentTime.isBefore(minValidDate)) {
+      return '–';
+    }
+    return DateFormat("HH:mm").format(currentTime);
+  }
 }
 
 class SystemCubit extends Cubit<SystemState> {
