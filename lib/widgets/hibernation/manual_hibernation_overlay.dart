@@ -17,7 +17,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
   Timer? _countdownTimer;
   int _remainingSeconds = 20;
   bool _wasBrakeHeld = false;
-  ScooterState? _lastState;
 
   @override
   void dispose() {
@@ -31,7 +30,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
 
     if (bothBrakesHeld && isHibernationState) {
       if (!_wasBrakeHeld) {
-        debugPrint('ManualHibernationOverlay: Both brakes pressed, starting 20s countdown');
         _wasBrakeHeld = true;
         _remainingSeconds = 20;
         _countdownTimer?.cancel();
@@ -40,7 +38,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
             setState(() {
               _remainingSeconds--;
               if (_remainingSeconds <= 0) {
-                debugPrint('ManualHibernationOverlay: Countdown reached 0, user can force hibernation');
                 _countdownTimer?.cancel();
               }
             });
@@ -52,7 +49,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
     } else {
       // Brakes released, reset
       if (_wasBrakeHeld) {
-        debugPrint('ManualHibernationOverlay: Brakes released at ${_remainingSeconds}s, resetting countdown');
         _wasBrakeHeld = false;
         _remainingSeconds = 20;
         _countdownTimer?.cancel();
@@ -69,14 +65,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
     final vehicleState = vehicleData.state;
     final bothBrakesHeld = vehicleData.brakeLeft == Toggle.on &&
                            vehicleData.brakeRight == Toggle.on;
-
-    // Log state transitions
-    if (_lastState != vehicleState && _isHibernationState(vehicleState)) {
-      debugPrint('ManualHibernationOverlay: Entered hibernation state: $vehicleState');
-    } else if (_lastState != null && _isHibernationState(_lastState!) && !_isHibernationState(vehicleState)) {
-      debugPrint('ManualHibernationOverlay: Exited hibernation state: $_lastState -> $vehicleState');
-    }
-    _lastState = vehicleState;
 
     _updateBrakeTimer(bothBrakesHeld, vehicleState);
 
