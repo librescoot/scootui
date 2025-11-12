@@ -125,6 +125,9 @@ jobs:
           echo "=== DEBUG: Modified build.sh content ==="
           grep "docker run" build.sh
 
+          # Clean up any existing container from previous runs
+          sudo docker rm -f yocto-build 2>/dev/null || true
+
           # Build only the scootui package for DBC target with version update and branch
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
