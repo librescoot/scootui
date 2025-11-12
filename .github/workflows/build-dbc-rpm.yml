@@ -80,8 +80,8 @@ jobs:
           echo "commit=$SCOOTUI_COMMIT" >> $GITHUB_OUTPUT
           echo "Detected scootui commit: $SCOOTUI_COMMIT"
 
-          # Get the current branch name
-          SCOOTUI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          # Get the branch name from GitHub context (handles detached HEAD in Actions)
+          SCOOTUI_BRANCH="${{ github.head_ref || github.ref_name }}"
           echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
           echo "Detected scootui branch: $SCOOTUI_BRANCH"
 
