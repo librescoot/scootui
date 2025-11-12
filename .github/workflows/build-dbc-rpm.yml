@@ -70,6 +70,20 @@ jobs:
           
           echo "Custom entrypoint script setup complete"
 
+      - name: Detect scootui branch and commit
+        id: scootui-ref
+        working-directory: scootui
+        run: |
+          # Get the current commit SHA (full)
+          SCOOTUI_COMMIT=$(git rev-parse HEAD)
+          echo "commit=$SCOOTUI_COMMIT" >> $GITHUB_OUTPUT
+          echo "Detected scootui commit: $SCOOTUI_COMMIT"
+
+          # Get the current branch name
+          SCOOTUI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
+          echo "Detected scootui branch: $SCOOTUI_BRANCH"
+
       - name: Build scootui package for DBC
         working-directory: librescoot
         run: |
@@ -78,18 +92,22 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
 
-          # Add SCOOTUI_VERSION_UPDATE environment variable to Docker run command
-          sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE=${SCOOTUI_VERSION_UPDATE}/' build.sh
-
           echo "=== DEBUG: Environment variables to be passed ==="
           echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
           echo "SCOOTUI_VERSION_UPDATE=0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}"
+          echo "SCOOTUI_SRCREV=${{ steps.scootui-ref.outputs.commit }}"
+          echo "SCOOTUI_BRANCH=${{ steps.scootui-ref.outputs.branch }}"
 
           echo "=== DEBUG: Modified build.sh content ==="
           grep "docker run" build.sh
 
-          # Build only the scootui package for DBC target with version update
-          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
+          # Build only the scootui package for DBC target with version update and branch
+          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
+          SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
+          SCOOTUI_SRCREV="${{ steps.scootui-ref.outputs.commit }}" \
+          SCOOTUI_BRANCH="${{ steps.scootui-ref.outputs.branch }}" \
+          PACKAGE="scootui" \
+          ./build.sh dbc
 
       - name: Extract ScootUI RPM
         run: |

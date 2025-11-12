@@ -53,31 +53,22 @@ clone_layer "meta-flutter" "scarthgap" "https://github.com/meta-flutter/meta-flu
 clone_layer "meta-librescoot" "${BRANCH}" "https://github.com/librescoot/meta-librescoot" "sources/meta-librescoot"
 clone_layer "meta-openjdk-temurin" "scarthgap" "https://github.com/lucimber/meta-openjdk-temurin" "sources/meta-openjdk-temurin"
 
-# UPDATE SCOOTUI VERSION - NEW FUNCTIONALITY
-echo "Check whether to update scootui version in bitbake recipe..."
+# Prepare scootui build configuration variables
+SCOOTUI_BUILD_VARS=""
+
 if [ -n "${SCOOTUI_VERSION_UPDATE}" ]; then
-    echo "Updating scootui version in bitbake recipe..."
-    SCOOTUI_BB_FILE="sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
-    
-    if [ -f "$SCOOTUI_BB_FILE" ]; then
-        echo "Found scootui.bb file: $SCOOTUI_BB_FILE"
-        echo "Current PV line:"
-        grep "^PV = " "$SCOOTUI_BB_FILE" || echo "No PV line found"
-        
-        # Backup the original file
-        cp "$SCOOTUI_BB_FILE" "$SCOOTUI_BB_FILE.backup"
-        
-        # Update the PV line with the new timestamped version
-        sed -i "s/^PV = \".*\"/PV = \"$SCOOTUI_VERSION_UPDATE\"/" "$SCOOTUI_BB_FILE"
-        
-        echo "Updated PV version to: $SCOOTUI_VERSION_UPDATE"
-        echo "New PV line:"
-        grep "^PV = " "$SCOOTUI_BB_FILE"
-    else
-        echo "Warning: scootui.bb file not found at $SCOOTUI_BB_FILE"
-        echo "Directory contents:"
-        ls -la sources/meta-librescoot/recipes-graphics/scootui/ || echo "Directory not found"
-    fi
+    echo "Will set scootui version to: ${SCOOTUI_VERSION_UPDATE}"
+    SCOOTUI_BUILD_VARS="${SCOOTUI_BUILD_VARS}PV:pn-scootui = \"${SCOOTUI_VERSION_UPDATE}\"\n"
+fi
+
+if [ -n "${SCOOTUI_SRCREV}" ]; then
+    echo "Will set scootui SRCREV to: ${SCOOTUI_SRCREV}"
+    SCOOTUI_BUILD_VARS="${SCOOTUI_BUILD_VARS}SCOOTUI_SRCREV = \"${SCOOTUI_SRCREV}\"\n"
+fi
+
+if [ -n "${SCOOTUI_BRANCH}" ]; then
+    echo "Will set scootui branch to: ${SCOOTUI_BRANCH}"
+    SCOOTUI_BUILD_VARS="${SCOOTUI_BUILD_VARS}SCOOTUI_BRANCH = \"${SCOOTUI_BRANCH}\"\n"
 fi
 
 # Determine LIBRESCOOT_VERSION - use environment variable if set, otherwise from meta-librescoot repository
@@ -172,7 +163,10 @@ ACCEPT_FSL_EULA = "1"
 HOSTTOOLS += "x86_64-linux-gnu-gcc git-lfs python"
 # EXTRA_IMAGE_FEATURES = "debug-tweaks"
 DEFAULT_TIMEZONE = "Europe/Berlin"
+
+# ScootUI build configuration
 EOL
+    echo -e "$SCOOTUI_BUILD_VARS" >> /yocto/build/conf/local.conf
 else
     # mdb
     cat > /yocto/build/conf/bblayers.conf << 'EOL'
@@ -226,7 +220,10 @@ ACCEPT_FSL_EULA = "1"
 HOSTTOOLS += "x86_64-linux-gnu-gcc git-lfs python"
 EXTRA_IMAGE_FEATURES = "debug-tweaks"
 DEFAULT_TIMEZONE = "Europe/Berlin"
+
+# ScootUI build configuration
 EOL
+    echo -e "$SCOOTUI_BUILD_VARS" >> /yocto/build/conf/local.conf
 fi
 
 echo "Starting build process..."
