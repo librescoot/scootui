@@ -71,28 +71,19 @@ jobs:
 
           echo "Custom entrypoint script setup complete"
 
-      - name: Patch scootui recipe to use local branch checkout
-        working-directory: librescoot
+      - name: Detect scootui branch and commit
+        id: scootui-ref
+        working-directory: scootui
         run: |
-          RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+          # Get the current commit SHA (full)
+          SCOOTUI_COMMIT=$(git rev-parse HEAD)
+          echo "commit=$SCOOTUI_COMMIT" >> $GITHUB_OUTPUT
+          echo "Detected scootui commit: $SCOOTUI_COMMIT"
 
-          # Use sudo to modify the recipe file if needed
-          if [ -f "$RECIPE_FILE" ]; then
-            sudo sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
-          else
-            echo "WARNING: Recipe file not found at $RECIPE_FILE, will be created during build"
-          fi
-
-          echo "=== DEBUG: Patched scootui recipe ==="
-          cat "$RECIPE_FILE" 2>/dev/null || echo "Recipe not yet available"
-
-          # Copy the scootui checkout to where Yocto can access it
-          sudo mkdir -p yocto/scootui
-          sudo cp -r ../scootui/* yocto/scootui/
-          sudo chown -R 999:999 yocto/scootui
-
-          echo "=== DEBUG: Scootui source copied to yocto/scootui ==="
-          ls -la yocto/scootui/ | head -20
+          # Get the current branch name
+          SCOOTUI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
+          echo "Detected scootui branch: $SCOOTUI_BRANCH"
 
       - name: Build scootui package for DBC
         working-directory: librescoot
@@ -102,18 +93,22 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
 
-          # Add SCOOTUI_VERSION_UPDATE environment variable to Docker run command
-          sed -i 's/docker run -i -e EULA=1/docker run -i -e EULA=1 -e SCOOTUI_VERSION_UPDATE=${SCOOTUI_VERSION_UPDATE}/' build.sh
-
           echo "=== DEBUG: Environment variables to be passed ==="
           echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
           echo "SCOOTUI_VERSION_UPDATE=0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}"
+          echo "SCOOTUI_SRCREV=${{ steps.scootui-ref.outputs.commit }}"
+          echo "SCOOTUI_BRANCH=${{ steps.scootui-ref.outputs.branch }}"
 
           echo "=== DEBUG: Modified build.sh content ==="
           grep "docker run" build.sh
 
-          # Build only the scootui package for DBC target with version update
-          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" PACKAGE="scootui" ./build.sh dbc
+          # Build only the scootui package for DBC target with version update and branch
+          LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
+          SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
+          SCOOTUI_SRCREV="${{ steps.scootui-ref.outputs.commit }}" \
+          SCOOTUI_BRANCH="${{ steps.scootui-ref.outputs.branch }}" \
+          PACKAGE="scootui" \
+          ./build.sh dbc
 
       - name: Extract ScootUI RPM
         run: |
