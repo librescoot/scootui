@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:latlong2/latlong.dart';
+import 'package:vector_map_tiles/vector_map_tiles.dart';
 
 import 'models.dart';
 
@@ -145,5 +146,64 @@ class RouteHelpers {
     }
 
     return upcomingInstructions;
+  }
+
+  /// Calculates all tile coordinates needed to display a route at a given zoom level
+  ///
+  /// Returns tiles in order from origin to destination with a buffer around the route.
+  /// Buffer adds ±1 tile on each side to ensure smooth rendering when panning slightly.
+  static List<TileIdentity> calculateRouteTiles(
+    List<LatLng> waypoints,
+    double zoom, {
+    int buffer = 1,
+  }) {
+    if (waypoints.isEmpty) {
+      return [];
+    }
+
+    final zoomLevel = zoom.floor();
+    final seenTiles = <String>{};
+    final tiles = <TileIdentity>[];
+
+    for (final point in waypoints) {
+      // Convert lat/lng to tile coordinates
+      final tileX = _lngToTileX(point.longitude, zoomLevel);
+      final tileY = _latToTileY(point.latitude, zoomLevel);
+
+      // Add the main tile and buffered tiles around it
+      for (int dx = -buffer; dx <= buffer; dx++) {
+        for (int dy = -buffer; dy <= buffer; dy++) {
+          final x = tileX + dx;
+          final y = tileY + dy;
+
+          // Ensure tile coordinates are valid
+          if (x < 0 || y < 0) continue;
+          final maxTile = math.pow(2, zoomLevel).toInt();
+          if (x >= maxTile || y >= maxTile) continue;
+
+          final key = '$zoomLevel/$x/$y';
+          if (!seenTiles.contains(key)) {
+            seenTiles.add(key);
+            tiles.add(TileIdentity(zoomLevel, x, y));
+          }
+        }
+      }
+    }
+
+    return tiles;
+  }
+
+  /// Convert longitude to tile X coordinate at given zoom level
+  static int _lngToTileX(double lng, int zoom) {
+    return ((lng + 180.0) / 360.0 * math.pow(2, zoom)).floor();
+  }
+
+  /// Convert latitude to tile Y coordinate at given zoom level
+  static int _latToTileY(double lat, int zoom) {
+    final latRad = lat * math.pi / 180.0;
+    return ((1.0 - math.log(math.tan(latRad) + 1.0 / math.cos(latRad)) / math.pi) /
+            2.0 *
+            math.pow(2, zoom))
+        .floor();
   }
 }
