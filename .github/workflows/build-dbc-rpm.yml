@@ -38,6 +38,7 @@ jobs:
       - name: Checkout scootui repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
           clean: false
           path: scootui
@@ -54,20 +55,20 @@ jobs:
           # Copy custom entrypoint script from scootui repository
           cp ../scootui/docker-entrypoint-with-version-update.sh docker/entrypoint-with-version-update.sh
           chmod +x docker/entrypoint-with-version-update.sh
-          
+
           echo "=== DEBUG: Checking if custom entrypoint was copied ==="
           ls -la docker/entrypoint*
-          
+
           # Replace the original entrypoint with our custom one in the docker directory
           # This ensures the Docker build uses our custom script
           cp docker/entrypoint-with-version-update.sh docker/entrypoint.sh
-          
+
           echo "=== DEBUG: Verifying entrypoint.sh contains our custom logic ==="
           grep -n "SCOOTUI_VERSION_UPDATE" docker/entrypoint.sh || echo "ERROR: Custom logic not found in entrypoint.sh"
-          
+
           echo "=== DEBUG: Checking build.sh content before modification ==="
           grep "docker/entrypoint" build.sh || echo "No entrypoint references found"
-          
+
           echo "Custom entrypoint script setup complete"
 
       - name: Detect scootui branch and commit
@@ -79,10 +80,33 @@ jobs:
           echo "commit=$SCOOTUI_COMMIT" >> $GITHUB_OUTPUT
           echo "Detected scootui commit: $SCOOTUI_COMMIT"
 
-          # Get the current branch name
-          SCOOTUI_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          # Get the branch name from GitHub context (handles detached HEAD in Actions)
+          SCOOTUI_BRANCH="${{ github.head_ref || github.ref_name }}"
           echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
           echo "Detected scootui branch: $SCOOTUI_BRANCH"
+
+      - name: Patch scootui recipe to use local branch checkout
+        working-directory: librescoot
+        run: |
+          RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
+
+          # Use sudo to modify the recipe file if needed
+          if [ -f "$RECIPE_FILE" ]; then
+            sudo sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
+          else
+            echo "WARNING: Recipe file not found at $RECIPE_FILE, will be created during build"
+          fi
+
+          echo "=== DEBUG: Patched scootui recipe ==="
+          cat "$RECIPE_FILE" 2>/dev/null || echo "Recipe not yet available"
+
+          # Copy the scootui checkout to where Yocto can access it
+          sudo mkdir -p yocto/scootui
+          sudo cp -r ../scootui/* yocto/scootui/
+          sudo chown -R 999:999 yocto/scootui
+
+          echo "=== DEBUG: Scootui source copied to yocto/scootui ==="
+          ls -la yocto/scootui/ | head -20
 
       - name: Build scootui package for DBC
         working-directory: librescoot
@@ -101,6 +125,9 @@ jobs:
           echo "=== DEBUG: Modified build.sh content ==="
           grep "docker run" build.sh
 
+          # Clean up any existing container from previous runs
+          sudo docker rm -f yocto-build 2>/dev/null || true
+
           # Build only the scootui package for DBC target with version update and branch
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
@@ -108,6 +135,13 @@ jobs:
           SCOOTUI_BRANCH="${{ steps.scootui-ref.outputs.branch }}" \
           PACKAGE="scootui" \
           ./build.sh dbc
+
+      - name: Sanitize branch name for artifact
+        id: sanitize
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          SAFE_BRANCH_NAME="${BRANCH_NAME//\//-}"
+          echo "branch=$SAFE_BRANCH_NAME" >> $GITHUB_OUTPUT
 
       - name: Extract ScootUI RPM
         run: |
@@ -117,7 +151,7 @@ jobs:
           # Find and copy scootui RPM from the DBC build (exclude dbg and dev variants)
           SCOOTUI_RPM=$(find librescoot/yocto/build/tmp/deploy/rpm -name "*scootui*.rpm" | grep -v -E -- "-(dbg|dev)-" | head -1)
           if [ -n "$SCOOTUI_RPM" ]; then
-            cp "$SCOOTUI_RPM" artifacts/dbc-rpm/scootui-dbc-${{ needs.generate-timestamp.outputs.timestamp }}.rpm
+            cp "$SCOOTUI_RPM" artifacts/dbc-rpm/scootui-dbc-${{ steps.sanitize.outputs.branch }}-${{ needs.generate-timestamp.outputs.timestamp }}.rpm
             echo "Found ScootUI RPM: $SCOOTUI_RPM"
             ls -la artifacts/dbc-rpm/
           else
@@ -129,7 +163,7 @@ jobs:
       - name: Upload ScootUI RPM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: scootui-dbc-rpm-${{ needs.generate-timestamp.outputs.timestamp }}
+          name: scootui-dbc-rpm-${{ steps.sanitize.outputs.branch }}-${{ needs.generate-timestamp.outputs.timestamp }}
           path: artifacts/dbc-rpm/*.rpm
           retention-days: 30
           compression-level: 0
@@ -163,11 +197,19 @@ jobs:
         run: |
           echo "value=${{ needs.generate-timestamp.outputs.timestamp }}" >> $GITHUB_OUTPUT
 
+      - name: Sanitize branch name for tag
+        id: sanitize-tag
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          SAFE_BRANCH_NAME="${BRANCH_NAME//\//-}"
+          echo "branch=$SAFE_BRANCH_NAME" >> $GITHUB_OUTPUT
+
       - name: Create Github release
         uses: softprops/action-gh-release@v1
         with:
-          name: ScootUI DBC RPM Build ${{ steps.date.outputs.value }}
-          tag_name: dbc-rpm-${{ steps.date.outputs.value }}
+          name: ScootUI DBC RPM Build ${{ github.ref_name }} ${{ steps.date.outputs.value }}
+          tag_name: dbc-rpm-${{ steps.sanitize-tag.outputs.branch }}-${{ steps.date.outputs.value }}
+          target_commitish: ${{ github.sha }}
           prerelease: true
           files: |
             artifacts/**/*.rpm
@@ -176,10 +218,12 @@ jobs:
 
             This build contains the ScootUI RPM package specifically built for the Dashboard Controller (DBC).
 
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+
             ## Changelog
             ${{ steps.changelog.outputs.content }}
 
             Build completed at: ${{ github.event.repository.updated_at }}
-            Commit: ${{ github.sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -969,6 +969,26 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         _groupSpacer,
+        _buildGroupHeading('Hibernation States'),
+        _buildSegmentedButton(
+          '',
+          ['waiting-hibernation', 'waiting-hibernation-advanced'],
+          _vehicleState,
+          (value) {
+            setState(() => _vehicleState = value);
+            _publishEvent('vehicle', 'state', value);
+          },
+        ),
+        _buildSegmentedButton(
+          '',
+          ['waiting-hibernation-seatbox', 'waiting-hibernation-confirm'],
+          _vehicleState,
+          (value) {
+            setState(() => _vehicleState = value);
+            _publishEvent('vehicle', 'state', value);
+          },
+        ),
+        _groupSpacer,
         _buildTextField(
           label: 'Odometer (km)',
           value: _simulatedOdometer.toStringAsFixed(1),
