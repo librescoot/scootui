@@ -15,7 +15,7 @@ class ManualHibernationOverlay extends StatefulWidget {
 
 class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
   Timer? _countdownTimer;
-  int _remainingSeconds = 20;
+  int _remainingSeconds = 15;
   bool _wasBrakeHeld = false;
 
   @override
@@ -31,7 +31,7 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
     if (bothBrakesHeld && isHibernationState) {
       if (!_wasBrakeHeld) {
         _wasBrakeHeld = true;
-        _remainingSeconds = 20;
+        _remainingSeconds = 15;
         _countdownTimer?.cancel();
         _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
           if (mounted) {
@@ -50,7 +50,7 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
       // Brakes released, reset
       if (_wasBrakeHeld) {
         _wasBrakeHeld = false;
-        _remainingSeconds = 20;
+        _remainingSeconds = 15;
         _countdownTimer?.cancel();
         if (mounted) {
           setState(() {});
@@ -144,13 +144,13 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
           Text(
             remainingSeconds == 0
                 ? 'Keep holding brakes to force'
-                : remainingSeconds < 20
+                : remainingSeconds < 15
                     ? 'Hold both brakes for ${remainingSeconds}s to force'
-                    : 'Or hold both brakes for 20s to force',
+                    : 'Or hold both brakes for 15s to force',
             style: TextStyle(
-              color: remainingSeconds < 20 ? Colors.orange : Colors.white70,
+              color: remainingSeconds < 15 ? Colors.orange : Colors.white70,
               fontSize: 14,
-              fontWeight: remainingSeconds < 20 ? FontWeight.bold : FontWeight.normal,
+              fontWeight: remainingSeconds < 15 ? FontWeight.bold : FontWeight.normal,
             ),
             textAlign: TextAlign.center,
           ),
