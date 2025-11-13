@@ -45,3 +45,7 @@ app.*.map.json
 /android/app/release
 redis/dump.rdb
 dump.rdb
+
+# Git worktrees (Crystal)
+/worktrees/
+/worktree-*/
