@@ -61,7 +61,26 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onVehicleData(VehicleData data) {
+    final previousState = _vehicleData.state;
     _vehicleData = data;
+
+    // Check if scooter just transitioned to shuttingDown state
+    if (previousState != ScooterState.shuttingDown &&
+        data.state == ScooterState.shuttingDown &&
+        state.destination != null &&
+        _currentPosition != null) {
+      final distanceToDestination = distanceCalculator.as(
+        LengthUnit.Meter,
+        _currentPosition!,
+        state.destination!,
+      );
+
+      // Clear navigation if within shutdown proximity radius
+      if (distanceToDestination < _shutdownProximityMeters) {
+        print("NavigationCubit: Scooter shutting down within ${_shutdownProximityMeters}m of destination (${distanceToDestination.toStringAsFixed(1)}m), clearing navigation.");
+        clearNavigation();
+      }
+    }
   }
 
   Future<void> _loadMbTiles() async {
