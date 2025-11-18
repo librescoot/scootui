@@ -148,7 +148,7 @@ def main():
             engine_speed = int(round(current_speed))
             set_redis_value("engine-ecu", "speed", engine_speed)
             engine_power = round(power, 1)
-            set_redis_value("engine-ecu", "motor:current", engine_power)
+            set_redis_value("engine-ecu", "motor:current", int(engine_power * 1000))
             set_redis_value("engine-ecu", "odometer", int(rounded_odometer))
 
             # Calculate target speed for display

@@ -56,7 +56,7 @@ class EngineData extends Equatable with $EngineData {
   @StateField()
   final double temperature;
 
-  double get powerOutput => motorVoltage * motorCurrent / 1000;
+  double get powerOutput => motorVoltage * motorCurrent / 1000000;
 
   EngineData({
     this.powerState = Toggle.off,

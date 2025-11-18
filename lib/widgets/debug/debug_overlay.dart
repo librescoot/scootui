@@ -144,7 +144,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
               children: [
                 _buildDataPoint('THR', engine.throttle.toString().split('.').last),
                 _buildDataPoint('RPM', engine.rpm.toStringAsFixed(0)),
-                _buildDataPoint('PWR', '${(engine.powerOutput / 1000).toStringAsFixed(1)} kW'),
+                _buildDataPoint('PWR', '${engine.powerOutput.toStringAsFixed(0)} W'),
                 _buildDataPoint('EBS', engine.kers.toString().split('.').last),
               ],
             ),

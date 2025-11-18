@@ -157,8 +157,8 @@ def main():
             voltage = base_voltage + power_effect + speed_effect + random_fluctuation
             voltage = max(min_voltage, min(max_voltage, voltage))
 
-            # Format voltage to 1 decimal place
-            motor_voltage = round(voltage, 1) * 100
+            # Format voltage to 1 decimal place (in V)
+            motor_voltage = round(voltage, 1)
 
             # Calculate distance traveled in this update interval (km)
             distance_km = (current_speed / 3600) * update_interval
@@ -216,8 +216,8 @@ def main():
                 f"HSET gps course {course}",
                 f"PUBLISH gps course",
                 f"HSET engine-ecu speed {engine_speed}",
-                f"HSET engine-ecu motor:current {engine_power * 100}",
-                f"HSET engine-ecu motor:voltage {motor_voltage * 100}",
+                f"HSET engine-ecu motor:current {int(engine_power * 1000)}",
+                f"HSET engine-ecu motor:voltage {int(motor_voltage * 1000)}",
                 f"HSET engine-ecu odometer {int(rounded_odometer)}"
             ]
             
