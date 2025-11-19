@@ -67,7 +67,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
     return Stack(
       children: [
         Positioned(
-          top: 160,
+          top: 120,
           left: 0,
           right: 0,
           child: Center(
@@ -91,7 +91,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
         // Condensed blinker and brake indicators on left and right
         // Left side
         Positioned(
-          top: 50,
+          top: 10,
           left: 60,
           child: _buildDebugPanel(
             context,
@@ -112,7 +112,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Right side
         Positioned(
-          top: 50,
+          top: 10,
           right: 60,
           child: _buildDebugPanel(
             context,
@@ -156,7 +156,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // GPS on left - without icon
         Positioned(
-          top: 100,
+          top: 60,
           left: 10,
           child: _buildDebugPanel(
             context,
@@ -178,7 +178,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
 
         // Internet on right
         Positioned(
-          top: 100,
+          top: 60,
           right: 10,
           child: _buildDebugPanel(
             context,
