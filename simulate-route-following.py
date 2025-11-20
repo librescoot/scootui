@@ -241,6 +241,11 @@ def main():
     # Traffic simulation state
     current_traffic_event = None
 
+    # Vehicle state check timing
+    state_check_counter = 0
+    state_check_interval = 2
+    is_ready_to_drive = True
+
     # Set destination in Redis if requested (only once at start)
     if args.set_destination:
         if specified_destination:
@@ -261,6 +266,21 @@ def main():
     try:
         # Main loop
         while True:
+            # Periodically check vehicle state
+            state_check_counter += 1
+            if state_check_counter >= state_check_interval:
+                state_check_counter = 0
+                vehicle_state = get_redis_value("vehicle", "state", "ready-to-drive")
+                is_ready_to_drive = (vehicle_state == "ready-to-drive")
+
+                if not is_ready_to_drive:
+                    print(f"Vehicle not ready (state: {vehicle_state}), pausing simulation...")
+
+            # If vehicle is not ready to drive, skip this update cycle
+            if not is_ready_to_drive:
+                time.sleep(update_interval)
+                continue
+
             if not route_waypoints or waypoint_index >= len(route_waypoints) - 1:
                 # Determine destination: Redis first, then specified args, then random
                 destination_str = get_redis_value("navigation", "destination")
