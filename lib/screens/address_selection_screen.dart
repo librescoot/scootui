@@ -1,5 +1,8 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../cubits/address_cubit.dart';
 // import '../cubits/navigation_cubit.dart'; // Not needed directly for setting destination via Redis
@@ -29,8 +32,16 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     super.dispose();
   }
 
-  Widget _buildDialInput(ScreenCubit screenCubit, Map<String, Address> addresses) {
-    // Removed mapCubit
+  int _fromBase32(String code) {
+    const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    var result = 0;
+    for (var i = 0; i < code.length; i++) {
+      result = result * 32 + chars.indexOf(code[i]);
+    }
+    return result;
+  }
+
+  Widget _buildDialInput(ScreenCubit screenCubit, List<LatLng> addresses) {
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
       onLeftPress: () => _controller.scroll(),
@@ -41,15 +52,19 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         length: 4,
         controller: _controller,
         onSubmit: (code) {
-          final address = addresses[code];
-          if (address != null) {
-            // Set destination via NavigationSync with address ID as label
+          final index = _fromBase32(code);
+          if (index >= 0 && index < addresses.length) {
+            final address = addresses[index];
+            developer.log('Destination code entered: $code (index: $index, lat: ${address.latitude}, lon: ${address.longitude})', name: 'AddressSelection');
+            // Set destination via NavigationSync with address code as label
             final navigationSync = context.read<NavigationSync>();
             navigationSync.setDestination(
-              address.coordinates.latitude,
-              address.coordinates.longitude,
-              address: code, // Use the address code/ID as the address
+              address.latitude,
+              address.longitude,
+              address: code,
             );
+          } else {
+            developer.log('Invalid destination code entered: $code (index: $index, out of range)', name: 'AddressSelection');
           }
           screenCubit.showMap();
         },
@@ -77,7 +92,10 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         )),
       AddressStateError(:final message) => ControlGestureDetector(
           stream: context.read<VehicleSync>().stream,
-          onRightPress: () => screenCubit.showMap(),
+          onRightPress: () {
+            developer.log('Address selection closed due to error', name: 'AddressSelection');
+            screenCubit.showMap();
+          },
           child: Center(child: Text(message))),
     };
 

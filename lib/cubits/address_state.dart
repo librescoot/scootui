@@ -4,6 +4,6 @@ part of 'address_cubit.dart';
 sealed class AddressState with _$AddressState {
   const factory AddressState.loading(String message) = AddressStateLoading;
   const factory AddressState.error(String message) = AddressStateError;
-  const factory AddressState.loaded(Map<String, Address> addresses) =
+  const factory AddressState.loaded(List<LatLng> addresses) =
       AddressStateLoaded;
 }

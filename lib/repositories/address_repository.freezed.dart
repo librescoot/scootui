@@ -203,175 +203,6 @@ class __$AddressCopyWithImpl<$Res> implements _$AddressCopyWith<$Res> {
 }
 
 /// @nodoc
-mixin _$AddressDatabase {
-  String get mapHash;
-  Map<String, Address> get addresses;
-
-  /// Create a copy of AddressDatabase
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  $AddressDatabaseCopyWith<AddressDatabase> get copyWith =>
-      _$AddressDatabaseCopyWithImpl<AddressDatabase>(
-          this as AddressDatabase, _$identity);
-
-  /// Serializes this AddressDatabase to a JSON map.
-  Map<String, dynamic> toJson();
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is AddressDatabase &&
-            (identical(other.mapHash, mapHash) || other.mapHash == mapHash) &&
-            const DeepCollectionEquality().equals(other.addresses, addresses));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType, mapHash, const DeepCollectionEquality().hash(addresses));
-
-  @override
-  String toString() {
-    return 'AddressDatabase(mapHash: $mapHash, addresses: $addresses)';
-  }
-}
-
-/// @nodoc
-abstract mixin class $AddressDatabaseCopyWith<$Res> {
-  factory $AddressDatabaseCopyWith(
-          AddressDatabase value, $Res Function(AddressDatabase) _then) =
-      _$AddressDatabaseCopyWithImpl;
-  @useResult
-  $Res call({String mapHash, Map<String, Address> addresses});
-}
-
-/// @nodoc
-class _$AddressDatabaseCopyWithImpl<$Res>
-    implements $AddressDatabaseCopyWith<$Res> {
-  _$AddressDatabaseCopyWithImpl(this._self, this._then);
-
-  final AddressDatabase _self;
-  final $Res Function(AddressDatabase) _then;
-
-  /// Create a copy of AddressDatabase
-  /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? mapHash = null,
-    Object? addresses = null,
-  }) {
-    return _then(_self.copyWith(
-      mapHash: null == mapHash
-          ? _self.mapHash
-          : mapHash // ignore: cast_nullable_to_non_nullable
-              as String,
-      addresses: null == addresses
-          ? _self.addresses
-          : addresses // ignore: cast_nullable_to_non_nullable
-              as Map<String, Address>,
-    ));
-  }
-}
-
-/// @nodoc
-@JsonSerializable()
-class _AddressDatabase implements AddressDatabase {
-  const _AddressDatabase(
-      {required this.mapHash, required final Map<String, Address> addresses})
-      : _addresses = addresses;
-  factory _AddressDatabase.fromJson(Map<String, dynamic> json) =>
-      _$AddressDatabaseFromJson(json);
-
-  @override
-  final String mapHash;
-  final Map<String, Address> _addresses;
-  @override
-  Map<String, Address> get addresses {
-    if (_addresses is EqualUnmodifiableMapView) return _addresses;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_addresses);
-  }
-
-  /// Create a copy of AddressDatabase
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @pragma('vm:prefer-inline')
-  _$AddressDatabaseCopyWith<_AddressDatabase> get copyWith =>
-      __$AddressDatabaseCopyWithImpl<_AddressDatabase>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$AddressDatabaseToJson(
-      this,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _AddressDatabase &&
-            (identical(other.mapHash, mapHash) || other.mapHash == mapHash) &&
-            const DeepCollectionEquality()
-                .equals(other._addresses, _addresses));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(
-      runtimeType, mapHash, const DeepCollectionEquality().hash(_addresses));
-
-  @override
-  String toString() {
-    return 'AddressDatabase(mapHash: $mapHash, addresses: $addresses)';
-  }
-}
-
-/// @nodoc
-abstract mixin class _$AddressDatabaseCopyWith<$Res>
-    implements $AddressDatabaseCopyWith<$Res> {
-  factory _$AddressDatabaseCopyWith(
-          _AddressDatabase value, $Res Function(_AddressDatabase) _then) =
-      __$AddressDatabaseCopyWithImpl;
-  @override
-  @useResult
-  $Res call({String mapHash, Map<String, Address> addresses});
-}
-
-/// @nodoc
-class __$AddressDatabaseCopyWithImpl<$Res>
-    implements _$AddressDatabaseCopyWith<$Res> {
-  __$AddressDatabaseCopyWithImpl(this._self, this._then);
-
-  final _AddressDatabase _self;
-  final $Res Function(_AddressDatabase) _then;
-
-  /// Create a copy of AddressDatabase
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $Res call({
-    Object? mapHash = null,
-    Object? addresses = null,
-  }) {
-    return _then(_AddressDatabase(
-      mapHash: null == mapHash
-          ? _self.mapHash
-          : mapHash // ignore: cast_nullable_to_non_nullable
-              as String,
-      addresses: null == addresses
-          ? _self._addresses
-          : addresses // ignore: cast_nullable_to_non_nullable
-              as Map<String, Address>,
-    ));
-  }
-}
-
-/// @nodoc
 mixin _$Addresses {
   @override
   bool operator ==(Object other) {
@@ -432,8 +263,6 @@ abstract mixin class $SuccessCopyWith<$Res>
       _$SuccessCopyWithImpl;
   @useResult
   $Res call({AddressDatabase database});
-
-  $AddressDatabaseCopyWith<$Res> get database;
 }
 
 /// @nodoc
@@ -455,16 +284,6 @@ class _$SuccessCopyWithImpl<$Res> implements $SuccessCopyWith<$Res> {
           : database // ignore: cast_nullable_to_non_nullable
               as AddressDatabase,
     ));
-  }
-
-  /// Create a copy of Addresses
-  /// with the given fields replaced by the non-null parameter values.
-  @override
-  @pragma('vm:prefer-inline')
-  $AddressDatabaseCopyWith<$Res> get database {
-    return $AddressDatabaseCopyWith<$Res>(_self.database, (value) {
-      return _then(_self.copyWith(database: value));
-    });
   }
 }
 

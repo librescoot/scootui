@@ -50,6 +50,8 @@ class MapCubit extends Cubit<MapState> {
 
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
+  LatLng? _lastPosition; // Track last position to detect changes
+  double? _lastCourse; // Track last course to detect changes
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
   SettingsData? _currentSettings; // Store current settings for map type and render mode
   ThemeState? _currentTheme; // Store current theme state
@@ -346,8 +348,12 @@ class MapCubit extends Cubit<MapState> {
       orientation: orientationForMarker,
     ));
 
-    // Update map immediately to keep marker and map synchronized
-    _moveAndRotate(positionForDisplay, courseForMapRotation);
+    // Only update map if position or course has actually changed
+    if (_lastPosition != positionForDisplay || _lastCourse != courseForMapRotation) {
+      _lastPosition = positionForDisplay;
+      _lastCourse = courseForMapRotation;
+      _moveAndRotate(positionForDisplay, courseForMapRotation);
+    }
   }
 
   void _onThemeUpdate(ThemeState event) {

@@ -166,14 +166,14 @@ class _$AddressStateErrorCopyWithImpl<$Res>
 /// @nodoc
 
 class AddressStateLoaded implements AddressState {
-  const AddressStateLoaded(final Map<String, Address> addresses)
+  const AddressStateLoaded(final List<LatLng> addresses)
       : _addresses = addresses;
 
-  final Map<String, Address> _addresses;
-  Map<String, Address> get addresses {
-    if (_addresses is EqualUnmodifiableMapView) return _addresses;
+  final List<LatLng> _addresses;
+  List<LatLng> get addresses {
+    if (_addresses is EqualUnmodifiableListView) return _addresses;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(_addresses);
+    return EqualUnmodifiableListView(_addresses);
   }
 
   /// Create a copy of AddressState
@@ -209,7 +209,7 @@ abstract mixin class $AddressStateLoadedCopyWith<$Res>
           AddressStateLoaded value, $Res Function(AddressStateLoaded) _then) =
       _$AddressStateLoadedCopyWithImpl;
   @useResult
-  $Res call({Map<String, Address> addresses});
+  $Res call({List<LatLng> addresses});
 }
 
 /// @nodoc
@@ -230,7 +230,7 @@ class _$AddressStateLoadedCopyWithImpl<$Res>
       null == addresses
           ? _self._addresses
           : addresses // ignore: cast_nullable_to_non_nullable
-              as Map<String, Address>,
+              as List<LatLng>,
     ));
   }
 }

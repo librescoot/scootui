@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
@@ -29,15 +30,80 @@ abstract class Address with _$Address {
       _$AddressFromJson(json);
 }
 
-@freezed
-abstract class AddressDatabase with _$AddressDatabase {
-  const factory AddressDatabase({
-    required String mapHash,
-    required Map<String, Address> addresses,
-  }) = _AddressDatabase;
+class AddressDatabase {
+  final String mapHash;
+  final List<LatLng> addresses;
+  final int version;
 
-  factory AddressDatabase.fromJson(Map<String, dynamic> json) =>
-      _$AddressDatabaseFromJson(json);
+  const AddressDatabase({
+    required this.mapHash,
+    required this.addresses,
+    this.version = _currentDatabaseVersion,
+  });
+
+  static int _fromBase32(String code) {
+    const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    var result = 0;
+    for (var i = 0; i < code.length; i++) {
+      result = result * 32 + chars.indexOf(code[i]);
+    }
+    return result;
+  }
+
+  factory AddressDatabase.fromJson(Map<String, dynamic> json) {
+    // Detect format by checking if 'version' field exists
+    final hasVersionField = json.containsKey('version');
+    final addressesJson = json['addresses'];
+
+    List<LatLng> addresses;
+
+    if (!hasVersionField && addressesJson is Map) {
+      // Old format v1: map with base32 keys {"0": {...}, "A": {...}, "GA1F": ...}
+      final addressMap = addressesJson as Map<String, dynamic>;
+
+      // Find max ID by decoding base32 keys
+      final maxId = addressMap.keys.map((k) => _fromBase32(k)).reduce((a, b) => a > b ? a : b);
+      final addressList = List<LatLng?>.filled(maxId + 1, null);
+
+      // Convert map to list
+      for (final entry in addressMap.entries) {
+        final id = _fromBase32(entry.key);
+        final addrObj = entry.value as Map<String, dynamic>;
+        final coordsObj = addrObj['coordinates'] as Map<String, dynamic>;
+        final coords = coordsObj['coordinates'] as List<dynamic>;
+        // Old format had coordinates in wrong order: [lon, lat] instead of [lat, lon]
+        // Swap them during migration
+        addressList[id] = LatLng(coords[1] as double, coords[0] as double);
+      }
+
+      // Filter out nulls (shouldn't be any, but just in case)
+      addresses = addressList.whereType<LatLng>().toList();
+    } else if (addressesJson is List) {
+      // New format v2: array of [lat, lon]
+      addresses = (addressesJson as List<dynamic>).map((coords) {
+        final c = coords as List<dynamic>;
+        return LatLng(c[0] as double, c[1] as double);
+      }).toList();
+    } else {
+      throw Exception('Unknown address database format');
+    }
+
+    return AddressDatabase(
+      mapHash: json['mapHash'] as String,
+      addresses: addresses,
+      version: _currentDatabaseVersion,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final addressesJson = addresses.map((addr) => [addr.latitude, addr.longitude]).toList();
+
+    return {
+      'version': version,
+      'mapHash': mapHash,
+      'addresses': addressesJson,
+    };
+  }
 }
 
 @freezed
@@ -48,6 +114,7 @@ sealed class Addresses with _$Addresses {
 }
 
 const _addressDatabaseFilename = 'address_database.json';
+const _currentDatabaseVersion = 2;
 
 class AddressRepository {
   static AddressRepository create(BuildContext context) => AddressRepository();
@@ -55,25 +122,44 @@ class AddressRepository {
   Future<Addresses> loadDatabase() async {
     final token = RootIsolateToken.instance;
 
+    developer.log('Loading address database from disk', name: 'AddressRepository');
+
     return await Isolate.run(() async {
       BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
 
       final file = await _getFile();
       if (file == null) {
+        developer.log('Failed to get database file path', name: 'AddressRepository');
         return const Addresses.error('File not found');
       }
 
       if (!await file.exists()) {
+        developer.log('Address database file does not exist, will need to build', name: 'AddressRepository');
         return const Addresses.notFound();
       }
 
-      final json = await file.readAsString();
-      return Addresses.success(AddressDatabase.fromJson(jsonDecode(json)));
+      final jsonString = await file.readAsString();
+      final json = jsonDecode(jsonString) as Map<String, dynamic>;
+      final oldVersion = json['version'] as int? ?? 1;
+
+      final database = AddressDatabase.fromJson(json);
+      developer.log('Loaded address database with ${database.addresses.length} addresses', name: 'AddressRepository');
+
+      // If old version, re-save in new format
+      if (oldVersion != _currentDatabaseVersion) {
+        print('[AddressRepository] Migrating database from version $oldVersion to $_currentDatabaseVersion');
+        await _saveDatabase(database);
+        print('[AddressRepository] Migration complete');
+      }
+
+      return Addresses.success(database);
     });
   }
 
   Future<Addresses> buildDatabase(tiles.TilesRepository tilesRepository) async {
     final token = RootIsolateToken.instance;
+
+    developer.log('Building address database from map tiles', name: 'AddressRepository');
 
     return await Isolate.run(() async {
       BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
@@ -81,7 +167,9 @@ class AddressRepository {
       final addresses = await _processTiles(tilesRepository);
 
       Future<Addresses> saveAndReturnDatabase(AddressDatabase database) async {
+        print('[AddressRepository] Saving address database to disk');
         await _saveDatabase(database);
+        print('[AddressRepository] Address database saved successfully');
         return Addresses.success(database);
       }
 
@@ -145,12 +233,18 @@ Future<Addresses> _processTiles(tiles.TilesRepository tilesRepository) async {
   }
 }
 
-Map<String, Address> _extractAddresses(MbTiles mbTiles) {
-  final addresses = <String, Address>{};
+List<LatLng> _extractAddresses(MbTiles mbTiles) {
+  final addresses = <LatLng>[];
   final coordinates = _getTileCoordinatesForBounds(mbTiles, 14);
-  var currentAddressId = 0;
+
+  final totalTiles = coordinates.length;
+  print('[AddressRepository] Building address database from $totalTiles tiles');
+
+  var processedTiles = 0;
+  var tilesWithAddresses = 0;
 
   for (var coordinate in coordinates) {
+    processedTiles++;
     final tile = mbTiles.getTile(x: coordinate.x, y: coordinate.y, z: 14);
     if (tile == null) {
       continue;
@@ -163,6 +257,10 @@ Map<String, Address> _extractAddresses(MbTiles mbTiles) {
       final features = addressesLayer.features;
       final extent = addressesLayer.extent;
 
+      if (features.isNotEmpty) {
+        tilesWithAddresses++;
+      }
+
       for (var feature in features) {
         final geometry = feature.decodeGeometry();
         if (geometry is GeometryPoint) {
@@ -172,25 +270,26 @@ Map<String, Address> _extractAddresses(MbTiles mbTiles) {
           final lon =
               (coordinate.x + coordinates[0] / extent) / n * 360.0 - 180.0;
           final y = 1 -
-              (coordinate.y + coordinates[1] / extent) / n; // Flip y for TMS
+              (coordinate.y + coordinates[1] / extent) / n;
           final z = math.pi * (1 - 2 * y);
           final latRad = math.atan((math.exp(z) - math.exp(-z)) / 2);
           final lat = latRad * 180.0 / math.pi;
 
-          // Assign ID and create mapping
-          final id = currentAddressId++;
-          final base32Id = _toBase32(id);
-          addresses[base32Id] = Address(
-              id: base32Id,
-              coordinates: LatLng(lat, lon),
-              x: coordinates[0],
-              y: coordinates[1]);
+          addresses.add(LatLng(lat, lon));
         }
       }
     } on StateError {
       continue;
     }
+
+    // Log progress every 10% of tiles
+    if (processedTiles % (totalTiles ~/ 10).clamp(1, totalTiles) == 0 || processedTiles == totalTiles) {
+      final progress = (processedTiles / totalTiles * 100).toStringAsFixed(1);
+      print('[AddressRepository] Progress: $progress% ($processedTiles/$totalTiles tiles, ${addresses.length} addresses found)');
+    }
   }
+
+  print('[AddressRepository] Address database build complete: ${addresses.length} addresses from $tilesWithAddresses tiles with address data');
 
   return addresses;
 }
