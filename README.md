@@ -45,6 +45,14 @@ ScootUI includes a simulator mode for development and testing without physical s
 - Desktop development environments (macOS, Windows, Linux)
 - Mobile devices (for testing)
 
+### WSL2 Flickering Fix
+
+If you experience screen flickering when running on WSL2 (Windows Subsystem for Linux), use software rendering:
+
+```bash
+FLUTTER_LINUX_RENDERER=software flutter run -d linux
+```
+
 ## 📋 Project Structure
 
 - **cubits/** - State management components
