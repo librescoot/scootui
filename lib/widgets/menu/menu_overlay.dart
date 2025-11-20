@@ -8,6 +8,7 @@ import '../../cubits/saved_locations_cubit.dart';
 import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
+import '../../repositories/mdb_repository.dart';
 import '../../services/settings_service.dart';
 import '../../services/toast_service.dart';
 import '../../state/carplay_availability.dart';
@@ -31,6 +32,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   int _selectedIndex = 0;
   bool _showMapView = false;
+  bool _isStockUnuMdb = false; // True if running stock UNU MDB (not LibreScoot)
 
   // Submenu state
   final List<List<MenuItem>> _menuStack = [];
@@ -59,6 +61,30 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         setState(() {});
       }
     });
+
+    _checkMdbType();
+  }
+
+  Future<void> _checkMdbType() async {
+    // Check if running stock UNU MDB by looking for version format like "v1.15.0"
+    try {
+      final mdbRepository = context.read<MDBRepository>();
+      final mdbVersion = await mdbRepository.get('system', 'mdb-version');
+
+      // Stock UNU MDB has format like "v1.15.0", LibreScoot has different structure
+      final isStockVersion = mdbVersion != null &&
+                            mdbVersion.isNotEmpty &&
+                            RegExp(r'^v\d+\.\d+\.\d+$').hasMatch(mdbVersion);
+
+      if (mounted) {
+        setState(() {
+          _isStockUnuMdb = isStockVersion;
+        });
+      }
+    } catch (e) {
+      // If we can't determine, assume not stock UNU (safer default)
+      debugPrint('Error checking MDB type: $e');
+    }
   }
 
   @override
@@ -784,15 +810,16 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             menu.hideMenu();
           },
         ),
-      // TODO: Add conditional for UNU stock MDB only
-      MenuItem(
-        title: 'Toggle Hazard Lights',
-        type: MenuItemType.action,
-        onChanged: (_) {
-          vehicle.toggleHazardLights();
-          menu.hideMenu();
-        },
-      ),
+      // Only show hazard lights toggle on stock UNU MDB (LibreScoot has hotkey)
+      if (_isStockUnuMdb)
+        MenuItem(
+          title: 'Toggle Hazard Lights',
+          type: MenuItemType.action,
+          onChanged: (_) {
+            vehicle.toggleHazardLights();
+            menu.hideMenu();
+          },
+        ),
       if (_showMapView)
         MenuItem(
           title: 'Switch to Cluster View',
