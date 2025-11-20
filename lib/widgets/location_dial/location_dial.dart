@@ -53,7 +53,7 @@ class LocationDialInputState extends State<LocationDialInput>
   int _currentDialIndex = 0;
   Timer? _scrollTimer;
   bool _isScrolling = false;
-  static const _base32Chars = 'ABCDEFGHJKMNPQRSTVWXYZ0123456789';
+  static const _base32Chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
   @override
   void initState() {
