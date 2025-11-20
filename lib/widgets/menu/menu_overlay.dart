@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../config.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/menu_cubit.dart';
 import '../../cubits/saved_locations_cubit.dart';
@@ -35,6 +36,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   final List<List<MenuItem>> _menuStack = [];
   final List<int> _selectedIndexStack = [];
   final List<SubmenuType> _submenuTypeStack = []; // Track submenu types
+  final List<String> _submenuTitleStack = []; // Track custom submenu titles
   final List<double> _scrollPositionStack = []; // Track scroll positions for each menu level
   bool _isInSubmenu = false;
 
@@ -100,7 +102,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     });
   }
 
-  void _enterSubmenu(List<MenuItem> submenuItems, SubmenuType submenuType) {
+  void _enterSubmenu(List<MenuItem> submenuItems, SubmenuType submenuType, {String? customTitle}) {
     // Save current scroll position before entering submenu
     final currentScrollPosition = _scrollController.hasClients ? _scrollController.offset : 0.0;
 
@@ -108,6 +110,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       _menuStack.add(submenuItems);
       _selectedIndexStack.add(_selectedIndex);
       _submenuTypeStack.add(submenuType);
+      _submenuTitleStack.add(customTitle ?? '');
       _scrollPositionStack.add(currentScrollPosition);
       _selectedIndex = 0;
       _isInSubmenu = true;
@@ -130,6 +133,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         _menuStack.removeLast();
         _selectedIndex = _selectedIndexStack.removeLast();
         _submenuTypeStack.removeLast();
+        if (_submenuTitleStack.isNotEmpty) _submenuTitleStack.removeLast();
         _isInSubmenu = _menuStack.isNotEmpty;
       });
 
@@ -147,23 +151,33 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     _menuStack.clear();
     _selectedIndexStack.clear();
     _submenuTypeStack.clear();
+    _submenuTitleStack.clear();
     _scrollPositionStack.clear();
     _selectedIndex = 0;
     _isInSubmenu = false;
   }
 
   String _getSubmenuTitle() {
-    if (!_isInSubmenu || _submenuTypeStack.isEmpty) return 'MENU';
+    if (!_isInSubmenu) return 'MENU';
 
-    // Use the submenu type to determine title
-    switch (_submenuTypeStack.last) {
-      case SubmenuType.savedLocations:
-        return 'SAVED LOCATIONS';
-      case SubmenuType.theme:
-        return 'CHANGE THEME';
-      case SubmenuType.other:
-        return 'SUBMENU';
+    // Use custom title if available
+    if (_submenuTitleStack.isNotEmpty) {
+      return _submenuTitleStack.last;
     }
+
+    // Fall back to submenu type
+    if (_submenuTypeStack.isNotEmpty) {
+      switch (_submenuTypeStack.last) {
+        case SubmenuType.savedLocations:
+          return 'SAVED LOCATIONS';
+        case SubmenuType.theme:
+          return 'CHANGE THEME';
+        case SubmenuType.other:
+          return 'SUBMENU';
+      }
+    }
+
+    return 'MENU';
   }
 
   List<MenuItem> _buildSavedLocationsSubmenu(BuildContext context) {
@@ -350,6 +364,399 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     ];
   }
 
+  List<MenuItem> _buildIndicatorVisibilitySubmenu(
+    BuildContext context,
+    SettingsData settings,
+    String settingName,
+    String currentValue,
+    Future<void> Function(String) updateFunction,
+  ) {
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Always',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'always' ? 1 : 0,
+        onChanged: (_) async {
+          await updateFunction('always');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Active or Error',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'active-or-error' ? 1 : 0,
+        onChanged: (_) async {
+          await updateFunction('active-or-error');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Error Only',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'error' ? 1 : 0,
+        onChanged: (_) async {
+          await updateFunction('error');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Never',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'never' ? 1 : 0,
+        onChanged: (_) async {
+          await updateFunction('never');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildGpsIconSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.showGps ?? 'error';
+    final settingsService = context.read<SettingsService>();
+    return _buildIndicatorVisibilitySubmenu(
+      context,
+      settings,
+      'GPS',
+      currentValue,
+      settingsService.updateShowGpsSetting,
+    );
+  }
+
+  List<MenuItem> _buildBluetoothIconSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.showBluetooth ?? 'active-or-error';
+    final settingsService = context.read<SettingsService>();
+    return _buildIndicatorVisibilitySubmenu(
+      context,
+      settings,
+      'Bluetooth',
+      currentValue,
+      settingsService.updateShowBluetoothSetting,
+    );
+  }
+
+  List<MenuItem> _buildCloudIconSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.showCloud ?? 'error';
+    final settingsService = context.read<SettingsService>();
+    return _buildIndicatorVisibilitySubmenu(
+      context,
+      settings,
+      'Cloud',
+      currentValue,
+      settingsService.updateShowCloudSetting,
+    );
+  }
+
+  List<MenuItem> _buildInternetIconSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.showInternet ?? 'always';
+    final settingsService = context.read<SettingsService>();
+    return _buildIndicatorVisibilitySubmenu(
+      context,
+      settings,
+      'Internet',
+      currentValue,
+      settingsService.updateShowInternetSetting,
+    );
+  }
+
+  List<MenuItem> _buildClockModeSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.showClock ?? 'always';
+    final settingsService = context.read<SettingsService>();
+
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Show',
+        type: MenuItemType.action,
+        currentValue: currentValue != 'never' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateShowClockSetting('always');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Hide',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'never' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateShowClockSetting('never');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildStatusBarSubmenu(BuildContext context, SettingsData settings) {
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Battery Display',
+        type: MenuItemType.submenu,
+        submenuItems: _buildBatteryDisplaySubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'BATTERY DISPLAY',
+      ),
+      MenuItem(
+        title: 'GPS Icon',
+        type: MenuItemType.submenu,
+        submenuItems: _buildGpsIconSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'GPS ICON',
+      ),
+      MenuItem(
+        title: 'Bluetooth Icon',
+        type: MenuItemType.submenu,
+        submenuItems: _buildBluetoothIconSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'BLUETOOTH ICON',
+      ),
+      MenuItem(
+        title: 'Cloud Icon',
+        type: MenuItemType.submenu,
+        submenuItems: _buildCloudIconSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'CLOUD ICON',
+      ),
+      MenuItem(
+        title: 'Internet Icon',
+        type: MenuItemType.submenu,
+        submenuItems: _buildInternetIconSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'INTERNET ICON',
+      ),
+      MenuItem(
+        title: 'Clock Mode',
+        type: MenuItemType.submenu,
+        submenuItems: _buildClockModeSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'CLOCK MODE',
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildMapRenderingSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.mapRenderMode.toString().split('.').last;
+    final settingsService = context.read<SettingsService>();
+
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Vector',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'vector' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateMapRenderModeSetting('vector');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Raster',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'raster' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateMapRenderModeSetting('raster');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildMapTypeSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = settings.mapType.toString().split('.').last;
+    final settingsService = context.read<SettingsService>();
+
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Online',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'online' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateMapTypeSetting('online');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Offline',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'offline' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateMapTypeSetting('offline');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildValhallaEndpointSubmenu(BuildContext context, SettingsData settings) {
+    final currentValue = AppConfig.valhallaEndpoint;
+    final settingsService = context.read<SettingsService>();
+
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Localhost',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'http://localhost:8002/' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateValhallaEndpointSetting('http://localhost:8002/');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'OpenStreetMap.de',
+        type: MenuItemType.action,
+        currentValue: currentValue == 'https://valhalla1.openstreetmap.de/' ? 1 : 0,
+        onChanged: (_) async {
+          await settingsService.updateValhallaEndpointSetting('https://valhalla1.openstreetmap.de/');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildMapAndNavigationSubmenu(BuildContext context, SettingsData settings) {
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Rendering Mode',
+        type: MenuItemType.submenu,
+        submenuItems: _buildMapRenderingSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'RENDERING MODE',
+      ),
+      MenuItem(
+        title: 'Map Type',
+        type: MenuItemType.submenu,
+        submenuItems: _buildMapTypeSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'MAP TYPE',
+      ),
+      MenuItem(
+        title: 'Valhalla Endpoint',
+        type: MenuItemType.submenu,
+        submenuItems: _buildValhallaEndpointSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'VALHALLA ENDPOINT',
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildNavigationSubmenu(BuildContext context) {
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Enter Destination Code',
+        type: MenuItemType.action,
+        onChanged: (_) {
+          context.read<ScreenCubit>().showAddressSelection();
+          context.read<MenuCubit>().hideMenu();
+        },
+      ),
+      MenuItem(
+        title: 'Saved Locations',
+        type: MenuItemType.submenu,
+        submenuItems: _buildSavedLocationsSubmenu(context),
+        submenuId: SubmenuType.savedLocations,
+      ),
+      MenuItem(
+        title: 'Stop Navigation',
+        type: MenuItemType.action,
+        onChanged: (_) async {
+          await context.read<NavigationSync>().clearDestination();
+          context.read<MenuCubit>().hideMenu();
+        },
+      ),
+    ];
+  }
+
+  List<MenuItem> _buildSettingsSubmenu(BuildContext context, SettingsData settings) {
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) => _exitSubmenu(),
+      ),
+      MenuItem(
+        title: 'Theme',
+        type: MenuItemType.submenu,
+        submenuItems: _buildThemeSubmenu(context, context.read<ThemeCubit>()),
+        submenuId: SubmenuType.theme,
+      ),
+      MenuItem(
+        title: 'Status Bar',
+        type: MenuItemType.submenu,
+        submenuItems: _buildStatusBarSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'STATUS BAR',
+      ),
+      MenuItem(
+        title: 'Map and Navigation',
+        type: MenuItemType.submenu,
+        submenuItems: _buildMapAndNavigationSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'MAP AND NAVIGATION',
+      ),
+    ];
+  }
+
   List<MenuItem> _buildCurrentMenuItems(
     BuildContext context,
     MenuCubit menu,
@@ -377,6 +784,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             menu.hideMenu();
           },
         ),
+      // TODO: Add conditional for UNU stock MDB only
       MenuItem(
         title: 'Toggle Hazard Lights',
         type: MenuItemType.action,
@@ -385,7 +793,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           menu.hideMenu();
         },
       ),
-      if (_showMapView) ...[
+      if (_showMapView)
         MenuItem(
           title: 'Switch to Cluster View',
           type: MenuItemType.action,
@@ -394,15 +802,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
             menu.hideMenu();
           },
         ),
-        MenuItem(
-          title: "Enter Destination Code",
-          type: MenuItemType.action,
-          onChanged: (_) {
-            screen.showAddressSelection();
-            menu.hideMenu();
-          },
-        ),
-      ],
       if (!_showMapView)
         MenuItem(
           title: 'Switch to Map View',
@@ -413,22 +812,18 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           },
         ),
       MenuItem(
-        title: 'Saved Locations',
+        title: 'Navigation',
         type: MenuItemType.submenu,
-        submenuItems: _buildSavedLocationsSubmenu(context),
-        submenuId: SubmenuType.savedLocations,
-      ),
-      MenuItem(
-        title: 'Change Theme',
-        type: MenuItemType.submenu,
-        submenuItems: _buildThemeSubmenu(context, theme),
-        submenuId: SubmenuType.theme,
-      ),
-      MenuItem(
-        title: 'Battery Display',
-        type: MenuItemType.submenu,
-        submenuItems: _buildBatteryDisplaySubmenu(context, settings),
+        submenuItems: _buildNavigationSubmenu(context),
         submenuId: SubmenuType.other,
+        submenuTitle: 'NAVIGATION',
+      ),
+      MenuItem(
+        title: 'Settings',
+        type: MenuItemType.submenu,
+        submenuItems: _buildSettingsSubmenu(context, settings),
+        submenuId: SubmenuType.other,
+        submenuTitle: 'SETTINGS',
       ),
       MenuItem(
         title: 'Reset Trip Statistics',
@@ -525,7 +920,11 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         if (menu.state is MenuHidden) return;
         final item = items[_selectedIndex];
         if (item.type == MenuItemType.submenu) {
-          _enterSubmenu(item.submenuItems ?? [], item.submenuId ?? SubmenuType.other);
+          _enterSubmenu(
+            item.submenuItems ?? [],
+            item.submenuId ?? SubmenuType.other,
+            customTitle: item.submenuTitle,
+          );
         } else {
           item.onChanged?.call(item.currentValue);
         }

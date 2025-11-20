@@ -23,6 +23,7 @@ class MenuItem {
   final Function(dynamic)? onChanged;
   final List<MenuItem>? submenuItems;
   final SubmenuType? submenuId;  // Identifier for the submenu type
+  final String? submenuTitle;  // Custom title displayed when entering this submenu
 
   MenuItem({
     required this.title,
@@ -32,6 +33,7 @@ class MenuItem {
     this.onChanged,
     this.submenuItems,
     this.submenuId,
+    this.submenuTitle,
   }) : assert(
     (type == MenuItemType.toggle && options != null && currentValue != null) ||
     (type == MenuItemType.value && currentValue != null) ||
