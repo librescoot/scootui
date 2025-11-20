@@ -39,6 +39,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   final List<int> _selectedIndexStack = [];
   final List<SubmenuType> _submenuTypeStack = []; // Track submenu types
   final List<String> _submenuTitleStack = []; // Track custom submenu titles
+  final List<String> _parentMenuTitleStack = []; // Track parent menu titles for "Back to" text
   final List<double> _scrollPositionStack = []; // Track scroll positions for each menu level
   bool _isInSubmenu = false;
 
@@ -128,7 +129,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     });
   }
 
-  void _enterSubmenu(List<MenuItem> submenuItems, SubmenuType submenuType, {String? customTitle}) {
+  void _enterSubmenu(List<MenuItem> submenuItems, SubmenuType submenuType, {String? customTitle, String? parentTitle}) {
     // Save current scroll position before entering submenu
     final currentScrollPosition = _scrollController.hasClients ? _scrollController.offset : 0.0;
 
@@ -137,6 +138,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       _selectedIndexStack.add(_selectedIndex);
       _submenuTypeStack.add(submenuType);
       _submenuTitleStack.add(customTitle ?? '');
+      _parentMenuTitleStack.add(parentTitle ?? (_isInSubmenu ? _getSubmenuTitle() : 'Menu'));
       _scrollPositionStack.add(currentScrollPosition);
       _selectedIndex = 0;
       _isInSubmenu = true;
@@ -160,6 +162,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         _selectedIndex = _selectedIndexStack.removeLast();
         _submenuTypeStack.removeLast();
         if (_submenuTitleStack.isNotEmpty) _submenuTitleStack.removeLast();
+        if (_parentMenuTitleStack.isNotEmpty) _parentMenuTitleStack.removeLast();
         _isInSubmenu = _menuStack.isNotEmpty;
       });
 
@@ -178,6 +181,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     _selectedIndexStack.clear();
     _submenuTypeStack.clear();
     _submenuTitleStack.clear();
+    _parentMenuTitleStack.clear();
     _scrollPositionStack.clear();
     _selectedIndex = 0;
     _isInSubmenu = false;
@@ -206,6 +210,21 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     return 'MENU';
   }
 
+  String _getParentMenuTitle() {
+    if (_parentMenuTitleStack.isNotEmpty) {
+      return _parentMenuTitleStack.last;
+    }
+    return 'Main Menu';
+  }
+
+  MenuItem _buildBackButton() {
+    return MenuItem(
+      title: '‹ Back to: ${_getParentMenuTitle()}',
+      type: MenuItemType.action,
+      onChanged: (_) => _exitSubmenu(),
+    );
+  }
+
   List<MenuItem> _buildSavedLocationsSubmenu(BuildContext context) {
     final savedLocationsCubit = context.read<SavedLocationsCubit>();
     final locations = savedLocationsCubit.currentLocations;
@@ -213,13 +232,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final items = <MenuItem>[];
 
     // Add "Go back" as first item
-    items.add(MenuItem(
-      title: '< Back',
-      type: MenuItemType.action,
-      onChanged: (_) {
-        _exitSubmenu();
-      },
-    ));
+    items.add(_buildBackButton());
 
     // Add "Save Current Location" as second item
     items.add(MenuItem(
@@ -267,13 +280,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
           title: location.label,
           type: MenuItemType.submenu,
           submenuItems: [
-            MenuItem(
-              title: '< Back',
-              type: MenuItemType.action,
-              onChanged: (_) {
-                _exitSubmenu();
-              },
-            ),
+            _buildBackButton(),
             MenuItem(
               title: 'Start Navigation',
               type: MenuItemType.action,
@@ -315,13 +322,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final themeState = theme.state;
 
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) {
-          _exitSubmenu();
-        },
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Automatic',
         type: MenuItemType.action,
@@ -358,13 +359,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final currentMode = settings.batteryDisplayMode ?? 'percentage';
 
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) {
-          _exitSubmenu();
-        },
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Percentage',
         type: MenuItemType.action,
@@ -398,11 +393,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     Future<void> Function(String) updateFunction,
   ) {
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Always',
         type: MenuItemType.action,
@@ -503,11 +494,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final settingsService = context.read<SettingsService>();
 
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Show',
         type: MenuItemType.action,
@@ -535,11 +522,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   List<MenuItem> _buildStatusBarSubmenu(BuildContext context, SettingsData settings) {
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Battery Display',
         type: MenuItemType.submenu,
@@ -590,11 +573,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final settingsService = context.read<SettingsService>();
 
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Vector',
         type: MenuItemType.action,
@@ -625,11 +604,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final settingsService = context.read<SettingsService>();
 
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Online',
         type: MenuItemType.action,
@@ -660,11 +635,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final settingsService = context.read<SettingsService>();
 
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Localhost',
         type: MenuItemType.action,
@@ -692,11 +663,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   List<MenuItem> _buildMapAndNavigationSubmenu(BuildContext context, SettingsData settings) {
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Rendering Mode',
         type: MenuItemType.submenu,
@@ -723,11 +690,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   List<MenuItem> _buildNavigationSubmenu(BuildContext context) {
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Enter Destination Code',
         type: MenuItemType.action,
@@ -755,11 +718,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   List<MenuItem> _buildSettingsSubmenu(BuildContext context, SettingsData settings) {
     return [
-      MenuItem(
-        title: '< Back',
-        type: MenuItemType.action,
-        onChanged: (_) => _exitSubmenu(),
-      ),
+      _buildBackButton(),
       MenuItem(
         title: 'Theme',
         type: MenuItemType.submenu,
