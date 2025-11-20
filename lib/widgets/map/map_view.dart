@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart'
-    show Border, BoxDecoration, BoxShape, BorderRadius, BorderSide, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,6 +67,168 @@ class CompassNeedlePainter extends CustomPainter {
   bool shouldRepaint(CompassNeedlePainter oldDelegate) => false;
 }
 
+class VehicleMarkerPainter extends CustomPainter {
+  final Color backgroundColor;
+  final Color borderColor;
+
+  VehicleMarkerPainter({
+    required this.backgroundColor,
+    required this.borderColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2;
+
+    // Draw filled circle
+    final fillPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius, fillPaint);
+
+    // Draw border
+    final borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    canvas.drawCircle(center, radius - 0.5, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(VehicleMarkerPainter oldDelegate) =>
+      oldDelegate.backgroundColor != backgroundColor ||
+      oldDelegate.borderColor != borderColor;
+}
+
+class AnimatedMarkerLayer extends StatefulWidget {
+  final LatLng targetPosition;
+  final LatLng? destination;
+
+  const AnimatedMarkerLayer({
+    super.key,
+    required this.targetPosition,
+    this.destination,
+  });
+
+  @override
+  State<AnimatedMarkerLayer> createState() => _AnimatedMarkerLayerState();
+}
+
+class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _latAnimation;
+  late Animation<double> _lngAnimation;
+  late LatLng _currentPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPosition = widget.targetPosition;
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+
+    _controller.addListener(_onAnimationTick);
+    _controller.addStatusListener(_onAnimationStatus);
+
+    _updateAnimation();
+  }
+
+  @override
+  void didUpdateWidget(AnimatedMarkerLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.targetPosition != widget.targetPosition) {
+      _updateAnimation();
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  void _updateAnimation() {
+    _latAnimation = Tween<double>(
+      begin: _currentPosition.latitude,
+      end: widget.targetPosition.latitude,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    ));
+
+    _lngAnimation = Tween<double>(
+      begin: _currentPosition.longitude,
+      end: widget.targetPosition.longitude,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    ));
+  }
+
+  void _onAnimationTick() {
+    if (mounted) {
+      setState(() {
+        _currentPosition = LatLng(_latAnimation.value, _lngAnimation.value);
+      });
+    }
+  }
+
+  void _onAnimationStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && mounted) {
+      setState(() {
+        _currentPosition = widget.targetPosition;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onAnimationTick);
+    _controller.removeStatusListener(_onAnimationStatus);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.7) : Colors.grey.shade300.withOpacity(0.7);
+    final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
+
+    final markers = <Marker>[
+      Marker(
+        point: _currentPosition,
+        width: 37,
+        height: 37,
+        rotate: true,
+        child: Container(
+          width: 37,
+          height: 37,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 1.0),
+          ),
+          child: const Icon(
+            Icons.navigation,
+            color: Colors.blue,
+            size: 24.0,
+          ),
+        ),
+      ),
+    ];
+
+    if (widget.destination != null) {
+      markers.add(Marker(
+        point: widget.destination!,
+        rotate: true,
+        child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
+      ));
+    }
+
+    return MarkerLayer(markers: markers);
+  }
+}
+
 class NorthIndicator extends StatelessWidget {
   final double orientation;
 
@@ -119,42 +281,6 @@ class NorthIndicator extends StatelessWidget {
   }
 }
 
-class VehicleIndicator extends StatelessWidget {
-  const VehicleIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.9) : Colors.grey.shade300.withOpacity(0.9);
-    final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
-
-    return Positioned(
-      left: 0,
-      right: 0,
-      top: 0,
-      bottom: 0,
-      child: Center(
-        child: Transform.translate(
-          offset: MapCubit.mapCenterOffset,
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: borderColor, width: 1.0),
-            ),
-            child: const Icon(
-              Icons.navigation,
-              color: Colors.blue,
-              size: 30.0,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class ScaleBarPainter extends CustomPainter {
   final double width;
@@ -401,20 +527,12 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
                   ),
                 ],
               ),
-            // Only show destination marker, not the vehicle (it's a fixed overlay now)
-            MarkerLayer(
-              markers: [
-                if (widget.destination != null)
-                  Marker(
-                    point: widget.destination!,
-                    rotate: true,
-                    child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
-                  ),
-              ],
+            AnimatedMarkerLayer(
+              targetPosition: widget.position,
+              destination: widget.destination,
             ),
           ],
         ),
-        const VehicleIndicator(),
         Positioned(
           bottom: 8,
           right: 8,
@@ -526,17 +644,6 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
     );
   }
 
-  List<Marker> _routeMarkers() {
-    final markers = <Marker>[];
-    if (widget.destination != null) {
-      markers.add(Marker(
-        point: widget.destination!,
-        rotate: true,
-        child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
-      ));
-    }
-    return markers;
-  }
 
   double? _getZoomIfReady() {
     try {
@@ -595,11 +702,12 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
               cacheFolder: ThemeAwareCache.getCacheFolderProvider(widget.themeMode),
             ),
             if (routeLayer != null) routeLayer,
-            // Only show destination markers, not the vehicle (it's a fixed overlay now)
-            MarkerLayer(markers: _routeMarkers()),
+            AnimatedMarkerLayer(
+              targetPosition: widget.position,
+              destination: widget.destination,
+            ),
           ],
         ),
-        const VehicleIndicator(),
         Positioned(
           bottom: 8,
           right: 8,
