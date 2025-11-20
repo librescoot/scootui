@@ -1,4 +1,4 @@
-import 'dart:async'; // Import dart:async for StreamSubscription
+import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../cubits/mdb_cubits.dart';
 import '../services/settings_service.dart';
+import '../state/vehicle.dart';
 
 part 'screen_cubit.freezed.dart';
 part 'screen_state.dart';
@@ -27,8 +28,11 @@ class ScreenCubit extends Cubit<ScreenState> {
 
     // Subscribe to vehicle state updates
     _vehicleSubscription = _vehicleSync.stream.listen((vehicleData) {
-      // Vehicle state changes handled here if needed
-      // Currently no special handling required since OTA display is handled by ShutdownOverlay
+      // Auto-dismiss address selection if vehicle becomes ready to drive
+      if (state is ScreenAddressSelection &&
+          vehicleData.state == ScooterState.readyToDrive) {
+        showMap();
+      }
     });
   }
 
