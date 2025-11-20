@@ -24,6 +24,7 @@ class MenuItem {
   final List<MenuItem>? submenuItems;
   final SubmenuType? submenuId;  // Identifier for the submenu type
   final String? submenuTitle;  // Custom title displayed when entering this submenu
+  final IconData? leadingIcon;  // Optional icon to show before the title
 
   MenuItem({
     required this.title,
@@ -34,6 +35,7 @@ class MenuItem {
     this.submenuItems,
     this.submenuId,
     this.submenuTitle,
+    this.leadingIcon,
   }) : assert(
     (type == MenuItemType.toggle && options != null && currentValue != null) ||
     (type == MenuItemType.value && currentValue != null) ||
@@ -92,16 +94,30 @@ class MenuItemWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              item.title,
-              style: TextStyle(
-                fontSize: 20,
-                color: isDark ? Colors.white : Colors.black,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              overflow: isSelected ? TextOverflow.visible : TextOverflow.ellipsis,
-              softWrap: isSelected,
-              maxLines: isSelected ? null : 1,
+            child: Row(
+              children: [
+                if (item.leadingIcon != null) ...[
+                  Icon(
+                    item.leadingIcon,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    item.title,
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: isDark ? Colors.white : Colors.black,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    overflow: isSelected ? TextOverflow.visible : TextOverflow.ellipsis,
+                    softWrap: isSelected,
+                    maxLines: isSelected ? null : 1,
+                  ),
+                ),
+              ],
             ),
           ),
           Row(

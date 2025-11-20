@@ -219,8 +219,9 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
 
   MenuItem _buildBackButton() {
     return MenuItem(
-      title: '‹ Back to: ${_getParentMenuTitle()}',
+      title: _getParentMenuTitle(),
       type: MenuItemType.action,
+      leadingIcon: Icons.chevron_left,
       onChanged: (_) => _exitSubmenu(),
     );
   }
