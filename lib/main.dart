@@ -16,6 +16,30 @@ import 'widgets/toast_listener_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Suppress vector map tile cancellation exceptions
+  FlutterError.onError = (FlutterErrorDetails details) {
+    final exception = details.exception;
+    final isCancelledException = exception.toString().contains('Cancelled') &&
+        details.stack.toString().contains('vector_map_tiles');
+
+    if (!isCancelledException) {
+      FlutterError.presentError(details);
+    }
+  };
+
+  // Also handle async errors from isolates and image loading
+  PlatformDispatcher.instance.onError = (error, stack) {
+    final isCancelledException = error.toString().contains('Cancelled') &&
+        stack.toString().contains('vector_map_tiles');
+
+    if (isCancelledException) {
+      return true; // Suppress the error
+    }
+
+    // Let other errors through
+    return false;
+  };
+
   if (kDebugMode) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   }
