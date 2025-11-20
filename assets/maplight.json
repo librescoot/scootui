@@ -48,22 +48,78 @@
 			}
 		},
 		{
-			"id": "water_lines",
+			"id": "water_lines_ditch",
 			"type": "line",
 			"source": "versatiles-shortbread",
 			"source-layer": "water_lines",
+			"filter": ["==", "kind", "ditch"],
 			"paint": {
 				"line-color": "hsl(205,50%,75%)",
 				"line-width": {
 					"stops": [
-						[10, 0.5],
-						[12, 1],
-						[14, 2],
-						[16, 3]
+						[14, 0.5],
+						[16, 1]
+					]
+				}
+			},
+			"minzoom": 14
+		},
+		{
+			"id": "water_lines_stream",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "water_lines",
+			"filter": ["==", "kind", "stream"],
+			"paint": {
+				"line-color": "hsl(205,50%,75%)",
+				"line-width": {
+					"stops": [
+						[12, 0.5],
+						[14, 1],
+						[16, 2]
+					]
+				}
+			},
+			"minzoom": 12
+		},
+		{
+			"id": "water_lines_canal",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "water_lines",
+			"filter": ["==", "kind", "canal"],
+			"paint": {
+				"line-color": "hsl(205,50%,75%)",
+				"line-width": {
+					"stops": [
+						[10, 1],
+						[12, 2],
+						[14, 3],
+						[16, 4]
 					]
 				}
 			},
 			"minzoom": 10
+		},
+		{
+			"id": "water_lines_river",
+			"type": "line",
+			"source": "versatiles-shortbread",
+			"source-layer": "water_lines",
+			"filter": ["==", "kind", "river"],
+			"paint": {
+				"line-color": "hsl(205,50%,75%)",
+				"line-width": {
+					"stops": [
+						[8, 1],
+						[10, 2],
+						[12, 3],
+						[14, 5],
+						[16, 8]
+					]
+				}
+			},
+			"minzoom": 8
 		},
 		{
 			"id": "land",
