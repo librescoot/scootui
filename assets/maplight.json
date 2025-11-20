@@ -299,13 +299,15 @@
 				"line-color": "#d0d0d0",
 				"line-width": {
 					"stops": [
+						[10, 1.5],
 						[12, 3],
 						[14, 5],
 						[16, 8],
 						[18, 12]
 					]
 				}
-			}
+			},
+			"minzoom": 10
 		},
 		{
 			"id": "local-roads",
@@ -317,13 +319,15 @@
 				"line-color": "#ffffff",
 				"line-width": {
 					"stops": [
+						[10, 0.5],
 						[12, 1.5],
 						[14, 3],
 						[16, 5.5],
 						[18, 9]
 					]
 				}
-			}
+			},
+			"minzoom": 10
 		},
 		{
 			"id": "main-roads-casing",
@@ -335,13 +339,16 @@
 				"line-color": "#bbb",
 				"line-width": {
 					"stops": [
+						[8, 2],
+						[10, 3],
 						[12, 5],
 						[14, 8],
 						[16, 13],
 						[18, 20]
 					]
 				}
-			}
+			},
+			"minzoom": 8
 		},
 		{
 			"id": "main-roads",
@@ -353,13 +360,16 @@
 				"line-color": "#fafafa",
 				"line-width": {
 					"stops": [
+						[8, 1],
+						[10, 1.5],
 						[12, 3],
 						[14, 5.5],
 						[16, 9.5],
 						[18, 16]
 					]
 				}
-			}
+			},
+			"minzoom": 8
 		},
 		{
 			"id": "major-roads-casing",
@@ -371,13 +381,17 @@
 				"line-color": "#aaa",
 				"line-width": {
 					"stops": [
+						[6, 2.5],
+						[8, 3.5],
+						[10, 4.5],
 						[12, 6],
 						[14, 10],
 						[16, 16],
 						[18, 24]
 					]
 				}
-			}
+			},
+			"minzoom": 6
 		},
 		{
 			"id": "major-roads",
@@ -389,13 +403,17 @@
 				"line-color": "#f5f5f5",
 				"line-width": {
 					"stops": [
+						[6, 1.5],
+						[8, 2],
+						[10, 3],
 						[12, 4],
 						[14, 7],
 						[16, 12],
 						[18, 19]
 					]
 				}
-			}
+			},
+			"minzoom": 6
 		},
 		{
 			"id": "labels-roads",
