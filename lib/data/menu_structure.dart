@@ -52,7 +52,7 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Switch to Cluster View (conditional)
+      // Switch to Cluster View (conditional - only show when on map)
       MenuNode.action(
         id: 'switch_cluster',
         title: 'Switch to Cluster View',
@@ -61,12 +61,12 @@ MenuNode buildMenuTree(BuildContext context) {
           context.read<MenuCubit>().hideMenu();
         },
         isVisible: (context) {
-          // TODO: Check if map view is shown
-          return false; // Placeholder
+          final screen = context.read<ScreenCubit>();
+          return screen.state is ScreenMap;
         },
       ),
 
-      // Switch to Map View (conditional)
+      // Switch to Map View (conditional - only show when on cluster)
       MenuNode.action(
         id: 'switch_map',
         title: 'Switch to Map View',
@@ -75,8 +75,8 @@ MenuNode buildMenuTree(BuildContext context) {
           context.read<MenuCubit>().hideMenu();
         },
         isVisible: (context) {
-          // TODO: Check if cluster view is shown
-          return false; // Placeholder
+          final screen = context.read<ScreenCubit>();
+          return screen.state is ScreenCluster;
         },
       ),
 

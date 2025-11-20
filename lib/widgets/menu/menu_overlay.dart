@@ -1,21 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../config.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/menu_cubit.dart';
 import '../../cubits/saved_locations_cubit.dart';
-import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
-import '../../cubits/trip_cubit.dart';
 import '../../data/menu_structure.dart';
 import '../../models/menu_node.dart';
-import '../../repositories/mdb_repository.dart';
-import '../../services/settings_service.dart';
-import '../../services/toast_service.dart';
-import '../../state/carplay_availability.dart';
-import '../../state/settings.dart';
-import '../../state/vehicle.dart';
 import '../../utils/menu_navigator.dart';
 import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
@@ -35,8 +26,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   bool _showBottomScrollIndicator = true;
 
   int _selectedIndex = 0;
-  bool _showMapView = false;
-  bool _isStockUnuMdb = false; // True if running stock UNU MDB (not LibreScoot)
 
   // Data-driven menu navigation (rebuilt each frame with current state)
   late MenuNavigator _menuNav;
@@ -47,8 +36,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-
-    // Menu navigator will be initialized in build
 
     _animController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -66,30 +53,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         setState(() {});
       }
     });
-
-    _checkMdbType();
-  }
-
-  Future<void> _checkMdbType() async {
-    // Check if running stock UNU MDB by looking for version format like "v1.15.0"
-    try {
-      final mdbRepository = context.read<MDBRepository>();
-      final mdbVersion = await mdbRepository.get('system', 'mdb-version');
-
-      // Stock UNU MDB has format like "v1.15.0", LibreScoot has different structure
-      final isStockVersion = mdbVersion != null &&
-                            mdbVersion.isNotEmpty &&
-                            RegExp(r'^v\d+\.\d+\.\d+$').hasMatch(mdbVersion);
-
-      if (mounted) {
-        setState(() {
-          _isStockUnuMdb = isStockVersion;
-        });
-      }
-    } catch (e) {
-      // If we can't determine, assume not stock UNU (safer default)
-      debugPrint('Error checking MDB type: $e');
-    }
   }
 
   @override
@@ -202,7 +165,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       return MenuItem(
         title: node.title,
         type: MenuItemType.submenu,
-        submenuItems: [], // Will be built when entering
         leadingIcon: node.leadingIcon,
         onChanged: (_) => _enterSubmenu(node.id),
       );
@@ -261,12 +223,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final menu = context.watch<MenuCubit>();
-    final screen = context.read<ScreenCubit>();
-    final trip = context.read<TripCubit>();
     final theme = context.watch<ThemeCubit>(); // Watch theme for menu item updates
-    final vehicle = context.read<VehicleSync>();
-    final carplayAvailability = context.watch<CarPlayAvailabilitySync>().state;
-    final settings = SettingsSync.watch(context);
 
     // Watch for saved locations changes - menu will rebuild automatically
     context.watch<SavedLocationsCubit>();
@@ -288,9 +245,6 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
       case MenuVisible():
         if (_animController.isDismissed) {
           _resetMenuState();
-          // use a separate variable here, because we only want to set this
-          // just before we start fading in the menu
-          _showMapView = screen.state is ScreenMap;
           _animController.forward();
           // Reset scroll position and indicators when menu opens
           WidgetsBinding.instance.addPostFrameCallback((_) {
