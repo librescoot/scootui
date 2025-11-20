@@ -25,6 +25,7 @@ class AddressSelectionScreen extends StatefulWidget {
 
 class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
   final _controller = LocationDialController();
+  bool _isConfirming = false;
 
   @override
   void dispose() {
@@ -51,12 +52,16 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       child: LocationDialInput(
         length: 4,
         controller: _controller,
+        onComplete: (code) {
+          setState(() {
+            _isConfirming = true;
+          });
+        },
         onSubmit: (code) {
           final index = _fromBase32(code);
           if (index >= 0 && index < addresses.length) {
             final address = addresses[index];
             developer.log('Destination code entered: $code (index: $index, lat: ${address.latitude}, lon: ${address.longitude})', name: 'AddressSelection');
-            // Set destination via NavigationSync with address code as label
             final navigationSync = context.read<NavigationSync>();
             navigationSync.setDestination(
               address.latitude,
@@ -72,6 +77,38 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     );
   }
 
+  Widget _buildConfirmation(String code) {
+    final screenCubit = context.read<ScreenCubit>();
+    final addressCubit = context.watch<AddressCubit>();
+    final addresses = (addressCubit.state as AddressStateLoaded).addresses;
+
+    return ControlGestureDetector(
+      stream: context.read<VehicleSync>().stream,
+      onLeftPress: () {
+        setState(() {
+          _isConfirming = false;
+          _controller.reset();
+        });
+      },
+      onRightPress: () {
+        _buildDialInput(screenCubit, addresses).toString();
+        final index = _fromBase32(code);
+        if (index >= 0 && index < addresses.length) {
+          final address = addresses[index];
+          developer.log('Destination confirmed: $code (index: $index, lat: ${address.latitude}, lon: ${address.longitude})', name: 'AddressSelection');
+          final navigationSync = context.read<NavigationSync>();
+          navigationSync.setDestination(
+            address.latitude,
+            address.longitude,
+            address: code,
+          );
+          screenCubit.showMap();
+        }
+      },
+      child: LocationDialConfirmation(code: code),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenCubit = context.read<ScreenCubit>();
@@ -81,7 +118,9 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
     final child = switch (addressCubit.state) {
-      AddressStateLoaded(:final addresses) => _buildDialInput(screenCubit, addresses), // Removed mapCubit
+      AddressStateLoaded(:final addresses) => _isConfirming
+          ? _buildConfirmation(_controller.getCode())
+          : _buildDialInput(screenCubit, addresses),
       AddressStateLoading(:final message) => Center(
             child: Column(
           children: [
@@ -119,11 +158,11 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
           ),
           ControlHints(
             leftAction: switch (addressCubit.state) {
-              AddressStateLoaded() => 'Scroll',
+              AddressStateLoaded() => _isConfirming ? 'Edit' : 'Scroll',
               _ => null,
             },
             rightAction: switch (addressCubit.state) {
-              AddressStateLoaded() => 'Next',
+              AddressStateLoaded() => _isConfirming ? 'Confirm' : 'Next',
               AddressStateError() => 'Close',
               _ => null,
             },

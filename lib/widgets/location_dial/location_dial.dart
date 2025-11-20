@@ -5,20 +5,32 @@ class LocationDialController {
   final _scrollController = StreamController<ScrollAction>.broadcast();
   final _nextController = StreamController<void>.broadcast();
   final _stopScrollController = StreamController<void>.broadcast();
+  final _resetController = StreamController<void>.broadcast();
 
   Stream<ScrollAction> get scrollEvents => _scrollController.stream;
   Stream<void> get nextEvents => _nextController.stream;
   Stream<void> get stopScrollEvents => _stopScrollController.stream;
+  Stream<void> get resetEvents => _resetController.stream;
+
+  LocationDialInputState? _state;
+
+  void _attachState(LocationDialInputState state) {
+    _state = state;
+  }
 
   void scroll({bool isLongPress = false}) =>
       _scrollController.add(ScrollAction(isLongPress));
   void next() => _nextController.add(null);
   void stopScroll() => _stopScrollController.add(null);
+  void reset() => _resetController.add(null);
+
+  String getCode() => _state?.getCode() ?? '';
 
   void dispose() {
     _scrollController.close();
     _nextController.close();
     _stopScrollController.close();
+    _resetController.close();
   }
 }
 
@@ -31,6 +43,7 @@ class LocationDialInput extends StatefulWidget {
   final int length;
   final LocationDialController controller;
   final void Function(String) onSubmit;
+  final void Function(String)? onComplete;
   final void Function()? onCancel;
 
   const LocationDialInput({
@@ -38,6 +51,7 @@ class LocationDialInput extends StatefulWidget {
     required this.length,
     required this.controller,
     required this.onSubmit,
+    this.onComplete,
     this.onCancel,
   }) : assert(length >= 4 && length <= 6, 'Length must be between 4 and 6');
 
@@ -58,6 +72,7 @@ class LocationDialInputState extends State<LocationDialInput>
   @override
   void initState() {
     super.initState();
+    widget.controller._attachState(this);
     _currentValues = List.filled(widget.length, 0);
     _controllers = List.generate(
       widget.length,
@@ -83,7 +98,19 @@ class LocationDialInputState extends State<LocationDialInput>
       }
     });
     widget.controller.nextEvents.listen((_) => _handleNext());
+    widget.controller.resetEvents.listen((_) => _handleReset());
     widget.controller.stopScrollEvents.listen((_) => _stopScrolling());
+  }
+
+  String getCode() {
+    return _currentValues.map((value) => _base32Chars[value]).join();
+  }
+
+  void _handleReset() {
+    setState(() {
+      _currentValues = List.filled(widget.length, 0);
+      _currentDialIndex = 0;
+    });
   }
 
   @override
@@ -122,13 +149,9 @@ class LocationDialInputState extends State<LocationDialInput>
         _currentDialIndex++;
       });
     } else {
-      _submitCode();
+      final code = getCode();
+      widget.onComplete?.call(code);
     }
-  }
-
-  void _submitCode() {
-    final code = _currentValues.map((value) => _base32Chars[value]).join();
-    widget.onSubmit(code);
   }
 
   @override
@@ -187,6 +210,63 @@ class _DialRow extends StatelessWidget {
           animation: animations[index],
         );
       }),
+    );
+  }
+}
+
+class LocationDialConfirmation extends StatelessWidget {
+  final String code;
+
+  const LocationDialConfirmation({super.key, required this.code});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      color: isDark
+          ? Colors.black.withOpacity(0.9)
+          : Colors.white.withOpacity(0.9),
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Destination Code',
+            style: TextStyle(
+              fontSize: 18,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            code,
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 8,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Press Right Brake to Confirm',
+            style: TextStyle(
+              fontSize: 16,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Press Left Brake to Edit',
+            style: TextStyle(
+              fontSize: 16,
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
