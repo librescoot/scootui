@@ -117,6 +117,12 @@ class MapTransformAnimator {
   AnimationController? _animationController;
   Animation<MapTransform>? _animation;
 
+  // Cache for trigonometric calculations
+  double? _cachedRotation;
+  double? _cachedSin;
+  double? _cachedCos;
+  static const double _rotationCacheTolerance = 0.1; // degrees
+
   MapTransformAnimator({
     required this.mapController,
     required this.tickerProvider,
@@ -196,15 +202,29 @@ class MapTransformAnimator {
       // Project GPS position to pixel coordinates at target zoom
       final gpsPixel = camera.project(transform.center, transform.zoom);
 
-      // Calculate where center should be by rotating around GPS position
-      final rotationRad = transform.rotation * pi / 180.0;
+      // Cache trigonometric calculations to reduce CPU load on ARM
+      double sinValue, cosValue;
+      if (_cachedRotation != null &&
+          (transform.rotation - _cachedRotation!).abs() < _rotationCacheTolerance) {
+        // Use cached values if rotation hasn't changed significantly
+        sinValue = _cachedSin!;
+        cosValue = _cachedCos!;
+      } else {
+        // Calculate and cache new values
+        final rotationRad = transform.rotation * pi / 180.0;
+        sinValue = sin(rotationRad);
+        cosValue = cos(rotationRad);
+        _cachedRotation = transform.rotation;
+        _cachedSin = sinValue;
+        _cachedCos = cosValue;
+      }
 
       // Rotating offset (0, 120) by -R:
       // x' = 0*cos(R) + 120*sin(R) = 120*sin(R)
       // y' = -0*sin(R) + 120*cos(R) = 120*cos(R)
       final centerPixel = Point(
-        gpsPixel.x - transform.offset.dy * sin(rotationRad),  // offset.dy = 140
-        gpsPixel.y - transform.offset.dy * cos(rotationRad),
+        gpsPixel.x - transform.offset.dy * sinValue,  // offset.dy = 140
+        gpsPixel.y - transform.offset.dy * cosValue,
       );
 
       centerPosition = camera.unproject(centerPixel, transform.zoom);
@@ -234,5 +254,8 @@ class MapTransformAnimator {
     _animationController?.dispose();
     _animationController = null;
     _animation = null;
+    _cachedRotation = null;
+    _cachedSin = null;
+    _cachedCos = null;
   }
 }
