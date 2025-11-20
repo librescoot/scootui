@@ -72,8 +72,6 @@ class InMemoryMDBRepository implements MDBRepository {
     await Future.delayed(Duration.zero);
     _subscribers['buttons']?.remove(controller);
     await controller.close();
-
-    print('InMemoryMDBRepository: Published button event: $event');
   }
 
   @override

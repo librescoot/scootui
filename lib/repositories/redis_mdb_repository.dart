@@ -387,7 +387,6 @@ class RedisMDBRepository implements MDBRepository {
   @override
   Future<void> publishButtonEvent(String event) {
     return _withConnection((cmd) {
-      print('RedisMDBRepository: Publishing button event: $event');
       return cmd.send_object(["PUBLISH", "buttons", event]);
     });
   }

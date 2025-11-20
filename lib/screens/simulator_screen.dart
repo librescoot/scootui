@@ -583,7 +583,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _publishButtonEvent(String event) async {
     try {
       await widget.repository.publishButtonEvent(event);
-      print('Published button event: $event');
     } catch (e) {
       print('Error publishing button event: $e');
     }
