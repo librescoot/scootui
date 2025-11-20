@@ -7,6 +7,7 @@ import '../cubits/saved_locations_cubit.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
+import '../globals/mdb_type.dart';
 import '../models/menu_node.dart';
 import '../services/settings_service.dart';
 import '../state/enums.dart';
@@ -38,7 +39,7 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Toggle Hazard Lights (conditional - only for stock UNU MDB)
+      // Toggle Hazard Lights (only show for stock UNU MDB)
       MenuNode.action(
         id: 'hazard_lights',
         title: 'Toggle Hazard Lights',
@@ -46,10 +47,7 @@ MenuNode buildMenuTree(BuildContext context) {
           context.read<VehicleSync>().toggleHazardLights();
           context.read<MenuCubit>().hideMenu();
         },
-        isVisible: (context) {
-          // TODO: Check if stock UNU MDB
-          return false; // Placeholder
-        },
+        isVisible: (context) => isStockUnuMdb.value,
       ),
 
       // Switch to Cluster View (conditional - only show when on map)
@@ -90,7 +88,7 @@ MenuNode buildMenuTree(BuildContext context) {
             id: 'nav_enter_code',
             title: 'Enter Destination Code',
             onAction: (context) {
-              // TODO: Implement destination code entry
+              context.read<ScreenCubit>().showAddressSelection();
               context.read<MenuCubit>().hideMenu();
             },
           ),
