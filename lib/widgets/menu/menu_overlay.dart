@@ -7,8 +7,10 @@ import '../../cubits/saved_locations_cubit.dart';
 import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
+import '../../services/settings_service.dart';
 import '../../services/toast_service.dart';
 import '../../state/carplay_availability.dart';
+import '../../state/settings.dart';
 import '../general/control_gestures_detector.dart';
 import 'menu_item.dart';
 
@@ -312,6 +314,42 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     ];
   }
 
+  List<MenuItem> _buildBatteryDisplaySubmenu(BuildContext context, SettingsData settings) {
+    final currentMode = settings.batteryDisplayMode ?? 'percentage';
+
+    return [
+      MenuItem(
+        title: '< Back',
+        type: MenuItemType.action,
+        onChanged: (_) {
+          _exitSubmenu();
+        },
+      ),
+      MenuItem(
+        title: 'Percentage',
+        type: MenuItemType.action,
+        currentValue: currentMode == 'percentage' ? 1 : 0,
+        onChanged: (_) async {
+          await context.read<SettingsService>().updateBatteryDisplayModeSetting('percentage');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+      MenuItem(
+        title: 'Range (km)',
+        type: MenuItemType.action,
+        currentValue: currentMode == 'range' ? 1 : 0,
+        onChanged: (_) async {
+          await context.read<SettingsService>().updateBatteryDisplayModeSetting('range');
+          if (context.mounted) {
+            context.read<MenuCubit>().hideMenu();
+          }
+        },
+      ),
+    ];
+  }
+
   List<MenuItem> _buildCurrentMenuItems(
     BuildContext context,
     MenuCubit menu,
@@ -320,6 +358,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     ThemeCubit theme,
     VehicleSync vehicle,
     CarPlayAvailabilityData carplayAvailability,
+    SettingsData settings,
   ) {
     // If we're in a submenu, return the current submenu items
     if (_isInSubmenu && _menuStack.isNotEmpty) {
@@ -386,6 +425,12 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
         submenuId: SubmenuType.theme,
       ),
       MenuItem(
+        title: 'Battery Display',
+        type: MenuItemType.submenu,
+        submenuItems: _buildBatteryDisplaySubmenu(context, settings),
+        submenuId: SubmenuType.other,
+      ),
+      MenuItem(
         title: 'Reset Trip Statistics',
         type: MenuItemType.action,
         onChanged: (_) {
@@ -409,6 +454,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final theme = context.read<ThemeCubit>();
     final vehicle = context.read<VehicleSync>();
     final carplayAvailability = context.watch<CarPlayAvailabilitySync>().state;
+    final settings = SettingsSync.watch(context);
 
     // Watch for saved locations changes and refresh submenu if needed
     context.watch<SavedLocationsCubit>();
@@ -462,7 +508,7 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     // Use the proper isDark getter that handles auto mode
     final isDark = theme.state.isDark;
 
-    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle, carplayAvailability);
+    final items = _buildCurrentMenuItems(context, menu, screen, trip, theme, vehicle, carplayAvailability, settings);
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,

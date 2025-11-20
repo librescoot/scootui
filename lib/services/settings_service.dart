@@ -375,6 +375,18 @@ class SettingsService {
     _settingsController.add(_settings);
   }
 
+  /// Updates the battery display mode setting
+  Future<void> updateBatteryDisplayModeSetting(String mode) async {
+    debugPrint('🔧 SettingsService: Updating battery display mode setting to $mode');
+    _settings[AppConfig.batteryDisplayModeKey] = mode;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.batteryDisplayModeKey, mode);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
   /// Updates the Valhalla endpoint setting
   Future<void> updateValhallaEndpointSetting(String url) async {
     debugPrint('🔧 SettingsService: Updating Valhalla endpoint setting to $url');

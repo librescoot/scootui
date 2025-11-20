@@ -15,6 +15,9 @@ class AppConfig {
   /// Redis show raw speed setting key
   static const String showRawSpeedKey = 'dashboard.show-raw-speed';
 
+  /// Redis battery display mode setting key
+  static const String batteryDisplayModeKey = 'dashboard.battery-display-mode';
+
   /// Redis settings cluster for persistent settings
   static const String redisSettingsPersistentCluster = 'settings';
 
@@ -35,4 +38,7 @@ class AppConfig {
 
   /// Auto theme dark threshold (lux) - switch to dark theme below this value
   static const double autoThemeDarkThreshold = 15.0;
+
+  /// Maximum battery range in kilometers at 100% SOC and 100% SOH
+  static const double maxBatteryRangeKm = 45.0;
 }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../config.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../services/toast_service.dart';
 import '../../state/aux_battery.dart';
 import '../../state/battery.dart';
 import '../../state/cb_battery.dart';
+import '../../state/settings.dart';
 import '../../state/vehicle.dart';
 import '../../utils/condition_debouncer.dart';
 import '../../utils/fault_codes.dart';
@@ -30,10 +32,64 @@ class BatteryStatusDisplay extends StatelessWidget {
 
   const BatteryStatusDisplay({super.key, required this.battery});
 
+  Widget _buildLabel(String labelText, Color textColor, bool showAsRange) {
+    if (!showAsRange) {
+      return Text(
+        labelText,
+        textAlign: TextAlign.left,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -1.1,
+          color: textColor,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      );
+    }
+
+    // Calculate range: 45km * SOH * SOC
+    final rangeKm = AppConfig.maxBatteryRangeKm *
+        (battery.stateOfHealth / 100.0) *
+        (battery.charge / 100.0);
+
+    // Show integers for range >= 10km, one decimal for < 10km
+    final rangeString = rangeKm >= 10.0
+        ? rangeKm.round().toString()
+        : rangeKm.toStringAsFixed(1);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          rangeString,
+          textAlign: TextAlign.left,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -1.1,
+            color: textColor,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        const SizedBox(width: 2),
+        Text(
+          'km',
+          style: TextStyle(
+            fontSize: 12,
+            color: textColor.withOpacity(0.54),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get theme information
     final ThemeState(:isDark) = ThemeCubit.watch(context);
+    final settings = SettingsSync.watch(context);
 
     final normalColor = isDark ? Colors.white : Colors.black;
 
@@ -240,17 +296,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         finalIcon,
         if (labelText != null) ...[
           const SizedBox(width: 2),
-          Text(
-            labelText,
-            textAlign: TextAlign.left,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -1.1,
-              color: textColor,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
+          _buildLabel(labelText, textColor, settings.showBatteryAsRange),
         ],
       ],
     );

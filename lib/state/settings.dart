@@ -11,6 +11,10 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   String? showRawSpeed;
 
   @override
+  @StateField(name: 'dashboard.battery-display-mode', defaultValue: 'percentage')
+  String? batteryDisplayMode;
+
+  @override
   @StateField(name: 'dashboard.show-gps', defaultValue: 'error')
   String? showGps;
 
@@ -41,6 +45,7 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   // Constructor for initial values
   SettingsData({
     this.showRawSpeed,
+    this.batteryDisplayMode,
     this.showGps,
     this.showBluetooth,
     this.showCloud,
@@ -54,4 +59,5 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   factory SettingsData.initial() => SettingsData();
 
   bool get showRawSpeedBool => showRawSpeed == 'true';
+  bool get showBatteryAsRange => batteryDisplayMode == 'range';
 }

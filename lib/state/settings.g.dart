@@ -18,6 +18,7 @@ final $_MapRenderModeMap = {
 
 abstract mixin class $SettingsData implements Syncable<SettingsData> {
   String? get showRawSpeed;
+  String? get batteryDisplayMode;
   String? get showGps;
   String? get showBluetooth;
   String? get showCloud;
@@ -35,6 +36,13 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             type: SyncFieldType.string,
             typeName: "String?",
             defaultValue: "false",
+            interval: null),
+        SyncFieldSettings(
+            name: "batteryDisplayMode",
+            variable: "dashboard.battery-display-mode",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "percentage",
             interval: null),
         SyncFieldSettings(
             name: "showGps",
@@ -93,6 +101,8 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   SettingsData update(String name, String value) {
     return SettingsData(
       showRawSpeed: "dashboard.show-raw-speed" != name ? showRawSpeed : value,
+      batteryDisplayMode:
+          "dashboard.battery-display-mode" != name ? batteryDisplayMode : value,
       showGps: "dashboard.show-gps" != name ? showGps : value,
       showBluetooth: "dashboard.show-bluetooth" != name ? showBluetooth : value,
       showCloud: "dashboard.show-cloud" != name ? showCloud : value,
@@ -111,6 +121,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   SettingsData updateSet(String name, Set<dynamic> value) {
     return SettingsData(
       showRawSpeed: showRawSpeed,
+      batteryDisplayMode: batteryDisplayMode,
       showGps: showGps,
       showBluetooth: showBluetooth,
       showCloud: showCloud,
@@ -123,6 +134,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
 
   List<Object?> get props => [
         showRawSpeed,
+        batteryDisplayMode,
         showGps,
         showBluetooth,
         showCloud,
@@ -137,6 +149,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
 
     buf.writeln("SettingsData(");
     buf.writeln("	showRawSpeed = $showRawSpeed");
+    buf.writeln("	batteryDisplayMode = $batteryDisplayMode");
     buf.writeln("	showGps = $showGps");
     buf.writeln("	showBluetooth = $showBluetooth");
     buf.writeln("	showCloud = $showCloud");
