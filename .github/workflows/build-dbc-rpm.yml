@@ -49,28 +49,6 @@ jobs:
           mkdir -p yocto
           sudo chown 999:999 yocto
 
-      - name: Setup custom entrypoint script with version update
-        working-directory: librescoot
-        run: |
-          # Copy custom entrypoint script from scootui repository
-          cp ../scootui/docker-entrypoint-with-version-update.sh docker/entrypoint-with-version-update.sh
-          chmod +x docker/entrypoint-with-version-update.sh
-
-          echo "=== DEBUG: Checking if custom entrypoint was copied ==="
-          ls -la docker/entrypoint*
-
-          # Replace the original entrypoint with our custom one in the docker directory
-          # This ensures the Docker build uses our custom script
-          cp docker/entrypoint-with-version-update.sh docker/entrypoint.sh
-
-          echo "=== DEBUG: Verifying entrypoint.sh contains our custom logic ==="
-          grep -n "SCOOTUI_VERSION_UPDATE" docker/entrypoint.sh || echo "ERROR: Custom logic not found in entrypoint.sh"
-
-          echo "=== DEBUG: Checking build.sh content before modification ==="
-          grep "docker/entrypoint" build.sh || echo "No entrypoint references found"
-
-          echo "Custom entrypoint script setup complete"
-
       - name: Detect scootui branch and commit
         id: scootui-ref
         working-directory: scootui
@@ -132,8 +110,6 @@ jobs:
           BUILD_CHANNEL="nightly" \
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
-          SCOOTUI_SRCREV="${{ steps.scootui-ref.outputs.commit }}" \
-          SCOOTUI_BRANCH="${{ steps.scootui-ref.outputs.branch }}" \
           PACKAGE="scootui" \
           ./build.sh dbc
 
