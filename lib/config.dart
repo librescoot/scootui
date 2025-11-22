@@ -18,6 +18,12 @@ class AppConfig {
   /// Redis battery display mode setting key
   static const String batteryDisplayModeKey = 'dashboard.battery-display-mode';
 
+  /// Redis map type setting key
+  static const String mapTypeKey = 'dashboard.map.type';
+
+  /// Redis map render mode setting key
+  static const String mapRenderModeKey = 'dashboard.map.render-mode';
+
   /// Redis settings cluster for persistent settings
   static const String redisSettingsPersistentCluster = 'settings';
 

@@ -400,6 +400,95 @@ class SettingsService {
     _settingsController.add(_settings);
   }
 
+  /// Updates the GPS indicator display setting
+  Future<void> updateShowGpsSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating show GPS setting to $value');
+    const key = 'dashboard.show-gps';
+    _settings[key] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the Bluetooth indicator display setting
+  Future<void> updateShowBluetoothSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating show Bluetooth setting to $value');
+    const key = 'dashboard.show-bluetooth';
+    _settings[key] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the Cloud indicator display setting
+  Future<void> updateShowCloudSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating show Cloud setting to $value');
+    const key = 'dashboard.show-cloud';
+    _settings[key] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the Internet indicator display setting
+  Future<void> updateShowInternetSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating show Internet setting to $value');
+    const key = 'dashboard.show-internet';
+    _settings[key] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the Clock display setting
+  Future<void> updateShowClockSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating show Clock setting to $value');
+    const key = 'dashboard.show-clock';
+    _settings[key] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the map type setting
+  Future<void> updateMapTypeSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating map type setting to $value');
+    _settings[AppConfig.mapTypeKey] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.mapTypeKey, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Updates the map render mode setting
+  Future<void> updateMapRenderModeSetting(String value) async {
+    debugPrint('🔧 SettingsService: Updating map render mode setting to $value');
+    _settings[AppConfig.mapRenderModeKey] = value;
+
+    // Save to persistent settings Redis
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.mapRenderModeKey, value);
+
+    // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
   /// Dispose the stream controller
   void dispose() {
     _settingsController.close();
