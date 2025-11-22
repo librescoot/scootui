@@ -134,9 +134,9 @@ jobs:
           # Clean up any existing container from previous runs
           sudo docker rm -f yocto-build 2>/dev/null || true
 
-          # First clean scootui shared state to ensure correct Flutter SDK version
-          echo "=== Cleaning scootui shared state ==="
-          PACKAGE="scootui" TASK="cleansstate" ./build.sh dbc || true
+          # Clean flutter-engine and scootui shared state to ensure correct Flutter SDK version
+          echo "=== Cleaning flutter-engine and scootui shared state ==="
+          PACKAGE="flutter-engine scootui" TASK="cleansstate" ./build.sh dbc || true
 
           # Clean up container after cleansstate
           sudo docker rm -f yocto-build 2>/dev/null || true
