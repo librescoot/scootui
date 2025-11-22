@@ -116,12 +116,6 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
 
-          # Add TASK variable support to build.sh
-          sed -i 's/-e SCOOTUI_BRANCH="${SCOOTUI_BRANCH}"/-e SCOOTUI_BRANCH="${SCOOTUI_BRANCH}" -e TASK="${TASK}"/' build.sh
-
-          # Modify entrypoint to support TASK variable for running bitbake -c <task>
-          sed -i 's/bitbake "${PACKAGE}" --continue/if [ -n "${TASK}" ]; then bitbake -c ${TASK} ${PACKAGE}; else bitbake "${PACKAGE}" --continue; fi/' docker/entrypoint.sh
-
           echo "=== DEBUG: Environment variables to be passed ==="
           echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
           echo "SCOOTUI_VERSION_UPDATE=0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}"
@@ -134,14 +128,8 @@ jobs:
           # Clean up any existing container from previous runs
           sudo docker rm -f yocto-build 2>/dev/null || true
 
-          # Clean flutter-engine and scootui shared state to ensure correct Flutter SDK version
-          echo "=== Cleaning flutter-engine and scootui shared state ==="
-          PACKAGE="flutter-engine scootui" TASK="cleansstate" ./build.sh dbc || true
-
-          # Clean up container after cleansstate
-          sudo docker rm -f yocto-build 2>/dev/null || true
-
           # Build only the scootui package for DBC target with version update and branch
+          BUILD_CHANNEL="nightly" \
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_SRCREV="${{ steps.scootui-ref.outputs.commit }}" \
