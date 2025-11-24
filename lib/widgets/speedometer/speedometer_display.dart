@@ -9,11 +9,13 @@ import '../../state/settings.dart';
 import '../indicators/speed_limit_indicator.dart';
 
 class SpeedometerDisplay extends StatefulWidget {
-  final double maxSpeed;
+  final double maxArcSpeed;
+  final double colorTransitionStartSpeed;
 
   const SpeedometerDisplay({
     super.key,
-    this.maxSpeed = 60.0,
+    this.maxArcSpeed = 60.0,
+    this.colorTransitionStartSpeed = 55.0,
   });
 
   @override
@@ -23,12 +25,14 @@ class SpeedometerDisplay extends StatefulWidget {
 class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProviderStateMixin {
   late AnimationController _speedController;
   late AnimationController _colorController;
+  late AnimationController _overspeedPulseController;
   late Animation<Color?> _colorAnimation;
 
   double _lastSpeed = 0.0;
   double _animationStartSpeed = 0.0;
   double _targetSpeed = 0.0;
   bool _isRegenerating = false;
+  bool _isOverSpeed = false;
 
   @override
   void initState() {
@@ -61,6 +65,14 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     )..addListener(() {
         if (mounted) setState(() {});
       });
+
+    // Overspeed pulse animation controller (repeating pulse)
+    _overspeedPulseController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
   }
 
   @override
@@ -76,6 +88,12 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       _colorController.dispose();
     } catch (e) {
       print("SpeedometerDisplay: Error disposing color controller: $e");
+    }
+
+    try {
+      _overspeedPulseController.dispose();
+    } catch (e) {
+      print("SpeedometerDisplay: Error disposing overspeed pulse controller: $e");
     }
 
     super.dispose();
@@ -117,6 +135,24 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       // Start color animation
       _colorController.reset();
       _colorController.forward();
+    }
+
+    // Check if speed is outside the arc range
+    final bool isOverSpeed = speed > widget.maxArcSpeed;
+
+    if (_isOverSpeed != isOverSpeed) {
+      setState(() {
+        _isOverSpeed = isOverSpeed;
+      });
+
+      if (_isOverSpeed) {
+        // Start pulsing animation when over speed
+        _overspeedPulseController.repeat(reverse: true);
+      } else {
+        // Stop pulsing when back under speed limit
+        _overspeedPulseController.stop();
+        _overspeedPulseController.reset();
+      }
     }
 
     // If the speed has changed and we're not currently animating
@@ -163,11 +199,15 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         CustomPaint(
           size: const Size(300, 240), // Width: full diameter, Height: reduced to visual arc bounds
           painter: _SpeedometerPainter(
-            progress: animatedSpeed / widget.maxSpeed,
+            progress: math.min(animatedSpeed / widget.maxArcSpeed, 1.0),
             isDark: theme.isDark,
             isRegenerating: _isRegenerating,
             backgroundColor: backgroundColor,
-            maxSpeed: widget.maxSpeed,
+            maxArcSpeed: widget.maxArcSpeed,
+            animatedSpeed: animatedSpeed,
+            colorTransitionStartSpeed: widget.colorTransitionStartSpeed,
+            isOverSpeed: animatedSpeed > widget.maxArcSpeed,
+            overspeedPulseValue: _overspeedPulseController.value,
           ),
         ),
         // Speed display and indicators
@@ -248,7 +288,11 @@ class _SpeedometerPainter extends CustomPainter {
   final bool isDark;
   final bool isRegenerating;
   final Color backgroundColor;
-  final double maxSpeed;
+  final double maxArcSpeed;
+  final double animatedSpeed;
+  final double colorTransitionStartSpeed;
+  final bool isOverSpeed;
+  final double overspeedPulseValue;
   static const double _startAngle = 150 * math.pi / 180;
   static const double _sweepAngle = 240 * math.pi / 180;
 
@@ -257,7 +301,11 @@ class _SpeedometerPainter extends CustomPainter {
     required this.isDark,
     required this.isRegenerating,
     required this.backgroundColor,
-    required this.maxSpeed,
+    required this.maxArcSpeed,
+    required this.animatedSpeed,
+    required this.colorTransitionStartSpeed,
+    required this.isOverSpeed,
+    required this.overspeedPulseValue,
   });
 
   @override
@@ -284,8 +332,23 @@ class _SpeedometerPainter extends CustomPainter {
 
     // Speed arc
     if (progress > 0) {
+      Color arcColor;
+      if (isOverSpeed) {
+        // Pulse between purple and pink when over speed
+        final pulseIntensity = (math.sin(overspeedPulseValue * math.pi * 2) + 1) / 2;
+        arcColor = Color.lerp(Colors.purple, Colors.pink, pulseIntensity) ?? Colors.purple;
+      } else if (animatedSpeed >= colorTransitionStartSpeed) {
+        // Gradually transition from blue to purple starting at colorTransitionStartSpeed
+        final transitionRange = maxArcSpeed - colorTransitionStartSpeed;
+        final transitionProgress = (animatedSpeed - colorTransitionStartSpeed) / transitionRange;
+        final clampedProgress = math.min(transitionProgress, 1.0);
+        arcColor = Color.lerp(Colors.blue, Colors.purple, clampedProgress) ?? Colors.blue;
+      } else {
+        arcColor = Colors.blue;
+      }
+
       final speedPaint = Paint()
-        ..color = Colors.blue
+        ..color = arcColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round;
@@ -314,16 +377,16 @@ class _SpeedometerPainter extends CustomPainter {
 
     final minorSpeedStep = 5.0; // 5 km/h per tick
     final majorSpeedStep = 10.0; // 10 km/h per major tick
-    final totalTicks = (maxSpeed / minorSpeedStep).ceil() + 1;
+    final totalTicks = (maxArcSpeed / minorSpeedStep).ceil() + 1;
 
     for (int i = 0; i <= totalTicks; i++) {
       final speedValue = (i * minorSpeedStep).toInt();
       final isMajorTick = speedValue % majorSpeedStep == 0;
 
-      // Skip if speed value would exceed maxSpeed
-      if (speedValue > maxSpeed) continue;
+      // Skip if speed value would exceed max arc range
+      if (speedValue > maxArcSpeed) continue;
 
-      final angle = _startAngle + (speedValue / maxSpeed) * _sweepAngle;
+      final angle = _startAngle + (speedValue / maxArcSpeed) * _sweepAngle;
       final tickLength = isMajorTick ? 8.0 : 4.0;
       final tickWidth = isMajorTick ? 1.5 : 1.0;
 
@@ -342,13 +405,13 @@ class _SpeedometerPainter extends CustomPainter {
   }
 
   void _drawSpeedLabels(Canvas canvas, Offset center, double radius, bool isDark) {
-    final labelSpeeds = [0.0, 30.0, 50.0];
+    final labelSpeeds = [0.0, 30.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 120.0];
 
     for (final speed in labelSpeeds) {
-      // Skip if speed exceeds maxSpeed
-      if (speed > maxSpeed) continue;
+      // Skip if speed exceeds arc range
+      if (speed > maxArcSpeed) continue;
 
-      final angle = _startAngle + (speed / maxSpeed) * _sweepAngle;
+      final angle = _startAngle + (speed / maxArcSpeed) * _sweepAngle;
 
       // Position label close to the ticks, just inside them
       final labelPosition = Offset(
@@ -386,6 +449,10 @@ class _SpeedometerPainter extends CustomPainter {
     return oldDelegate.progress != progress ||
         oldDelegate.isDark != isDark ||
         oldDelegate.isRegenerating != isRegenerating ||
-        oldDelegate.backgroundColor != backgroundColor;
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.animatedSpeed != animatedSpeed ||
+        oldDelegate.colorTransitionStartSpeed != colorTransitionStartSpeed ||
+        oldDelegate.isOverSpeed != isOverSpeed ||
+        oldDelegate.overspeedPulseValue != overspeedPulseValue;
   }
 }
