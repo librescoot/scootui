@@ -38,6 +38,8 @@ class ToastUtils {
       ),
       duration: duration,
       position: ToastPosition.center, // Use center and align manually
+      animationCurve: Curves.easeInOut,
+      animationDuration: const Duration(milliseconds: 300),
     );
   }
 
@@ -75,6 +77,8 @@ class ToastUtils {
       ),
       duration: const Duration(days: 365),
       position: ToastPosition.center,
+      animationCurve: Curves.easeInOut,
+      animationDuration: const Duration(milliseconds: 300),
     );
   }
 
