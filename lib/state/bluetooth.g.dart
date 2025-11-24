@@ -15,6 +15,9 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
   ConnectionStatus get status;
   String get macAddress;
   String get pinCode;
+  String get serviceHealth;
+  String get serviceError;
+  String get lastUpdate;
   get syncSettings => SyncSettings(
       "ble",
       Duration(microseconds: 5000000),
@@ -40,6 +43,27 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
             typeName: "String",
             defaultValue: null,
             interval: null),
+        SyncFieldSettings(
+            name: "serviceHealth",
+            variable: "service-health",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: null,
+            interval: null),
+        SyncFieldSettings(
+            name: "serviceError",
+            variable: "service-error",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: null,
+            interval: null),
+        SyncFieldSettings(
+            name: "lastUpdate",
+            variable: "last-update",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: null,
+            interval: null),
       ],
       "null",
       []);
@@ -52,6 +76,9 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
           : $_ConnectionStatusMap[value] ?? ConnectionStatus.disconnected,
       macAddress: "mac-address" != name ? macAddress : value,
       pinCode: "pin-code" != name ? pinCode : value,
+      serviceHealth: "service-health" != name ? serviceHealth : value,
+      serviceError: "service-error" != name ? serviceError : value,
+      lastUpdate: "last-update" != name ? lastUpdate : value,
     );
   }
 
@@ -61,10 +88,14 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
       status: status,
       macAddress: macAddress,
       pinCode: pinCode,
+      serviceHealth: serviceHealth,
+      serviceError: serviceError,
+      lastUpdate: lastUpdate,
     );
   }
 
-  List<Object?> get props => [status, macAddress, pinCode];
+  List<Object?> get props =>
+      [status, macAddress, pinCode, serviceHealth, serviceError, lastUpdate];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -73,6 +104,9 @@ abstract mixin class $BluetoothData implements Syncable<BluetoothData> {
     buf.writeln("	status = $status");
     buf.writeln("	macAddress = $macAddress");
     buf.writeln("	pinCode = $pinCode");
+    buf.writeln("	serviceHealth = $serviceHealth");
+    buf.writeln("	serviceError = $serviceError");
+    buf.writeln("	lastUpdate = $lastUpdate");
     buf.writeln(")");
 
     return buf.toString();

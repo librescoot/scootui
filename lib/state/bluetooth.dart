@@ -20,9 +20,24 @@ class BluetoothData extends Equatable with $BluetoothData {
   @StateField()
   final String pinCode;
 
+  @override
+  @StateField()
+  final String serviceHealth;
+
+  @override
+  @StateField()
+  final String serviceError;
+
+  @override
+  @StateField()
+  final String lastUpdate;
+
   BluetoothData({
     this.macAddress = "",
     this.pinCode = "",
     this.status = ConnectionStatus.disconnected,
+    this.serviceHealth = "",
+    this.serviceError = "",
+    this.lastUpdate = "",
   });
 }

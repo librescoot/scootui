@@ -20,6 +20,7 @@ class _Icons {
   static const String off = 'librescoot-internet-modem-off.svg';
   static const String bluetoothConnected = 'librescoot-bluetooth-connected.svg';
   static const String bluetoothDisconnected = 'librescoot-bluetooth-disconnected.svg';
+  static const String bluetoothError = 'librescoot-bluetooth-error.svg';
   static const String cloudConnected = 'librescoot-internet-cloud-connected.svg';
   static const String cloudDisconnected = 'librescoot-internet-cloud-disconnected.svg';
   static const String gpsOff = 'librescoot-gps-off.svg';
@@ -47,6 +48,11 @@ class StatusIndicators extends StatelessWidget {
   }
 
   String bluetoothIcon(BluetoothData bluetooth) {
+    // Show error icon if service health is bad
+    if (bluetoothHasError(bluetooth)) {
+      return _Icons.bluetoothError;
+    }
+
     return switch (bluetooth.status) {
       ConnectionStatus.connected => _Icons.bluetoothConnected,
       ConnectionStatus.disconnected => _Icons.bluetoothDisconnected,
@@ -99,6 +105,31 @@ class StatusIndicators extends StatelessWidget {
     return bluetooth.status == ConnectionStatus.connected;
   }
 
+  bool bluetoothHasError(BluetoothData bluetooth) {
+    // Check if service explicitly reports error state
+    if (bluetooth.serviceHealth == 'error') {
+      return true;
+    }
+
+    // Check if heartbeat is stale (service crashed/hung)
+    if (bluetooth.lastUpdate.isNotEmpty) {
+      try {
+        final lastUpdateTimestamp = int.parse(bluetooth.lastUpdate);
+        final now = DateTime.now().millisecondsSinceEpoch ~/ 1000; // Unix timestamp in seconds
+        const staleThresholdSeconds = 30; // Consider stale if no update in 30 seconds
+
+        if (now - lastUpdateTimestamp > staleThresholdSeconds) {
+          return true;
+        }
+      } catch (e) {
+        // If we can't parse the timestamp, treat as error
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   bool cloudIsActive(InternetData internet) {
     return internet.unuCloud == ConnectionStatus.connected;
   }
@@ -145,7 +176,7 @@ class StatusIndicators extends StatelessWidget {
       ));
     }
 
-    if (shouldShowIndicator(settings.showBluetooth ?? 'active-or-error', bluetoothIsActive(bluetooth), false)) {
+    if (shouldShowIndicator(settings.showBluetooth ?? 'active-or-error', bluetoothIsActive(bluetooth), bluetoothHasError(bluetooth))) {
       children.add(IndicatorLight(
         icon: IndicatorLight.svgAsset(bluetoothIcon(bluetooth)),
         isActive: true,
