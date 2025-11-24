@@ -8,6 +8,8 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
 import '../env_config.dart';
+import '../services/toast_service.dart';
+import '../state/bluetooth.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/hibernation/manual_hibernation_overlay.dart';
@@ -35,6 +37,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   ScooterState? _lastVehicleState;
   bool _poweroffScheduled = false;
+  bool _bluetoothWasError = false;
 
   @override
   Widget build(BuildContext context) {
@@ -124,12 +127,33 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    return SizedBox(
-      width: EnvConfig.resolution.width,
-      height: EnvConfig.resolution.height,
-      child: OKToast(
-        child: Stack(
-          children: [
+    return BlocListener<BluetoothSync, BluetoothData>(
+      listenWhen: (previous, current) {
+        // Only listen when error state changes
+        final wasError = _isBluetoothError(previous);
+        final isError = _isBluetoothError(current);
+        return wasError != isError;
+      },
+      listener: (context, bluetooth) {
+        final isError = _isBluetoothError(bluetooth);
+
+        debugPrint('BLE Health: isError=$isError, health=${bluetooth.serviceHealth}, error=${bluetooth.serviceError}');
+
+        // Show toast when transitioning to error state
+        if (isError) {
+          final errorMessage = bluetooth.serviceError.isNotEmpty
+              ? bluetooth.serviceError
+              : 'Bluetooth service communication error';
+          debugPrint('BLE: Showing error toast: $errorMessage');
+          ToastService.showError('Bluetooth: $errorMessage');
+        }
+      },
+      child: SizedBox(
+        width: EnvConfig.resolution.width,
+        height: EnvConfig.resolution.height,
+        child: OKToast(
+          child: Stack(
+            children: [
             switch (state) {
               // Map, cluster, and CarPlay screens allow menu access
               ScreenMap() => menuTrigger(const MapScreen()),
@@ -162,6 +186,32 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
+    ),
     );
+  }
+
+  bool _isBluetoothError(BluetoothData bluetooth) {
+    // Check if service explicitly reports error state
+    if (bluetooth.serviceHealth == 'error') {
+      return true;
+    }
+
+    // Check if heartbeat is stale (service crashed/hung)
+    if (bluetooth.lastUpdate.isNotEmpty) {
+      try {
+        final lastUpdateTimestamp = int.parse(bluetooth.lastUpdate);
+        final now = DateTime.now().millisecondsSinceEpoch ~/ 1000; // Unix timestamp in seconds
+        const staleThresholdSeconds = 30; // Consider stale if no update in 30 seconds
+
+        if (now - lastUpdateTimestamp > staleThresholdSeconds) {
+          return true;
+        }
+      } catch (e) {
+        // If we can't parse the timestamp, treat as error
+        return true;
+      }
+    }
+
+    return false;
   }
 }

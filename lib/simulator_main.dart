@@ -12,6 +12,7 @@ import 'env_config.dart';
 import 'repositories/all.dart';
 import 'repositories/mdb_repository.dart';
 import 'screens/simulator_screen.dart';
+import 'widgets/toast_listener_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,15 +89,17 @@ class SimulatorApp extends StatelessWidget {
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, state) {
-            return MaterialApp(
-              title: 'Cluster Simulator',
-              theme: state.lightTheme,
-              darkTheme: state.darkTheme,
-              themeMode: state.themeMode,
-              debugShowCheckedModeBanner: false,
-              home: Builder(
-                builder: (context) => SimulatorScreen(
-                  repository: context.read<MDBRepository>(),
+            return ToastListenerWrapper(
+              child: MaterialApp(
+                title: 'Cluster Simulator',
+                theme: state.lightTheme,
+                darkTheme: state.darkTheme,
+                themeMode: state.themeMode,
+                debugShowCheckedModeBanner: false,
+                home: Builder(
+                  builder: (context) => SimulatorScreen(
+                    repository: context.read<MDBRepository>(),
+                  ),
                 ),
               ),
             );
