@@ -26,6 +26,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   late AnimationController _speedController;
   late AnimationController _colorController;
   late AnimationController _overspeedPulseController;
+  late AnimationController _accelerationPulseController;
   late Animation<Color?> _colorAnimation;
 
   double _lastSpeed = 0.0;
@@ -33,6 +34,9 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   double _targetSpeed = 0.0;
   bool _isRegenerating = false;
   bool _isOverSpeed = false;
+  bool _isAccelerating = false;
+  bool _lastAccelerationState = false;
+  int _accelerationDebounceFrames = 0;
 
   @override
   void initState() {
@@ -40,7 +44,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
     // Speed animation controller
     _speedController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     )
       ..addListener(() {
@@ -60,7 +64,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
     // Color animation controller
     _colorController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..addListener(() {
         if (mounted) setState(() {});
@@ -69,6 +73,14 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     // Overspeed pulse animation controller (repeating pulse)
     _overspeedPulseController = AnimationController(
       duration: const Duration(milliseconds: 800),
+      vsync: this,
+    )..addListener(() {
+        if (mounted) setState(() {});
+      });
+
+    // Acceleration pulse animation controller (subtle pulse while accelerating)
+    _accelerationPulseController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..addListener(() {
         if (mounted) setState(() {});
@@ -94,6 +106,12 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       _overspeedPulseController.dispose();
     } catch (e) {
       print("SpeedometerDisplay: Error disposing overspeed pulse controller: $e");
+    }
+
+    try {
+      _accelerationPulseController.dispose();
+    } catch (e) {
+      print("SpeedometerDisplay: Error disposing acceleration pulse controller: $e");
     }
 
     super.dispose();
@@ -155,6 +173,37 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       }
     }
 
+    // Check if we're accelerating (positive motor current, not regenerating)
+    final bool isAccelerating = engineData.motorCurrent > 0 && !regenerating;
+
+    // Debounce acceleration state changes to prevent animation restarts
+    if (isAccelerating != _lastAccelerationState) {
+      _accelerationDebounceFrames++;
+      if (_accelerationDebounceFrames >= 3) {
+        // Only update state after 3 consecutive frames of the same state
+        _lastAccelerationState = isAccelerating;
+        _accelerationDebounceFrames = 0;
+
+        if (_isAccelerating != isAccelerating) {
+          setState(() {
+            _isAccelerating = isAccelerating;
+          });
+
+          if (_isAccelerating) {
+            // Start pulsing animation when accelerating
+            _accelerationPulseController.repeat(reverse: true);
+          } else {
+            // Stop pulsing when not accelerating
+            _accelerationPulseController.stop();
+            _accelerationPulseController.reset();
+          }
+        }
+      }
+    } else {
+      // Reset debounce counter if state is stable
+      _accelerationDebounceFrames = 0;
+    }
+
     // If the speed has changed and we're not currently animating
     if (speed != _targetSpeed && !_speedController.isAnimating) {
       // Store the starting point (current displayed value) and target
@@ -171,7 +220,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
     if (_speedController.isAnimating) {
       // Apply easing curve for smooth motion
-      final curvedValue = Curves.easeOutCubic.transform(_speedController.value);
+      final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
       animatedSpeed = _animationStartSpeed + (curvedValue * (_targetSpeed - _animationStartSpeed));
     } else {
       // Not animating, use the last stable value
@@ -208,6 +257,8 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
             colorTransitionStartSpeed: widget.colorTransitionStartSpeed,
             isOverSpeed: animatedSpeed > widget.maxArcSpeed,
             overspeedPulseValue: _overspeedPulseController.value,
+            isAccelerating: _isAccelerating,
+            accelerationPulseValue: _accelerationPulseController.value,
           ),
         ),
         // Speed display and indicators
@@ -236,15 +287,15 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
                 text: TextSpan(
                   text: 'km/h',
                   style: TextStyle(
-                    fontSize: 24,
-                    height: 0.95,
-                    color: theme.isDark ? Colors.white70 : Colors.black54,
+                    fontSize: 22,
+                    height: 0.9,
+                    color: theme.isDark ? Colors.white60 : Colors.black54,
                   ),
                 ),
               ),
 
               // Speed limit indicator
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -293,6 +344,8 @@ class _SpeedometerPainter extends CustomPainter {
   final double colorTransitionStartSpeed;
   final bool isOverSpeed;
   final double overspeedPulseValue;
+  final bool isAccelerating;
+  final double accelerationPulseValue;
   static const double _startAngle = 150 * math.pi / 180;
   static const double _sweepAngle = 240 * math.pi / 180;
 
@@ -306,6 +359,8 @@ class _SpeedometerPainter extends CustomPainter {
     required this.colorTransitionStartSpeed,
     required this.isOverSpeed,
     required this.overspeedPulseValue,
+    required this.isAccelerating,
+    required this.accelerationPulseValue,
   });
 
   @override
@@ -342,9 +397,26 @@ class _SpeedometerPainter extends CustomPainter {
         final transitionRange = maxArcSpeed - colorTransitionStartSpeed;
         final transitionProgress = (animatedSpeed - colorTransitionStartSpeed) / transitionRange;
         final clampedProgress = math.min(transitionProgress, 1.0);
-        arcColor = Color.lerp(Colors.blue, Colors.purple, clampedProgress) ?? Colors.blue;
+        var baseColor = Color.lerp(Colors.blue, Colors.purple, clampedProgress) ?? Colors.blue;
+
+        // Apply acceleration pulse if accelerating
+        if (isAccelerating) {
+          final accelPulseIntensity = (math.sin(accelerationPulseValue * math.pi * 2) + 1) / 2;
+          // Create a slightly lighter version of the base color (very subtle)
+          final slightlyLighterColor = baseColor.withOpacity(0.96);
+          arcColor = Color.lerp(baseColor, slightlyLighterColor, accelPulseIntensity) ?? baseColor;
+        } else {
+          arcColor = baseColor;
+        }
       } else {
-        arcColor = Colors.blue;
+        // Below transition speed - blue
+        if (isAccelerating) {
+          // Pulse between blue and a slightly lighter blue when accelerating
+          final accelPulseIntensity = (math.sin(accelerationPulseValue * math.pi * 2) + 1) / 2;
+          arcColor = Color.lerp(Colors.blue, Colors.blue.shade400, accelPulseIntensity) ?? Colors.blue;
+        } else {
+          arcColor = Colors.blue;
+        }
       }
 
       final speedPaint = Paint()
@@ -453,6 +525,8 @@ class _SpeedometerPainter extends CustomPainter {
         oldDelegate.animatedSpeed != animatedSpeed ||
         oldDelegate.colorTransitionStartSpeed != colorTransitionStartSpeed ||
         oldDelegate.isOverSpeed != isOverSpeed ||
-        oldDelegate.overspeedPulseValue != overspeedPulseValue;
+        oldDelegate.overspeedPulseValue != overspeedPulseValue ||
+        oldDelegate.isAccelerating != isAccelerating ||
+        oldDelegate.accelerationPulseValue != accelerationPulseValue;
   }
 }
