@@ -424,6 +424,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('engine-ecu', 'speed', _simulatedSpeed.toString()),
       _publishEvent('engine-ecu', 'rpm', _simulatedRpm.toString()),
+      _publishEvent('engine-ecu', 'motor:voltage', _motorVoltage.toString()),
       _publishEvent('engine-ecu', 'motor:current',
           (_simulatedMotorCurrent * 1000).toString()),
       _publishEvent(

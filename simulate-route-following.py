@@ -185,6 +185,97 @@ def generate_traffic_event(at_intersection=False):
     return None
 
 
+def calculate_motor_values(current_speed, target_speed, prev_speed, voltage, min_voltage, max_continuous_current, max_peak_current, max_regen_current, motor_efficiency, controller_efficiency, peak_current_timer, update_interval):
+    """Calculate realistic motor current, voltage sag, discharge, and regen values.
+
+    Returns: (motor_current, actual_voltage, battery_discharge_wh, regen_wh, new_peak_timer)
+    """
+    # Calculate required power based on speed change
+    acceleration = (current_speed - prev_speed) / update_interval if update_interval > 0 else 0
+
+    # Binary throttle model with hysteresis: either on throttle or coasting
+    # Add deadband to prevent rapid on/off cycling
+    speed_error = target_speed - current_speed
+
+    # Hysteresis: bigger deadband to prevent jagged behavior
+    # Turn throttle on when 3+ km/h below target, turn off when 1+ km/h above
+    if speed_error > 3:  # Well below target - definitely throttle on
+        throttle_on = True
+    elif speed_error < -1:  # Above target - coast
+        throttle_on = False
+    else:  # In deadband - maintain previous state (simulated with tendency to stay on)
+        # In real riding, you tend to keep throttle on in this zone
+        throttle_on = speed_error > -0.5
+
+    if not throttle_on or current_speed < 1:  # Coasting or stopped
+        motor_current = 0
+        required_elec_power = 0
+    else:
+        # Full throttle - use max power to reach/maintain target speed
+        # Realistic scooter power model
+        speed_ms = current_speed / 3.6  # Convert to m/s
+
+        # Rolling resistance: F_roll = Crr * m * g (Crr ≈ 0.01 for scooter wheels)
+        rolling_power = 0.01 * 150 * 9.81 * speed_ms  # ~15W per m/s
+
+        # Air drag: F_drag = 0.5 * rho * Cd * A * v^2
+        # Cd ≈ 0.7 for upright rider, A ≈ 0.6 m^2, rho = 1.225 kg/m^3
+        drag_power = 0.5 * 1.225 * 0.7 * 0.6 * speed_ms**3  # Scales with v^3
+
+        # Base mechanical power (minimum 200W when on throttle)
+        cruise_power = max(200, rolling_power + drag_power)
+
+        # Acceleration power (realistic scooter mass ~100kg + rider 70kg = 170kg)
+        # When on throttle, provide smooth acceleration power
+        accel_power = 0
+        if speed_error > 0:  # Need to accelerate
+            # Smooth proportional control with gentler response
+            desired_accel = min(speed_error * 1.0, 10)  # Gentler proportional gain, max 10 km/h/s
+            accel_ms2 = desired_accel / 3.6  # Convert km/h/s to m/s^2
+            force = 170 * accel_ms2  # Force needed for acceleration
+            accel_power = force * speed_ms
+
+        # Total mechanical power needed
+        total_mech_power = cruise_power + accel_power
+
+        # Required electrical power accounting for motor efficiency
+        required_elec_power = total_mech_power / motor_efficiency if motor_efficiency > 0 else 0
+        required_elec_power = min(required_elec_power, 3000)  # Cap at motor rating
+
+        # Calculate motor current from power: P = V * I
+        motor_current = required_elec_power / voltage if voltage > 0 else 0
+
+        # Determine if we should use peak current (only during strong acceleration)
+        new_peak_timer = max(0, peak_current_timer - update_interval)
+        if speed_error > 10 and motor_current > max_continuous_current:
+            motor_current = min(motor_current, max_peak_current)
+            new_peak_timer = 20  # 20 second peak window
+        else:
+            motor_current = min(motor_current, max_continuous_current)
+
+    # Voltage sag due to current: V_sag = V - (I * R)
+    # Estimate internal resistance as 0.01 ohm
+    internal_resistance = 0.01
+    voltage_sag = motor_current * internal_resistance
+    actual_voltage = max(min_voltage, voltage - voltage_sag)
+
+    # Battery discharge: Energy = Power * Time (only when motor is driving)
+    battery_discharge_wh = (required_elec_power * update_interval) / 3600 if required_elec_power > 0 else 0
+
+    # Regenerative braking: Only during hard braking (strong deceleration)
+    # Threshold: need at least 5 km/h/s deceleration to engage regen (threshold for brake application)
+    regen_wh = 0
+    if acceleration < -5:  # Hard braking only
+        regen_power = abs(acceleration) * 10 / 3.6 * (current_speed / 3.6)  # Estimated regen power
+        regen_power = min(regen_power, 500)  # Cap regen power at 500W
+        regen_current = regen_power / voltage if voltage > 0 else 0
+        regen_current = min(regen_current, max_regen_current)  # Cap at max regen current
+        regen_power = regen_current * voltage  # Recalculate power with capped current
+        regen_wh = (regen_power * update_interval) / 3600  # Convert to Wh
+
+    return motor_current, actual_voltage, battery_discharge_wh, regen_wh, peak_current_timer
+
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(
@@ -214,7 +305,7 @@ def main():
     course = 0
     max_speed = 57                   # Maximum speed in km/h
     max_acceleration = 11.5          # Maximum acceleration (km/h per second) - 0 to 57 km/h in ~5s
-    max_deceleration = 30            # Maximum deceleration (km/h per second) - can stop from 57 km/h in ~1.9s
+    max_deceleration = 16            # Maximum deceleration (km/h per second) - gentle braking, ~3s to stop from 57 km/h
     earth_radius = 6371.0            # Earth radius in km
     target_speed = max_speed * 0.7   # Initial target speed
 
@@ -223,10 +314,23 @@ def main():
     prev_speed = 0                   # Previous speed in km/h
 
     # Motor variables
-    min_voltage = 48.0               # Minimum voltage (V)
-    max_voltage = 57.0               # Maximum voltage (V)
-    nominal_voltage = 53.0           # Nominal voltage when cruising (V)
+    min_voltage = 39.0               # Minimum voltage (V) - 13S LiPo cutoff (~3V/cell)
+    max_voltage = 54.6               # Maximum voltage (V) - 13S LiPo full (~4.2V/cell)
+    current_voltage = 50.4            # Current battery voltage (V) - nominal (~3.88V/cell)
     battery_state = 0.8              # Battery state of charge (0.0-1.0)
+    battery_capacity_ah = 35.0        # Battery capacity in Ah
+    battery_capacity_wh = battery_capacity_ah * 48.0  # ~1680 Wh at nominal 48V
+    battery_energy_wh = battery_capacity_wh * battery_state  # Current energy in Wh
+    max_continuous_current = 50.0     # Max continuous current in A
+    max_peak_current = 80.0           # Max peak current in A (for 20s)
+    max_regen_current = 10.0          # Max regenerative braking current in A
+    motor_power_rating = 3000.0       # Motor power rating in watts
+    motor_efficiency = 0.85           # Motor efficiency (0.0-1.0)
+    controller_efficiency = 0.95      # Controller efficiency (0.0-1.0)
+    peak_current_timer = 0            # Timer for peak current duration
+    total_motor_current = 0.0         # Track motor current
+    total_discharge_wh = 0.0          # Track total discharge
+    total_regen_wh = 0.0              # Track total regen
 
     # Get current odometer value from Redis or initialize to 0
     odometer = float(get_redis_value("engine-ecu", "odometer", 0))
@@ -346,6 +450,28 @@ def main():
                 speed_delta_per_update = max_deceleration * update_interval
                 current_speed = max(target_speed, prev_speed - speed_delta_per_update)
 
+            # Calculate motor values (current, voltage, discharge, regen)
+            motor_current, actual_voltage, discharge_wh, regen_wh, peak_current_timer = calculate_motor_values(
+                current_speed, target_speed, prev_speed, current_voltage, min_voltage,
+                max_continuous_current, max_peak_current, max_regen_current,
+                motor_efficiency, controller_efficiency,
+                peak_current_timer, update_interval
+            )
+
+            # Update battery energy and voltage based on discharge/regen
+            battery_energy_wh -= discharge_wh
+            battery_energy_wh = min(battery_energy_wh + regen_wh, battery_capacity_wh)
+            battery_state = battery_energy_wh / battery_capacity_wh if battery_capacity_wh > 0 else 0.0
+
+            # Update current voltage based on state of charge (linear approximation)
+            # Voltage ranges from 48V (0% SoC) to 57V (100% SoC)
+            current_voltage = min_voltage + (max_voltage - min_voltage) * battery_state
+
+            # Track cumulative metrics
+            total_motor_current += motor_current
+            total_discharge_wh += discharge_wh
+            total_regen_wh += regen_wh
+
             # Calculate distance traveled in this update interval (km)
             distance_km = (current_speed / 3600) * update_interval
             distance_meters = distance_km * 1000
@@ -407,6 +533,11 @@ def main():
             # Batch all Redis updates in a single transaction
             engine_speed = int(round(current_speed))
 
+            # Convert voltage to mV and current to mA for Redis
+            motor_voltage_mv = int(actual_voltage * 1000)
+            motor_current_ma = int(motor_current * 1000)
+            battery_charge_pct = int(battery_state * 100)
+
             redis_commands = [
                 f"HSET gps latitude {lat_formatted}",
                 f"PUBLISH gps latitude",
@@ -415,7 +546,13 @@ def main():
                 f"HSET gps course {course}",
                 f"PUBLISH gps course",
                 f"HSET engine-ecu speed {engine_speed}",
-                f"HSET engine-ecu odometer {int(rounded_odometer)}"
+                f"HSET engine-ecu odometer {int(rounded_odometer)}",
+                f"HSET engine-ecu motor:voltage {motor_voltage_mv}",
+                f"PUBLISH engine-ecu motor:voltage",
+                f"HSET engine-ecu motor:current {motor_current_ma}",
+                f"PUBLISH engine-ecu motor:current",
+                f"HSET battery:0 charge {battery_charge_pct}",
+                f"PUBLISH battery:0 charge"
             ]
 
             execute_redis_batch(redis_commands)
@@ -424,6 +561,8 @@ def main():
                 f"GPS: lat={lat_formatted}, lon={lon_formatted}, course={course:.1f}°")
             print(
                 f"Engine: speed={engine_speed}km/h (target: {int(round(target_speed))}km/h)")
+            print(f"Motor: current={motor_current:.1f}A, voltage={actual_voltage:.1f}V, SoC={battery_state*100:.1f}%")
+            print(f"Energy: discharge={discharge_wh:.2f}Wh, regen={regen_wh:.2f}Wh (cumulative: -{total_discharge_wh:.1f}Wh, +{total_regen_wh:.1f}Wh)")
             print(f"Road: {turn_desc} ahead (turn angle: {turn_angle:.1f}°)")
             print(f"Traffic: {traffic_desc}")
             print(f"Odometer: {int(rounded_odometer)}m")

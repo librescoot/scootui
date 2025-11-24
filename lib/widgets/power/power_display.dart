@@ -52,7 +52,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
   void didUpdateWidget(PowerDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final newPowerKW = widget.powerOutput / 1000;
+    final newPowerKW = widget.powerOutput;
 
     // Only animate if power has changed significantly
     if ((newPowerKW - _lastPowerKW).abs() > 0.01) {
@@ -123,18 +123,18 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final totalWidth = constraints.maxWidth;
-                  
+
                   // Calculate asymmetric layout: regen gets 11.9%, discharge gets 88.1%
                   final totalPower = widget.maxRegenPower + widget.maxDischargePower;
                   final regenWidth = totalWidth * (widget.maxRegenPower / totalPower);
                   final dischargeWidth = totalWidth * (widget.maxDischargePower / totalPower);
                   final zeroPoint = regenWidth; // Zero point is at end of regen section
-                  
+
                   // Calculate actual bar width based on power direction and magnitude
-                  final barWidth = isRegenerating 
-                      ? regenWidth * progress  // Regen: grows leftward from zero point
+                  final barWidth = isRegenerating
+                      ? regenWidth * progress // Regen: grows leftward from zero point
                       : dischargeWidth * progress; // Discharge: grows rightward from zero point
-                      
+
                   final midThreshold = 0.15;
 
                   // Calculate position for the power value label
@@ -197,7 +197,9 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                                   width: 2,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: isDark ? Colors.white.withOpacity(0.4) : Colors.black.withOpacity(0.38), // Slightly more prominent
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.4)
+                                        : Colors.black.withOpacity(0.38), // Slightly more prominent
                                     borderRadius: BorderRadius.circular(1),
                                   ),
                                 ),
