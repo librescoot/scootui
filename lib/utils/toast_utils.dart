@@ -5,32 +5,76 @@ class ToastUtils {
   static void showToast(
     BuildContext context,
     String message, {
-    ToastPosition position = ToastPosition.bottom,
+    ToastPosition position = ToastPosition.top,
     Color? backgroundColor,
     Color? textColor,
     Duration duration = const Duration(seconds: 2),
   }) {
     final theme = Theme.of(context);
-    final effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surface.withOpacity(0.85);
+    final effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surface.withOpacity(0.95);
     final effectiveTextColor = textColor ?? theme.colorScheme.onSurface;
 
     showToastWidget(
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-        decoration: BoxDecoration(
-          color: effectiveBackgroundColor,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Text(
-          message,
-          style: TextStyle(
-            color: effectiveTextColor,
-            fontSize: 16.0,
+      Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          width: 480,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          margin: const EdgeInsets.only(top: 40.0), // Position right below status bar (40px)
+          decoration: BoxDecoration(
+            color: effectiveBackgroundColor,
+            borderRadius: BorderRadius.circular(0),
+          ),
+          child: Text(
+            message,
+            style: TextStyle(
+              color: effectiveTextColor,
+              fontSize: 20.0,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.left,
           ),
         ),
       ),
       duration: duration,
-      position: position,
+      position: ToastPosition.center, // Use center and align manually
+    );
+  }
+
+  static ToastFuture showPermanentToast(
+    BuildContext context,
+    String message, {
+    Color? backgroundColor,
+    Color? textColor,
+  }) {
+    final theme = Theme.of(context);
+    final effectiveBackgroundColor = backgroundColor ?? theme.colorScheme.surface.withOpacity(0.95);
+    final effectiveTextColor = textColor ?? theme.colorScheme.onSurface;
+
+    return showToastWidget(
+      Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          width: 480,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+          margin: const EdgeInsets.only(top: 40.0),
+          decoration: BoxDecoration(
+            color: effectiveBackgroundColor,
+            borderRadius: BorderRadius.circular(0),
+          ),
+          child: Text(
+            message,
+            style: TextStyle(
+              color: effectiveTextColor,
+              fontSize: 20.0,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.left,
+          ),
+        ),
+      ),
+      duration: const Duration(days: 365),
+      position: ToastPosition.center,
     );
   }
 
@@ -39,9 +83,9 @@ class ToastUtils {
     showToast(
       context,
       message,
-      backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.9),
+      backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
       textColor: theme.colorScheme.onErrorContainer,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 15),
     );
   }
 
@@ -61,9 +105,9 @@ class ToastUtils {
     showToast(
       context,
       message,
-      backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.9),
+      backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.95),
       textColor: theme.colorScheme.onSecondaryContainer,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 5),
     );
   }
 
@@ -83,9 +127,9 @@ class ToastUtils {
     showToast(
       context,
       message,
-      backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.9),
+      backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
       textColor: theme.colorScheme.onErrorContainer,
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 15),
     );
   }
 }

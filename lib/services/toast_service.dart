@@ -1,13 +1,18 @@
 import 'dart:async';
 
-enum ToastType { info, error, success, warning }
+enum ToastType { info, error, success, warning, permanentInfo, permanentError }
 
 class ToastEvent {
   final String message;
   final ToastType type;
-  // Future: Add duration, gravity, etc. if needed
+  final String? id;
 
-  ToastEvent(this.message, this.type);
+  ToastEvent(this.message, this.type, {this.id});
+}
+
+class DismissToastEvent {
+  final String id;
+  DismissToastEvent(this.id);
 }
 
 class ToastService {
@@ -15,7 +20,10 @@ class ToastService {
   ToastService._();
 
   static final _controller = StreamController<ToastEvent>.broadcast();
+  static final _dismissController = StreamController<DismissToastEvent>.broadcast();
+
   static Stream<ToastEvent> get events => _controller.stream;
+  static Stream<DismissToastEvent> get dismissEvents => _dismissController.stream;
 
   static void showInfo(String message) {
     _controller.add(ToastEvent(message, ToastType.info));
@@ -33,9 +41,22 @@ class ToastService {
     _controller.add(ToastEvent(message, ToastType.warning));
   }
 
+  static void showPermanentInfo(String message, String id) {
+    _controller.add(ToastEvent(message, ToastType.permanentInfo, id: id));
+  }
+
+  static void showPermanentError(String message, String id) {
+    _controller.add(ToastEvent(message, ToastType.permanentError, id: id));
+  }
+
+  static void dismiss(String id) {
+    _dismissController.add(DismissToastEvent(id));
+  }
+
   // Call this in your main app's dispose or when no longer needed,
   // though for a global service, it might live for the app's lifetime.
   static void dispose() {
     _controller.close();
+    _dismissController.close();
   }
 }
