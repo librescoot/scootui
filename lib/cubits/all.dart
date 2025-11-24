@@ -4,6 +4,7 @@ import 'package:nested/nested.dart';
 import 'address_cubit.dart';
 import 'carplay_cubit.dart';
 import 'debug_overlay_cubit.dart';
+import 'low_temperature_warning_cubit.dart';
 import 'map_cubit.dart';
 import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
@@ -27,6 +28,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: Battery1Sync.create),
   BlocProvider(create: CbBatterySync.create),
   BlocProvider(create: AuxBatterySync.create),
+  BlocProvider(create: LowTemperatureWarningCubit.create),
   BlocProvider(create: BluetoothSync.create),
   BlocProvider(create: GpsSync.create),
   BlocProvider(create: InternetSync.create),
