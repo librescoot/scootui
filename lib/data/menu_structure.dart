@@ -224,23 +224,31 @@ MenuNode buildMenuTree(BuildContext context) {
                   MenuNode.setting(
                     id: 'gps_always',
                     title: 'Always',
-                    currentValue: (settings.showGps ?? 'auto') == 'always' ? 1 : 0,
+                    currentValue: (settings.showGps ?? 'error') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowGpsSetting('always');
                     },
                   ),
                   MenuNode.setting(
-                    id: 'gps_auto',
-                    title: 'Auto',
-                    currentValue: (settings.showGps ?? 'auto') == 'auto' ? 1 : 0,
+                    id: 'gps_active_or_error',
+                    title: 'Active or Error',
+                    currentValue: (settings.showGps ?? 'error') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>().updateShowGpsSetting('auto');
+                      await context.read<SettingsService>().updateShowGpsSetting('active-or-error');
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'gps_error',
+                    title: 'Error Only',
+                    currentValue: (settings.showGps ?? 'error') == 'error' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateShowGpsSetting('error');
                     },
                   ),
                   MenuNode.setting(
                     id: 'gps_never',
                     title: 'Never',
-                    currentValue: (settings.showGps ?? 'auto') == 'never' ? 1 : 0,
+                    currentValue: (settings.showGps ?? 'error') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowGpsSetting('never');
                     },
@@ -255,23 +263,31 @@ MenuNode buildMenuTree(BuildContext context) {
                   MenuNode.setting(
                     id: 'bt_always',
                     title: 'Always',
-                    currentValue: (settings.showBluetooth ?? 'auto') == 'always' ? 1 : 0,
+                    currentValue: (settings.showBluetooth ?? 'active-or-error') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowBluetoothSetting('always');
                     },
                   ),
                   MenuNode.setting(
-                    id: 'bt_auto',
-                    title: 'Auto',
-                    currentValue: (settings.showBluetooth ?? 'auto') == 'auto' ? 1 : 0,
+                    id: 'bt_active_or_error',
+                    title: 'Active or Error',
+                    currentValue: (settings.showBluetooth ?? 'active-or-error') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>().updateShowBluetoothSetting('auto');
+                      await context.read<SettingsService>().updateShowBluetoothSetting('active-or-error');
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'bt_error',
+                    title: 'Error Only',
+                    currentValue: (settings.showBluetooth ?? 'active-or-error') == 'error' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateShowBluetoothSetting('error');
                     },
                   ),
                   MenuNode.setting(
                     id: 'bt_never',
                     title: 'Never',
-                    currentValue: (settings.showBluetooth ?? 'auto') == 'never' ? 1 : 0,
+                    currentValue: (settings.showBluetooth ?? 'active-or-error') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowBluetoothSetting('never');
                     },
@@ -286,23 +302,31 @@ MenuNode buildMenuTree(BuildContext context) {
                   MenuNode.setting(
                     id: 'cloud_always',
                     title: 'Always',
-                    currentValue: (settings.showCloud ?? 'auto') == 'always' ? 1 : 0,
+                    currentValue: (settings.showCloud ?? 'error') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowCloudSetting('always');
                     },
                   ),
                   MenuNode.setting(
-                    id: 'cloud_auto',
-                    title: 'Auto',
-                    currentValue: (settings.showCloud ?? 'auto') == 'auto' ? 1 : 0,
+                    id: 'cloud_active_or_error',
+                    title: 'Active or Error',
+                    currentValue: (settings.showCloud ?? 'error') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>().updateShowCloudSetting('auto');
+                      await context.read<SettingsService>().updateShowCloudSetting('active-or-error');
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'cloud_error',
+                    title: 'Error Only',
+                    currentValue: (settings.showCloud ?? 'error') == 'error' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateShowCloudSetting('error');
                     },
                   ),
                   MenuNode.setting(
                     id: 'cloud_never',
                     title: 'Never',
-                    currentValue: (settings.showCloud ?? 'auto') == 'never' ? 1 : 0,
+                    currentValue: (settings.showCloud ?? 'error') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowCloudSetting('never');
                     },
@@ -317,23 +341,31 @@ MenuNode buildMenuTree(BuildContext context) {
                   MenuNode.setting(
                     id: 'inet_always',
                     title: 'Always',
-                    currentValue: (settings.showInternet ?? 'auto') == 'always' ? 1 : 0,
+                    currentValue: (settings.showInternet ?? 'always') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowInternetSetting('always');
                     },
                   ),
                   MenuNode.setting(
-                    id: 'inet_auto',
-                    title: 'Auto',
-                    currentValue: (settings.showInternet ?? 'auto') == 'auto' ? 1 : 0,
+                    id: 'inet_active_or_error',
+                    title: 'Active or Error',
+                    currentValue: (settings.showInternet ?? 'always') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>().updateShowInternetSetting('auto');
+                      await context.read<SettingsService>().updateShowInternetSetting('active-or-error');
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'inet_error',
+                    title: 'Error Only',
+                    currentValue: (settings.showInternet ?? 'always') == 'error' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateShowInternetSetting('error');
                     },
                   ),
                   MenuNode.setting(
                     id: 'inet_never',
                     title: 'Never',
-                    currentValue: (settings.showInternet ?? 'auto') == 'never' ? 1 : 0,
+                    currentValue: (settings.showInternet ?? 'always') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowInternetSetting('never');
                     },
@@ -346,19 +378,19 @@ MenuNode buildMenuTree(BuildContext context) {
                 title: 'Clock',
                 children: [
                   MenuNode.setting(
-                    id: 'clock_show',
-                    title: 'Show',
-                    currentValue: (settings.showClock ?? 'show') == 'show' ? 1 : 0,
+                    id: 'clock_always',
+                    title: 'Always',
+                    currentValue: (settings.showClock ?? 'always') != 'never' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>().updateShowClockSetting('show');
+                      await context.read<SettingsService>().updateShowClockSetting('always');
                     },
                   ),
                   MenuNode.setting(
-                    id: 'clock_hide',
-                    title: 'Hide',
-                    currentValue: (settings.showClock ?? 'show') == 'hide' ? 1 : 0,
+                    id: 'clock_never',
+                    title: 'Never',
+                    currentValue: (settings.showClock ?? 'always') == 'never' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>().updateShowClockSetting('hide');
+                      await context.read<SettingsService>().updateShowClockSetting('never');
                     },
                   ),
                 ],
