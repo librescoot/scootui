@@ -62,7 +62,8 @@ class MapCubit extends Cubit<MapState> {
   // ============================================================================
   static const double _drUpdateHz = 30.0; // Update rate for position interpolation
   static const Duration _drUpdateInterval = Duration(milliseconds: 33); // 1000ms / 30Hz ≈ 33ms
-  static const double _drGpsLatencySeconds = 0.3; // Typical GPS latency ~300ms
+  static const double _drGpsLatencySeconds = 0.15; // Reduced latency compensation for slight undershoot
+  static const double _drSpeedFactor = 0.9; // Slightly underpredict to avoid overshooting
   static const double _drCorrectionBlendRate = 2.0; // How fast to blend toward GPS (per second)
   static const double _drMinSpeedMs = 0.1; // Minimum speed to apply dead reckoning (m/s)
   static const int _drLogIntervalFrames = 30; // Log every N frames (once per second at 30Hz)
@@ -76,14 +77,10 @@ class MapCubit extends Cubit<MapState> {
   DateTime? _lastFrameTime;
   int _frameCount = 0;
 
-  // Smoothed rotation and zoom (interpolated each frame)
+  // Smoothed rotation (interpolated each frame)
   double _currentRotation = 0.0; // Current smoothed rotation
   double _targetRotation = 0.0; // Target rotation from GPS
-  double _currentZoom = 16.0; // Current smoothed zoom
-  double _targetZoom = 16.0; // Target zoom from navigation state
   static const double _rotationSmoothingRate = 4.0; // How fast rotation catches up (per second)
-  static const double _zoomSmoothingRate = 2.0; // How fast zoom catches up (per second)
-  static const double _zoomHysteresis = 0.3; // Only change target zoom if difference > this
 
   static MapCubit create(BuildContext context) {
     final cubit = MapCubit(
@@ -199,15 +196,29 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onNavigationStateChanged(NavigationState navState) {
-    // Update dynamic zoom based on navigation context
-    // Store the current navigation state for zoom calculations
+    // Store the current navigation state
     _currentNavigationState = navState;
 
-    // Trigger map update with new zoom if currently navigating
-    // Use snapped position when available and on-route, otherwise use current position
-    if (navState.isNavigating && state.position != defaultCoordinates) {
-      final positionToUse = navState.snappedPosition ?? state.position;
-      _moveAndRotate(positionToUse, state.orientation);
+    // Animate zoom change using the animator (1s duration for smooth transition)
+    // This is separate from the 30Hz position updates
+    if (_transformAnimator != null && !isClosed) {
+      final targetZoom = _calculateDynamicZoom();
+      final currentCamera = state.controller.camera;
+
+      // Only animate if zoom actually changed significantly
+      if ((targetZoom - currentCamera.zoom).abs() > 0.1) {
+        final targetTransform = MapTransform(
+          center: currentCamera.center,
+          zoom: targetZoom,
+          rotation: currentCamera.rotation,
+          offset: Offset.zero,
+        );
+        _transformAnimator!.animateTo(
+          targetTransform,
+          animationDuration: const Duration(milliseconds: 1000),
+          animationCurve: Curves.linear,
+        );
+      }
     }
   }
 
@@ -640,9 +651,9 @@ class MapCubit extends Cubit<MapState> {
     var estLat = _estimatedPosition!.latitude;
     var estLng = _estimatedPosition!.longitude;
 
-    // Step 1: Dead reckon forward using clamped dt
+    // Step 1: Dead reckon forward using clamped dt (with slight undershoot factor)
     if (speedMs > _drMinSpeedMs) {
-      final distance = speedMs * clampedDt;
+      final distance = speedMs * clampedDt * _drSpeedFactor;
 
       // When navigating with a route, follow the route instead of straight-line projection
       final navState = _currentNavigationState;
@@ -706,14 +717,12 @@ class MapCubit extends Cubit<MapState> {
     final isOffRoute = navState?.isOffRoute ?? false;
     final offset = isOffRoute ? Offset.zero : mapCenterOffset;
 
-    // Update target rotation
-    _targetRotation = isOffRoute ? 0.0 : -course;
+    // Get camera reference first
+    final controller = current.controller;
+    final camera = controller.camera;
 
-    // Update target zoom with hysteresis to prevent pulsing
-    final newTargetZoom = _calculateDynamicZoom();
-    if ((newTargetZoom - _targetZoom).abs() > _zoomHysteresis) {
-      _targetZoom = newTargetZoom;
-    }
+    // Update target rotation (zoom is animated separately via _onNavigationStateChanged)
+    _targetRotation = isOffRoute ? 0.0 : -course;
 
     // Smooth rotation (handle wraparound at ±180°)
     double rotationDelta = _targetRotation - _currentRotation;
@@ -726,17 +735,11 @@ class MapCubit extends Cubit<MapState> {
     if (_currentRotation > 180) _currentRotation -= 360;
     if (_currentRotation < -180) _currentRotation += 360;
 
-    // Smooth zoom
-    final zoomDelta = _targetZoom - _currentZoom;
-    final zoomBlend = (_zoomSmoothingRate * dt).clamp(0.0, 1.0);
-    _currentZoom += zoomDelta * zoomBlend;
-
     final rotation = _currentRotation;
-    final zoom = _currentZoom;
+    // Use current camera zoom - don't override the animator's zoom transitions
+    final zoom = camera.zoom;
 
     // Calculate center position accounting for vehicle offset
-    final controller = current.controller;
-    final camera = controller.camera;
 
     LatLng centerPosition = positionForDisplay;
     if (offset != Offset.zero) {
@@ -767,7 +770,7 @@ class MapCubit extends Cubit<MapState> {
       final errorM = _gpsCorrectionTarget != null
           ? distanceCalculator.distance(position, _gpsCorrectionTarget!)
           : 0.0;
-      print("MapCubit DR: pos=${position.latitude.toStringAsFixed(6)},${position.longitude.toStringAsFixed(6)}, speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h, dt=${(dt*1000).toStringAsFixed(1)}ms, zoom=${_currentZoom.toStringAsFixed(2)}->${_targetZoom.toStringAsFixed(2)}, gpsErr=${errorM.toStringAsFixed(1)}m");
+      print("MapCubit DR: pos=${position.latitude.toStringAsFixed(6)},${position.longitude.toStringAsFixed(6)}, speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h, dt=${(dt*1000).toStringAsFixed(1)}ms, gpsErr=${errorM.toStringAsFixed(1)}m");
     }
   }
 }
