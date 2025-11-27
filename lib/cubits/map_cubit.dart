@@ -59,8 +59,12 @@ class MapCubit extends Cubit<MapState> {
   // Dead Reckoning Configuration
   // ============================================================================
 
-  static const double _drUpdateHz = 30.0; // Update rate for position interpolation
-  static const Duration _drUpdateInterval = Duration(milliseconds: 33); // 1000ms / 30Hz ≈ 33ms
+  /// Target update rate for position interpolation - change this to adjust smoothness vs CPU usage
+  static const double _drUpdateHz = 30.0;
+
+  /// Derived: interval between updates (computed from _drUpdateHz)
+  static Duration get _drUpdateInterval => Duration(milliseconds: (1000 / _drUpdateHz).round());
+
   static const double _drGpsLatencySeconds = 0.15; // Reduced latency compensation for slight undershoot
   static const double _drSpeedFactor = 0.95; // Slightly underpredict to avoid overshooting
   static const double _drCorrectionBlendRate = 2.0; // How fast to blend toward GPS (per second)
