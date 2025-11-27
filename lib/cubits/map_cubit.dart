@@ -58,6 +58,7 @@ class MapCubit extends Cubit<MapState> {
   // ============================================================================
   // Dead Reckoning Configuration
   // ============================================================================
+
   static const double _drUpdateHz = 30.0; // Update rate for position interpolation
   static const Duration _drUpdateInterval = Duration(milliseconds: 33); // 1000ms / 30Hz ≈ 33ms
   static const double _drGpsLatencySeconds = 0.15; // Reduced latency compensation for slight undershoot
@@ -637,13 +638,6 @@ class MapCubit extends Cubit<MapState> {
   void _onDrTick(Timer timer) {
     final now = DateTime.now();
     _drStartTime ??= now;
-    final secondsSinceStart = now.difference(_drStartTime!).inSeconds;
-
-    // Always log for first 10 seconds, then every 5th tick
-    final verboseLog = secondsSinceStart < 10;
-    if (verboseLog || _frameCount % 5 == 0) {
-      print("MapCubit _onDrTick: frame $_frameCount, t=${secondsSinceStart}s");
-    }
 
     // Calculate dt since last frame
     final dt = _lastFrameTime != null
@@ -653,51 +647,64 @@ class MapCubit extends Cubit<MapState> {
 
     // Clamp dt to reasonable range (skip negative, cap at 150ms to prevent jumps)
     final clampedDt = dt.clamp(0.001, 0.15);
-    if (dt <= 0) {
-      if (verboseLog) print("MapCubit _onDrTick: skipping negative dt=$dt");
+    if (dt <= 0) return;
+
+    // Check preconditions
+    final gpsData = _lastGpsData;
+    if (gpsData == null || !gpsData.hasRecentFix || _estimatedPosition == null) {
       return;
     }
 
-    // Need GPS data and estimated position to do dead reckoning
-    final gpsData = _lastGpsData;
-    if (gpsData == null) {
-      if (verboseLog) print("MapCubit _onDrTick: no GPS data yet");
-      return;
-    }
-    if (!gpsData.hasRecentFix) {
-      if (verboseLog) print("MapCubit _onDrTick: GPS fix not recent (ts=${gpsData.lastUpdated})");
-      return;
-    }
-    if (_estimatedPosition == null) {
-      if (verboseLog) print("MapCubit _onDrTick: no estimated position");
-      return;
-    }
+    // Step 1: Calculate what we want to show
+    final prediction = _calculatePrediction(clampedDt, gpsData);
+
+    // Step 2: Apply prediction with smoothing
+    _applyPrediction(prediction, clampedDt);
+  }
+
+  // ============================================================================
+  // Prediction Calculation - determines target position, heading, zoom
+  // ============================================================================
+
+  /// Calculates the prediction for this frame based on:
+  /// - Dead reckoning from ECU speed
+  /// - GPS correction blending
+  /// - Route-based heading (when navigating)
+  /// - Navigation-based zoom
+  ({
+    LatLng position,
+    double heading,
+    double zoom,
+    bool isOffRoute,
+    bool immediateReset,
+  }) _calculatePrediction(double dt, GpsData gpsData) {
+    final navState = _currentNavigationState;
+    final route = navState?.route;
+    final isOffRoute = navState?.isOffRoute ?? false;
+    final isNavigating = navState?.isNavigating == true && route != null && route.waypoints.length >= 2;
 
     // Get current velocity from ECU
     final ecuSpeedKmh = _engineSync.state.speed.toDouble();
     final speedMs = ecuSpeedKmh / 3.6;
 
-    // Current estimated position
+    // Start with current estimated position
     var estLat = _estimatedPosition!.latitude;
     var estLng = _estimatedPosition!.longitude;
+    var heading = gpsData.course; // Default to GPS heading
+    var immediateReset = false;
 
-    // Step 1: Dead reckon forward using clamped dt (with slight undershoot factor)
+    // Dead reckon forward using ECU speed
     if (speedMs > _drMinSpeedMs) {
-      final distance = speedMs * clampedDt * _drSpeedFactor;
+      final distance = speedMs * dt * _drSpeedFactor;
 
-      // When navigating with a route, follow the route instead of straight-line projection
-      final navState = _currentNavigationState;
-      final route = navState?.route;
-
-      if (navState?.isNavigating == true && route != null && route.waypoints.length >= 2) {
-        // Project along route - get both position and heading from route
+      if (isNavigating && !isOffRoute) {
+        // Follow route - get position AND heading from route geometry
         final projection = _projectAlongRoute(LatLng(estLat, estLng), route.waypoints, distance);
         estLat = projection.position.latitude;
         estLng = projection.position.longitude;
-        // Update target rotation from route heading (with hysteresis applied in _updateCameraDirectly)
-        _targetRotation = -projection.heading;
+        heading = projection.heading;
       } else {
-        // No route - use GPS course for straight-line projection
+        // Straight-line projection using GPS course
         final courseRadians = gpsData.courseRadians;
         final dLat = distance * math.cos(courseRadians) / 111320.0;
         final dLng = distance * math.sin(courseRadians) / (111320.0 * math.cos(estLat * math.pi / 180));
@@ -706,61 +713,73 @@ class MapCubit extends Cubit<MapState> {
       }
     }
 
-    // Step 2: Blend toward GPS correction target (using clamped dt)
-    // Use gentle blending to avoid sudden jumps - corrections happen gradually
-    // But if error is large (>15m), use faster correction; if >50m, animate snap over 1s
-    // For very large errors (>500m, e.g. after routing restart), immediately reset
+    // Blend toward GPS correction target
     if (_gpsCorrectionTarget != null) {
       final target = _gpsCorrectionTarget!;
       final currentPos = LatLng(estLat, estLng);
       final errorM = distanceCalculator.distance(currentPos, target);
 
       if (errorM > _drImmediateResetThreshold) {
-        // Extremely large error (routing restart, GPS jump): immediately reset
-        // Discard all predictions and start fresh from known GPS position
+        // Extremely large error: immediate reset, skip smoothing
         estLat = target.latitude;
         estLng = target.longitude;
-        _lastRouteSegment = 0; // Reset route segment tracking too
-        // Also reset heading to GPS heading
-        final gpsHeading = _lastGpsData?.course ?? 0;
-        _currentRotation = -gpsHeading;
-        _targetRotation = -gpsHeading;
-        print("MapCubit DR: RESET - error=${errorM.toStringAsFixed(0)}m > ${_drImmediateResetThreshold}m, discarding predictions, heading=${gpsHeading.toStringAsFixed(0)}°");
+        heading = gpsData.course;
+        immediateReset = true;
+        _lastRouteSegment = 0;
+        print("MapCubit DR: RESET - error=${errorM.toStringAsFixed(0)}m, discarding predictions");
       } else {
+        // Gradual correction with adaptive blend rate
         double blendRate;
         double maxBlend;
 
         if (errorM > _drSnapErrorThreshold) {
-          // Very large error: animate snap over 1 second (blend = 1/duration per second)
           blendRate = 1.0 / _drSnapAnimationSeconds;
-          maxBlend = 1.0; // Allow full correction
+          maxBlend = 1.0;
         } else if (errorM > _drMaxErrorBeforeReset) {
-          // Large error: use faster correction
           blendRate = _drFastCorrectionBlendRate;
           maxBlend = 0.4;
         } else {
-          // Normal: gentle correction
           blendRate = _drCorrectionBlendRate;
           maxBlend = 0.15;
         }
 
-        final blendFactor = blendRate * clampedDt;
-        final clampedBlend = blendFactor.clamp(0.0, maxBlend);
-
-        estLat = estLat + (target.latitude - estLat) * clampedBlend;
-        estLng = estLng + (target.longitude - estLng) * clampedBlend;
+        final blend = (blendRate * dt).clamp(0.0, maxBlend);
+        estLat += (target.latitude - estLat) * blend;
+        estLng += (target.longitude - estLng) * blend;
       }
     }
 
-    // Update estimated position
+    // Update internal estimated position
     _estimatedPosition = LatLng(estLat, estLng);
 
-    // Apply to map using DIRECT camera update (no animation)
-    _updateCameraDirectly(_estimatedPosition!, ecuSpeedKmh, clampedDt);
+    // Calculate target zoom from navigation state
+    final zoom = _calculateDynamicZoom();
+
+    return (
+      position: LatLng(estLat, estLng),
+      heading: heading,
+      zoom: zoom,
+      isOffRoute: isOffRoute,
+      immediateReset: immediateReset,
+    );
   }
 
-  /// Updates the map camera directly without animation - for smooth movement
-  void _updateCameraDirectly(LatLng position, double ecuSpeedKmh, double dt) {
+  // ============================================================================
+  // Prediction Application - smoothly applies prediction to camera
+  // ============================================================================
+
+  /// Applies the prediction to the map camera with appropriate smoothing.
+  /// Handles rotation/zoom interpolation and offset calculations.
+  void _applyPrediction(
+    ({
+      LatLng position,
+      double heading,
+      double zoom,
+      bool isOffRoute,
+      bool immediateReset,
+    }) prediction,
+    double dt,
+  ) {
     final current = state;
 
     // Check if map is ready
@@ -769,83 +788,81 @@ class MapCubit extends Cubit<MapState> {
       MapOnline(:final isReady) => isReady,
       _ => false,
     };
-
     if (!isReady || isClosed) return;
 
-    // Always use the dead-reckoned position for smooth camera movement
-    // The snapped position (for route following) only updates at 1Hz
-    final navState = _currentNavigationState;
-    final positionForDisplay = position;
-
     // Update state with position (for vehicle marker)
-    emit(current.copyWith(position: positionForDisplay));
+    emit(current.copyWith(position: prediction.position));
 
-    // Get map parameters
-    final course = _lastGpsData?.course ?? 0;
-    final isOffRoute = navState?.isOffRoute ?? false;
-    final offset = isOffRoute ? Offset.zero : mapCenterOffset;
-
-    // Get camera reference first
     final controller = current.controller;
     final camera = controller.camera;
+    final offset = prediction.isOffRoute ? Offset.zero : mapCenterOffset;
 
-    // Update target rotation:
-    // - When navigating along a route, heading is already set from route projection in _onDrTick
-    // - When off-route or no route, use GPS course with hysteresis
-    final route = navState?.route;
-    final isNavigatingAlongRoute = navState?.isNavigating == true && route != null && route.waypoints.length >= 2 && !isOffRoute;
+    // === Rotation smoothing ===
+    final targetRotation = prediction.isOffRoute ? 0.0 : -prediction.heading;
 
-    if (!isNavigatingAlongRoute) {
-      final newTargetRotation = isOffRoute ? 0.0 : -course;
-      double rotationDiff = newTargetRotation - _targetRotation;
-      // Handle wraparound for comparison
+    if (prediction.immediateReset) {
+      // Immediate reset: snap to target
+      _currentRotation = targetRotation;
+      _targetRotation = targetRotation;
+    } else {
+      // Apply hysteresis to target rotation
+      double rotationDiff = targetRotation - _targetRotation;
       if (rotationDiff > 180) rotationDiff -= 360;
       if (rotationDiff < -180) rotationDiff += 360;
       if (rotationDiff.abs() > _rotationHysteresis) {
-        _targetRotation = newTargetRotation;
+        _targetRotation = targetRotation;
+      }
+
+      // Smooth rotation with duration-based interpolation
+      double rotationDelta = _targetRotation - _currentRotation;
+      if (rotationDelta > 180) rotationDelta -= 360;
+      if (rotationDelta < -180) rotationDelta += 360;
+
+      final absDelta = rotationDelta.abs();
+      final rotationRate = absDelta <= _rotationMaxRate
+          ? absDelta / _rotationAnimationDuration
+          : _rotationMaxRate;
+
+      final rotationStep = rotationRate * dt;
+      if (absDelta <= rotationStep || rotationRate == 0) {
+        _currentRotation = _targetRotation;
+      } else {
+        _currentRotation += rotationStep * rotationDelta.sign;
+      }
+
+      // Normalize to [-180, 180]
+      if (_currentRotation > 180) _currentRotation -= 360;
+      if (_currentRotation < -180) _currentRotation += 360;
+    }
+
+    // === Zoom smoothing ===
+    if (prediction.immediateReset) {
+      _currentZoom = prediction.zoom;
+      _targetZoom = prediction.zoom;
+    } else {
+      // Apply hysteresis to target zoom
+      if ((prediction.zoom - _targetZoom).abs() > _zoomHysteresis) {
+        _targetZoom = prediction.zoom;
+      }
+
+      // Smooth zoom with linear interpolation
+      final zoomDelta = _targetZoom - _currentZoom;
+      final zoomStep = _zoomSmoothingRate * dt;
+      if (zoomDelta.abs() <= zoomStep) {
+        _currentZoom = _targetZoom;
+      } else {
+        _currentZoom += zoomStep * zoomDelta.sign;
       }
     }
 
-    // Smooth rotation with linear interpolation (handle wraparound at ±180°)
-    double rotationDelta = _targetRotation - _currentRotation;
-    // Take shortest path around the circle
-    if (rotationDelta > 180) rotationDelta -= 360;
-    if (rotationDelta < -180) rotationDelta += 360;
-
-    // Calculate rate: small rotations take fixed duration, large ones use max rate
-    // <= 60° takes 1 second, > 60° uses 60°/sec
-    final absDelta = rotationDelta.abs();
-    final rotationRate = absDelta <= _rotationMaxRate
-        ? absDelta / _rotationAnimationDuration  // Complete in fixed duration
-        : _rotationMaxRate;  // Cap at max rate for large rotations
-
-    final rotationStep = rotationRate * dt;
-    if (absDelta <= rotationStep || rotationRate == 0) {
-      _currentRotation = _targetRotation;
-    } else {
-      _currentRotation += rotationStep * rotationDelta.sign;
-    }
-    // Normalize to [-180, 180]
-    if (_currentRotation > 180) _currentRotation -= 360;
-    if (_currentRotation < -180) _currentRotation += 360;
-
+    // === Apply to camera ===
     final rotation = _currentRotation;
-
-    // Smooth zoom (linear interpolation toward target)
-    final zoomDelta = _targetZoom - _currentZoom;
-    final zoomStep = _zoomSmoothingRate * dt; // Max change per frame
-    if (zoomDelta.abs() <= zoomStep) {
-      _currentZoom = _targetZoom;
-    } else {
-      _currentZoom += zoomStep * zoomDelta.sign;
-    }
     final zoom = _currentZoom;
 
-    // Calculate center position accounting for vehicle offset
-
-    LatLng centerPosition = positionForDisplay;
+    // Calculate center position with vehicle offset
+    LatLng centerPosition = prediction.position;
     if (offset != Offset.zero) {
-      final gpsPixel = camera.project(positionForDisplay, zoom);
+      final gpsPixel = camera.project(prediction.position, zoom);
       final rotationRad = rotation * math.pi / 180.0;
       final centerPixel = math.Point(
         gpsPixel.x - offset.dy * math.sin(rotationRad),
@@ -854,25 +871,20 @@ class MapCubit extends Cubit<MapState> {
       centerPosition = camera.unproject(centerPixel, zoom);
     }
 
-    // Use mapController.moveAndRotate for camera updates
-    // This triggers proper repaints unlike moveAndRotateRaw
     try {
       controller.moveAndRotate(centerPosition, camera.clampZoom(zoom), rotation);
-      // Log every 5 frames to confirm camera updates
-      if (_frameCount % 5 == 0) {
-        print("MapCubit: moveAndRotate called, center=${centerPosition.latitude.toStringAsFixed(6)},${centerPosition.longitude.toStringAsFixed(6)}");
-      }
     } catch (e) {
       print("MapCubit: moveAndRotate error: $e");
     }
 
-    // Log once per second (at 30Hz, that's every 30 frames)
+    // Logging
     _frameCount++;
     if (_frameCount % _drLogIntervalFrames == 0) {
       final errorM = _gpsCorrectionTarget != null
-          ? distanceCalculator.distance(position, _gpsCorrectionTarget!)
+          ? distanceCalculator.distance(prediction.position, _gpsCorrectionTarget!)
           : 0.0;
-      print("MapCubit DR: pos=${position.latitude.toStringAsFixed(6)},${position.longitude.toStringAsFixed(6)}, speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h, dt=${(dt*1000).toStringAsFixed(1)}ms, gpsErr=${errorM.toStringAsFixed(1)}m");
+      final speedKmh = _engineSync.state.speed;
+      print("MapCubit DR: pos=${prediction.position.latitude.toStringAsFixed(6)},${prediction.position.longitude.toStringAsFixed(6)}, heading=${prediction.heading.toStringAsFixed(0)}°, speed=${speedKmh.toStringAsFixed(1)}km/h, gpsErr=${errorM.toStringAsFixed(1)}m");
     }
   }
 }
