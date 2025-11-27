@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/src/map/controller/map_controller_impl.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -56,11 +57,33 @@ class MapCubit extends Cubit<MapState> {
   SettingsData? _currentSettings; // Store current settings for map type and render mode
   ThemeState? _currentTheme; // Store current theme state
 
-  // GPS interpolation state
-  Ticker? _interpolationTicker;
-  GpsData? _lastGpsData; // Last received GPS data for interpolation
-  DateTime? _lastGpsTime; // When the last GPS update was received
-  LatLng? _lastInterpolatedPosition; // Last interpolated position to detect actual changes
+  // ============================================================================
+  // Dead Reckoning Configuration
+  // ============================================================================
+  static const double _drUpdateHz = 30.0; // Update rate for position interpolation
+  static const Duration _drUpdateInterval = Duration(milliseconds: 33); // 1000ms / 30Hz ≈ 33ms
+  static const double _drGpsLatencySeconds = 0.3; // Typical GPS latency ~300ms
+  static const double _drCorrectionBlendRate = 2.0; // How fast to blend toward GPS (per second)
+  static const double _drMinSpeedMs = 0.1; // Minimum speed to apply dead reckoning (m/s)
+  static const int _drLogIntervalFrames = 30; // Log every N frames (once per second at 30Hz)
+
+  // Dead reckoning runtime state
+  Timer? _drTimer;
+  GpsData? _lastGpsData;
+  DateTime? _lastGpsTime;
+  LatLng? _estimatedPosition; // Continuous position estimate (moves every frame)
+  LatLng? _gpsCorrectionTarget; // GPS position projected forward for latency compensation
+  DateTime? _lastFrameTime;
+  int _frameCount = 0;
+
+  // Smoothed rotation and zoom (interpolated each frame)
+  double _currentRotation = 0.0; // Current smoothed rotation
+  double _targetRotation = 0.0; // Target rotation from GPS
+  double _currentZoom = 16.0; // Current smoothed zoom
+  double _targetZoom = 16.0; // Target zoom from navigation state
+  static const double _rotationSmoothingRate = 4.0; // How fast rotation catches up (per second)
+  static const double _zoomSmoothingRate = 2.0; // How fast zoom catches up (per second)
+  static const double _zoomHysteresis = 0.3; // Only change target zoom if difference > this
 
   static MapCubit create(BuildContext context) {
     final cubit = MapCubit(
@@ -102,8 +125,8 @@ class MapCubit extends Cubit<MapState> {
   Future<void> close() {
     final current = state;
 
-    // Stop interpolation ticker
-    _stopInterpolationTicker();
+    // Stop dead reckoning timer
+    _stopDrTimer();
 
     // Stop any ongoing animations and dispose MapTransformAnimator
     try {
@@ -156,7 +179,7 @@ class MapCubit extends Cubit<MapState> {
 
   /// Disposes the current animator - called when map view is being disposed
   void disposeAnimator() {
-    _stopInterpolationTicker();
+    _stopDrTimer();
     try {
       _transformAnimator?.stopAnimations();
       _transformAnimator?.dispose();
@@ -204,7 +227,7 @@ class MapCubit extends Cubit<MapState> {
     }
   }
 
-  void _moveAndRotate(LatLng center, double course, {Duration? duration}) {
+  void _moveAndRotate(LatLng center, double course, {Duration? duration, Curve? curve}) {
     if (_mapLocked) {
       print("MapCubit: Map is locked, skipping _moveAndRotate.");
       return;
@@ -245,7 +268,7 @@ class MapCubit extends Cubit<MapState> {
 
     // Use animator for smooth transitions with all parameters synchronized
     try {
-      animator.animateTo(targetTransform);
+      animator.animateTo(targetTransform, animationDuration: duration, animationCurve: curve);
     } catch (e) {
       // Widget disposed during animation, ignore the error
       print("MapCubit: Animation error (likely disposed): $e");
@@ -340,34 +363,37 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onGpsData(GpsData data) {
-    final current = state;
+    final lastGps = _lastGpsData;
+    final positionChanged = lastGps == null ||
+        (data.latitude - lastGps.latitude).abs() > 0.000001 ||
+        (data.longitude - lastGps.longitude).abs() > 0.000001;
 
-    // Store GPS data for interpolation
     _lastGpsData = data;
-    _lastGpsTime = DateTime.now();
 
-    // Map should rotate by the vehicle's actual course.
-    final courseForMapRotation = data.course;
+    if (positionChanged) {
+      _lastGpsTime = DateTime.now();
 
-    // Marker should counter-rotate by the same amount to stay screen-upright.
-    final orientationForMarker = data.course;
+      // Calculate GPS correction target: project GPS forward to account for latency
+      // GPS tells us where we WERE ~300ms ago, so project forward to where we ARE now
+      final ecuSpeedKmh = _engineSync.state.speed.toDouble();
+      final speedMs = ecuSpeedKmh / 3.6;
+      final latencyDistance = speedMs * _drGpsLatencySeconds;
 
-    final rawPosition = LatLng(data.latitude, data.longitude);
+      final courseRadians = data.courseRadians;
+      final dLat = latencyDistance * math.cos(courseRadians) / 111320.0;
+      final dLng = latencyDistance * math.sin(courseRadians) / (111320.0 * math.cos(data.latitude * math.pi / 180));
 
-    // Use snapped position when navigating and on-route, otherwise use raw GPS position
-    final navState = _currentNavigationState;
-    final positionForDisplay = (navState?.isNavigating == true && navState?.snappedPosition != null)
-        ? navState!.snappedPosition!
-        : rawPosition;
+      _gpsCorrectionTarget = LatLng(data.latitude + dLat, data.longitude + dLng);
 
-    emit(current.copyWith(
-      position: positionForDisplay,
-      orientation: orientationForMarker,
-    ));
+      // Initialize estimated position if this is first GPS
+      _estimatedPosition ??= _gpsCorrectionTarget;
 
-    // Snap to real GPS position - this resets interpolation baseline
-    _lastInterpolatedPosition = positionForDisplay;
-    _moveAndRotate(positionForDisplay, courseForMapRotation);
+      print("MapCubit GPS (NEW): raw=${data.latitude.toStringAsFixed(6)},${data.longitude.toStringAsFixed(6)} -> target=${_gpsCorrectionTarget!.latitude.toStringAsFixed(6)},${_gpsCorrectionTarget!.longitude.toStringAsFixed(6)}, speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h");
+    }
+
+    // Update orientation in state (marker rotation)
+    final current = state;
+    emit(current.copyWith(orientation: data.course));
   }
 
   void _onThemeUpdate(ThemeState event) {
@@ -386,11 +412,11 @@ class MapCubit extends Cubit<MapState> {
       mapController: current.controller,
       tickerProvider: vsync,
       duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
+      curve: Curves.linear,
     );
 
-    // Start interpolation ticker using the same TickerProvider
-    _startInterpolationTicker(vsync);
+    // Start dead reckoning timer for smooth position updates
+    _startDrTimer();
 
     emit(switch (current) {
       MapOffline() => current.copyWith(isReady: true),
@@ -480,94 +506,182 @@ class MapCubit extends Cubit<MapState> {
   }
 
   // ============================================================================
-  // GPS Position Interpolation (Dead Reckoning)
+  // Dead Reckoning - Smooth position interpolation between GPS updates
   // ============================================================================
 
-  /// Starts the interpolation ticker for smooth map movement between GPS updates
-  void _startInterpolationTicker(TickerProvider vsync) {
-    _stopInterpolationTicker();
-    _interpolationTicker = vsync.createTicker(_onInterpolationTick);
-    _interpolationTicker!.start();
+  /// Projects a position forward along a route by the given distance (meters)
+  LatLng _projectAlongRoute(LatLng currentPos, List<LatLng> waypoints, double distanceM) {
+    if (waypoints.isEmpty) return currentPos;
+    if (waypoints.length == 1) return waypoints.first;
+
+    // Find the nearest segment on the route
+    int nearestSegment = 0;
+    double minDist = double.infinity;
+    LatLng nearestPoint = waypoints.first;
+
+    for (int i = 0; i < waypoints.length - 1; i++) {
+      final segStart = waypoints[i];
+      final segEnd = waypoints[i + 1];
+      final projected = _projectPointOnSegment(currentPos, segStart, segEnd);
+      final dist = distanceCalculator.distance(currentPos, projected);
+
+      if (dist < minDist) {
+        minDist = dist;
+        nearestSegment = i;
+        nearestPoint = projected;
+      }
+    }
+
+    // Now advance along the route from nearestPoint by distanceM
+    double remaining = distanceM;
+    LatLng pos = nearestPoint;
+
+    for (int i = nearestSegment; i < waypoints.length - 1 && remaining > 0; i++) {
+      final segEnd = waypoints[i + 1];
+      final distToEnd = distanceCalculator.distance(pos, segEnd);
+
+      if (distToEnd <= remaining) {
+        // Move to end of this segment and continue
+        remaining -= distToEnd;
+        pos = segEnd;
+      } else {
+        // Interpolate within this segment
+        final fraction = remaining / distToEnd;
+        pos = LatLng(
+          pos.latitude + (segEnd.latitude - pos.latitude) * fraction,
+          pos.longitude + (segEnd.longitude - pos.longitude) * fraction,
+        );
+        remaining = 0;
+      }
+    }
+
+    return pos;
   }
 
-  /// Stops the interpolation ticker
-  void _stopInterpolationTicker() {
-    _interpolationTicker?.stop();
-    _interpolationTicker?.dispose();
-    _interpolationTicker = null;
+  /// Projects a point onto a line segment, returning the closest point on the segment
+  LatLng _projectPointOnSegment(LatLng point, LatLng segStart, LatLng segEnd) {
+    final dx = segEnd.longitude - segStart.longitude;
+    final dy = segEnd.latitude - segStart.latitude;
+
+    if (dx == 0 && dy == 0) return segStart;
+
+    final t = ((point.longitude - segStart.longitude) * dx +
+            (point.latitude - segStart.latitude) * dy) /
+        (dx * dx + dy * dy);
+
+    final tClamped = t.clamp(0.0, 1.0);
+
+    return LatLng(
+      segStart.latitude + tClamped * dy,
+      segStart.longitude + tClamped * dx,
+    );
   }
 
-  /// Called at ~60Hz by the ticker; we throttle internally to ~15Hz for position updates
-  DateTime? _lastInterpolationTime;
-  static const _interpolationInterval = Duration(milliseconds: 66); // ~15Hz
+  /// Starts the dead reckoning timer for smooth map movement
+  void _startDrTimer() {
+    _stopDrTimer();
+    _drTimer = Timer.periodic(_drUpdateInterval, _onDrTick);
+    print("MapCubit: Started dead reckoning timer at ${_drUpdateHz}Hz");
+  }
 
-  void _onInterpolationTick(Duration elapsed) {
+  /// Stops the dead reckoning timer
+  void _stopDrTimer() {
+    _drTimer?.cancel();
+    _drTimer = null;
+  }
+
+  DateTime? _drStartTime;
+
+  /// Called at 30Hz by the timer for smooth position updates
+  void _onDrTick(Timer timer) {
     final now = DateTime.now();
+    _drStartTime ??= now;
+    final secondsSinceStart = now.difference(_drStartTime!).inSeconds;
 
-    // Throttle to ~15Hz
-    if (_lastInterpolationTime != null &&
-        now.difference(_lastInterpolationTime!) < _interpolationInterval) {
+    // Always log for first 10 seconds, then every 5th tick
+    final verboseLog = secondsSinceStart < 10;
+    if (verboseLog || _frameCount % 5 == 0) {
+      print("MapCubit _onDrTick: frame $_frameCount, t=${secondsSinceStart}s");
+    }
+
+    // Calculate dt since last frame
+    final dt = _lastFrameTime != null
+        ? now.difference(_lastFrameTime!).inMicroseconds / 1000000.0
+        : 1.0 / _drUpdateHz;
+    _lastFrameTime = now;
+
+    // Clamp dt to reasonable range (skip negative, cap at 150ms to prevent jumps)
+    final clampedDt = dt.clamp(0.001, 0.15);
+    if (dt <= 0) {
+      if (verboseLog) print("MapCubit _onDrTick: skipping negative dt=$dt");
       return;
     }
-    _lastInterpolationTime = now;
 
-    // Perform dead reckoning interpolation
-    final interpolatedPosition = _calculateInterpolatedPosition();
-    if (interpolatedPosition != null) {
-      _applyInterpolatedPosition(interpolatedPosition);
-    }
-  }
-
-  /// Calculates the interpolated position using dead reckoning
-  LatLng? _calculateInterpolatedPosition() {
+    // Need GPS data and estimated position to do dead reckoning
     final gpsData = _lastGpsData;
-    final gpsTime = _lastGpsTime;
+    if (gpsData == null) {
+      if (verboseLog) print("MapCubit _onDrTick: no GPS data yet");
+      return;
+    }
+    if (!gpsData.hasRecentFix) {
+      if (verboseLog) print("MapCubit _onDrTick: GPS fix not recent (ts=${gpsData.lastUpdated})");
+      return;
+    }
+    if (_estimatedPosition == null) {
+      if (verboseLog) print("MapCubit _onDrTick: no estimated position");
+      return;
+    }
 
-    // Need GPS data to interpolate from
-    if (gpsData == null || gpsTime == null) return null;
-
-    // Only interpolate if GPS fix is recent (<10s old)
-    if (!gpsData.hasRecentFix) return null;
-
-    // Get ECU speed (km/h)
+    // Get current velocity from ECU
     final ecuSpeedKmh = _engineSync.state.speed.toDouble();
-
-    // Only interpolate when ECU speed > 0 (vehicle is moving)
-    if (ecuSpeedKmh <= 0) return null;
-
-    // Calculate elapsed time since last GPS update
-    final now = DateTime.now();
-    final elapsedSeconds = now.difference(gpsTime).inMilliseconds / 1000.0;
-
-    // Don't interpolate too far ahead (max 2 seconds)
-    if (elapsedSeconds > 2.0) return null;
-
-    // Convert speed from km/h to m/s
     final speedMs = ecuSpeedKmh / 3.6;
 
-    // Calculate distance traveled since last GPS update
-    final distanceM = speedMs * elapsedSeconds;
+    // Current estimated position
+    var estLat = _estimatedPosition!.latitude;
+    var estLng = _estimatedPosition!.longitude;
 
-    // Get course in radians
-    final courseRadians = gpsData.courseRadians;
+    // Step 1: Dead reckon forward using clamped dt
+    if (speedMs > _drMinSpeedMs) {
+      final distance = speedMs * clampedDt;
 
-    // Calculate position offset using dead reckoning
-    // Note: GPS course is degrees from north, clockwise
-    // cos(course) gives the northward component
-    // sin(course) gives the eastward component
-    final baseLat = gpsData.latitude;
-    final baseLng = gpsData.longitude;
+      // When navigating with a route, follow the route instead of straight-line projection
+      final navState = _currentNavigationState;
+      final route = navState?.route;
 
-    // Meters per degree latitude is roughly constant at 111320m
-    // Meters per degree longitude varies with latitude
-    final dLat = distanceM * math.cos(courseRadians) / 111320.0;
-    final dLng = distanceM * math.sin(courseRadians) / (111320.0 * math.cos(baseLat * math.pi / 180));
+      if (navState?.isNavigating == true && route != null && route.waypoints.length >= 2) {
+        // Project along route
+        final newPos = _projectAlongRoute(LatLng(estLat, estLng), route.waypoints, distance);
+        estLat = newPos.latitude;
+        estLng = newPos.longitude;
+      } else {
+        // No route - use GPS course for straight-line projection
+        final courseRadians = gpsData.courseRadians;
+        final dLat = distance * math.cos(courseRadians) / 111320.0;
+        final dLng = distance * math.sin(courseRadians) / (111320.0 * math.cos(estLat * math.pi / 180));
+        estLat += dLat;
+        estLng += dLng;
+      }
+    }
 
-    return LatLng(baseLat + dLat, baseLng + dLng);
+    // Step 2: Blend toward GPS correction target (using clamped dt)
+    if (_gpsCorrectionTarget != null) {
+      final target = _gpsCorrectionTarget!;
+      final blendFactor = _drCorrectionBlendRate * clampedDt;
+      final clampedBlend = blendFactor.clamp(0.0, 0.5); // Cap at 50% per frame to prevent overshooting
+
+      estLat = estLat + (target.latitude - estLat) * clampedBlend;
+      estLng = estLng + (target.longitude - estLng) * clampedBlend;
+    }
+
+    // Update estimated position
+    _estimatedPosition = LatLng(estLat, estLng);
+
+    // Apply to map using DIRECT camera update (no animation)
+    _updateCameraDirectly(_estimatedPosition!, ecuSpeedKmh, clampedDt);
   }
 
-  /// Applies the interpolated position to the map
-  void _applyInterpolatedPosition(LatLng interpolatedPosition) {
+  /// Updates the map camera directly without animation - for smooth movement
+  void _updateCameraDirectly(LatLng position, double ecuSpeedKmh, double dt) {
     final current = state;
 
     // Check if map is ready
@@ -577,31 +691,83 @@ class MapCubit extends Cubit<MapState> {
       _ => false,
     };
 
-    if (!isReady || _transformAnimator == null || isClosed) return;
+    if (!isReady || isClosed) return;
 
-    // Use snapped position when navigating, otherwise use interpolated
+    // Always use the dead-reckoned position for smooth camera movement
+    // The snapped position (for route following) only updates at 1Hz
     final navState = _currentNavigationState;
-    final positionForDisplay = (navState?.isNavigating == true && navState?.snappedPosition != null)
-        ? navState!.snappedPosition!
-        : interpolatedPosition;
+    final positionForDisplay = position;
 
-    // Only update if position has actually changed significantly
-    if (_lastInterpolatedPosition != null) {
-      final distance = distanceCalculator.distance(
-        _lastInterpolatedPosition!,
-        positionForDisplay,
-      );
-      // Skip updates smaller than 0.5 meters to avoid micro-jitter
-      if (distance < 0.5) return;
-    }
-
-    _lastInterpolatedPosition = positionForDisplay;
-
-    // Update state with interpolated position
+    // Update state with position (for vehicle marker)
     emit(current.copyWith(position: positionForDisplay));
 
-    // Animate map to interpolated position
+    // Get map parameters
     final course = _lastGpsData?.course ?? 0;
-    _moveAndRotate(positionForDisplay, course);
+    final isOffRoute = navState?.isOffRoute ?? false;
+    final offset = isOffRoute ? Offset.zero : mapCenterOffset;
+
+    // Update target rotation
+    _targetRotation = isOffRoute ? 0.0 : -course;
+
+    // Update target zoom with hysteresis to prevent pulsing
+    final newTargetZoom = _calculateDynamicZoom();
+    if ((newTargetZoom - _targetZoom).abs() > _zoomHysteresis) {
+      _targetZoom = newTargetZoom;
+    }
+
+    // Smooth rotation (handle wraparound at ±180°)
+    double rotationDelta = _targetRotation - _currentRotation;
+    // Take shortest path around the circle
+    if (rotationDelta > 180) rotationDelta -= 360;
+    if (rotationDelta < -180) rotationDelta += 360;
+    final rotationBlend = (_rotationSmoothingRate * dt).clamp(0.0, 1.0);
+    _currentRotation += rotationDelta * rotationBlend;
+    // Normalize to [-180, 180]
+    if (_currentRotation > 180) _currentRotation -= 360;
+    if (_currentRotation < -180) _currentRotation += 360;
+
+    // Smooth zoom
+    final zoomDelta = _targetZoom - _currentZoom;
+    final zoomBlend = (_zoomSmoothingRate * dt).clamp(0.0, 1.0);
+    _currentZoom += zoomDelta * zoomBlend;
+
+    final rotation = _currentRotation;
+    final zoom = _currentZoom;
+
+    // Calculate center position accounting for vehicle offset
+    final controller = current.controller;
+    final camera = controller.camera;
+
+    LatLng centerPosition = positionForDisplay;
+    if (offset != Offset.zero) {
+      final gpsPixel = camera.project(positionForDisplay, zoom);
+      final rotationRad = rotation * math.pi / 180.0;
+      final centerPixel = math.Point(
+        gpsPixel.x - offset.dy * math.sin(rotationRad),
+        gpsPixel.y - offset.dy * math.cos(rotationRad),
+      );
+      centerPosition = camera.unproject(centerPixel, zoom);
+    }
+
+    // Use mapController.moveAndRotate for camera updates
+    // This triggers proper repaints unlike moveAndRotateRaw
+    try {
+      controller.moveAndRotate(centerPosition, camera.clampZoom(zoom), rotation);
+      // Log every 5 frames to confirm camera updates
+      if (_frameCount % 5 == 0) {
+        print("MapCubit: moveAndRotate called, center=${centerPosition.latitude.toStringAsFixed(6)},${centerPosition.longitude.toStringAsFixed(6)}");
+      }
+    } catch (e) {
+      print("MapCubit: moveAndRotate error: $e");
+    }
+
+    // Log once per second (at 30Hz, that's every 30 frames)
+    _frameCount++;
+    if (_frameCount % _drLogIntervalFrames == 0) {
+      final errorM = _gpsCorrectionTarget != null
+          ? distanceCalculator.distance(position, _gpsCorrectionTarget!)
+          : 0.0;
+      print("MapCubit DR: pos=${position.latitude.toStringAsFixed(6)},${position.longitude.toStringAsFixed(6)}, speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h, dt=${(dt*1000).toStringAsFixed(1)}ms, zoom=${_currentZoom.toStringAsFixed(2)}->${_targetZoom.toStringAsFixed(2)}, gpsErr=${errorM.toStringAsFixed(1)}m");
+    }
   }
 }
