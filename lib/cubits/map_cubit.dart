@@ -2,12 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map/src/map/controller/map_controller_impl.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mbtiles/mbtiles.dart';
@@ -63,24 +61,35 @@ class MapCubit extends Cubit<MapState> {
   static const double _drUpdateHz = 30.0; // Update rate for position interpolation
   static const Duration _drUpdateInterval = Duration(milliseconds: 33); // 1000ms / 30Hz ≈ 33ms
   static const double _drGpsLatencySeconds = 0.15; // Reduced latency compensation for slight undershoot
-  static const double _drSpeedFactor = 0.9; // Slightly underpredict to avoid overshooting
+  static const double _drSpeedFactor = 0.95; // Slightly underpredict to avoid overshooting
   static const double _drCorrectionBlendRate = 2.0; // How fast to blend toward GPS (per second)
+  static const double _drMaxErrorBeforeReset = 15.0; // If error exceeds this (meters), use fast correction
+  static const double _drFastCorrectionBlendRate = 5.0; // Faster blend when resetting (per second)
+  static const double _drSnapErrorThreshold = 50.0; // If error exceeds this (meters), snap with 1s animation
+  static const double _drSnapAnimationSeconds = 1.0; // Duration for snap animation
+  static const double _drImmediateResetThreshold = 500.0; // If error exceeds this (meters), immediately reset position
   static const double _drMinSpeedMs = 0.1; // Minimum speed to apply dead reckoning (m/s)
   static const int _drLogIntervalFrames = 30; // Log every N frames (once per second at 30Hz)
 
   // Dead reckoning runtime state
   Timer? _drTimer;
   GpsData? _lastGpsData;
-  DateTime? _lastGpsTime;
   LatLng? _estimatedPosition; // Continuous position estimate (moves every frame)
   LatLng? _gpsCorrectionTarget; // GPS position projected forward for latency compensation
   DateTime? _lastFrameTime;
   int _frameCount = 0;
+  int _lastRouteSegment = 0; // Track which route segment we're on to prevent jumping
 
-  // Smoothed rotation (interpolated each frame)
+  // Smoothed rotation and zoom (interpolated each frame)
   double _currentRotation = 0.0; // Current smoothed rotation
   double _targetRotation = 0.0; // Target rotation from GPS
-  static const double _rotationSmoothingRate = 4.0; // How fast rotation catches up (per second)
+  double _currentZoom = 16.0; // Current smoothed zoom
+  double _targetZoom = 16.0; // Target zoom from navigation
+  static const double _rotationMaxRate = 90.0; // Max degrees per second for large rotations
+  static const double _rotationAnimationDuration = 1.0; // Seconds for rotations <= 90 degrees
+  static const double _rotationHysteresis = 5.0; // Only change target rotation if difference > this (degrees)
+  static const double _zoomSmoothingRate = 1.0; // Zoom levels per second
+  static const double _zoomHysteresis = 0.3; // Only change target zoom if difference > this
 
   static MapCubit create(BuildContext context) {
     final cubit = MapCubit(
@@ -196,29 +205,20 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onNavigationStateChanged(NavigationState navState) {
+    // Reset route segment tracking if route changed
+    final oldRoute = _currentNavigationState?.route;
+    final newRoute = navState.route;
+    if (oldRoute != newRoute) {
+      _lastRouteSegment = 0;
+    }
+
     // Store the current navigation state
     _currentNavigationState = navState;
 
-    // Animate zoom change using the animator (1s duration for smooth transition)
-    // This is separate from the 30Hz position updates
-    if (_transformAnimator != null && !isClosed) {
-      final targetZoom = _calculateDynamicZoom();
-      final currentCamera = state.controller.camera;
-
-      // Only animate if zoom actually changed significantly
-      if ((targetZoom - currentCamera.zoom).abs() > 0.1) {
-        final targetTransform = MapTransform(
-          center: currentCamera.center,
-          zoom: targetZoom,
-          rotation: currentCamera.rotation,
-          offset: Offset.zero,
-        );
-        _transformAnimator!.animateTo(
-          targetTransform,
-          animationDuration: const Duration(milliseconds: 1000),
-          animationCurve: Curves.linear,
-        );
-      }
+    // Update target zoom with hysteresis - only change if significant difference
+    final newTargetZoom = _calculateDynamicZoom();
+    if ((newTargetZoom - _targetZoom).abs() > _zoomHysteresis) {
+      _targetZoom = newTargetZoom;
     }
   }
 
@@ -382,8 +382,6 @@ class MapCubit extends Cubit<MapState> {
     _lastGpsData = data;
 
     if (positionChanged) {
-      _lastGpsTime = DateTime.now();
-
       // Calculate GPS correction target: project GPS forward to account for latency
       // GPS tells us where we WERE ~300ms ago, so project forward to where we ARE now
       final ecuSpeedKmh = _engineSync.state.speed.toDouble();
@@ -521,16 +519,26 @@ class MapCubit extends Cubit<MapState> {
   // ============================================================================
 
   /// Projects a position forward along a route by the given distance (meters)
+  /// Only searches forward from _lastRouteSegment to prevent jumping backwards
   LatLng _projectAlongRoute(LatLng currentPos, List<LatLng> waypoints, double distanceM) {
     if (waypoints.isEmpty) return currentPos;
     if (waypoints.length == 1) return waypoints.first;
 
-    // Find the nearest segment on the route
-    int nearestSegment = 0;
-    double minDist = double.infinity;
-    LatLng nearestPoint = waypoints.first;
+    // Clamp last segment to valid range
+    if (_lastRouteSegment >= waypoints.length - 1) {
+      _lastRouteSegment = waypoints.length - 2;
+    }
 
-    for (int i = 0; i < waypoints.length - 1; i++) {
+    // Search for nearest segment, but only forward from last known position
+    // Allow looking back by 2 segments max (in case of GPS correction)
+    final searchStart = (_lastRouteSegment - 2).clamp(0, waypoints.length - 2);
+    final searchEnd = (waypoints.length - 1).clamp(0, waypoints.length - 1);
+
+    int nearestSegment = _lastRouteSegment;
+    double minDist = double.infinity;
+    LatLng nearestPoint = waypoints[_lastRouteSegment];
+
+    for (int i = searchStart; i < searchEnd; i++) {
       final segStart = waypoints[i];
       final segEnd = waypoints[i + 1];
       final projected = _projectPointOnSegment(currentPos, segStart, segEnd);
@@ -541,6 +549,11 @@ class MapCubit extends Cubit<MapState> {
         nearestSegment = i;
         nearestPoint = projected;
       }
+    }
+
+    // Update last segment (only allow moving forward, or back by 1 for corrections)
+    if (nearestSegment >= _lastRouteSegment || nearestSegment == _lastRouteSegment - 1) {
+      _lastRouteSegment = nearestSegment;
     }
 
     // Now advance along the route from nearestPoint by distanceM
@@ -555,6 +568,7 @@ class MapCubit extends Cubit<MapState> {
         // Move to end of this segment and continue
         remaining -= distToEnd;
         pos = segEnd;
+        _lastRouteSegment = i + 1; // Update segment as we pass it
       } else {
         // Interpolate within this segment
         final fraction = remaining / distToEnd;
@@ -675,13 +689,45 @@ class MapCubit extends Cubit<MapState> {
     }
 
     // Step 2: Blend toward GPS correction target (using clamped dt)
+    // Use gentle blending to avoid sudden jumps - corrections happen gradually
+    // But if error is large (>15m), use faster correction; if >50m, animate snap over 1s
+    // For very large errors (>500m, e.g. after routing restart), immediately reset
     if (_gpsCorrectionTarget != null) {
       final target = _gpsCorrectionTarget!;
-      final blendFactor = _drCorrectionBlendRate * clampedDt;
-      final clampedBlend = blendFactor.clamp(0.0, 0.5); // Cap at 50% per frame to prevent overshooting
+      final currentPos = LatLng(estLat, estLng);
+      final errorM = distanceCalculator.distance(currentPos, target);
 
-      estLat = estLat + (target.latitude - estLat) * clampedBlend;
-      estLng = estLng + (target.longitude - estLng) * clampedBlend;
+      if (errorM > _drImmediateResetThreshold) {
+        // Extremely large error (routing restart, GPS jump): immediately reset
+        // Discard all predictions and start fresh from known GPS position
+        estLat = target.latitude;
+        estLng = target.longitude;
+        _lastRouteSegment = 0; // Reset route segment tracking too
+        print("MapCubit DR: RESET - error=${errorM.toStringAsFixed(0)}m > ${_drImmediateResetThreshold}m, discarding predictions");
+      } else {
+        double blendRate;
+        double maxBlend;
+
+        if (errorM > _drSnapErrorThreshold) {
+          // Very large error: animate snap over 1 second (blend = 1/duration per second)
+          blendRate = 1.0 / _drSnapAnimationSeconds;
+          maxBlend = 1.0; // Allow full correction
+        } else if (errorM > _drMaxErrorBeforeReset) {
+          // Large error: use faster correction
+          blendRate = _drFastCorrectionBlendRate;
+          maxBlend = 0.4;
+        } else {
+          // Normal: gentle correction
+          blendRate = _drCorrectionBlendRate;
+          maxBlend = 0.15;
+        }
+
+        final blendFactor = blendRate * clampedDt;
+        final clampedBlend = blendFactor.clamp(0.0, maxBlend);
+
+        estLat = estLat + (target.latitude - estLat) * clampedBlend;
+        estLng = estLng + (target.longitude - estLng) * clampedBlend;
+      }
     }
 
     // Update estimated position
@@ -721,23 +767,50 @@ class MapCubit extends Cubit<MapState> {
     final controller = current.controller;
     final camera = controller.camera;
 
-    // Update target rotation (zoom is animated separately via _onNavigationStateChanged)
-    _targetRotation = isOffRoute ? 0.0 : -course;
+    // Update target rotation with hysteresis to dampen small heading wobbles
+    final newTargetRotation = isOffRoute ? 0.0 : -course;
+    double rotationDiff = newTargetRotation - _targetRotation;
+    // Handle wraparound for comparison
+    if (rotationDiff > 180) rotationDiff -= 360;
+    if (rotationDiff < -180) rotationDiff += 360;
+    if (rotationDiff.abs() > _rotationHysteresis) {
+      _targetRotation = newTargetRotation;
+    }
 
-    // Smooth rotation (handle wraparound at ±180°)
+    // Smooth rotation with linear interpolation (handle wraparound at ±180°)
     double rotationDelta = _targetRotation - _currentRotation;
     // Take shortest path around the circle
     if (rotationDelta > 180) rotationDelta -= 360;
     if (rotationDelta < -180) rotationDelta += 360;
-    final rotationBlend = (_rotationSmoothingRate * dt).clamp(0.0, 1.0);
-    _currentRotation += rotationDelta * rotationBlend;
+
+    // Calculate rate: small rotations take fixed duration, large ones use max rate
+    // <= 60° takes 1 second, > 60° uses 60°/sec
+    final absDelta = rotationDelta.abs();
+    final rotationRate = absDelta <= _rotationMaxRate
+        ? absDelta / _rotationAnimationDuration  // Complete in fixed duration
+        : _rotationMaxRate;  // Cap at max rate for large rotations
+
+    final rotationStep = rotationRate * dt;
+    if (absDelta <= rotationStep || rotationRate == 0) {
+      _currentRotation = _targetRotation;
+    } else {
+      _currentRotation += rotationStep * rotationDelta.sign;
+    }
     // Normalize to [-180, 180]
     if (_currentRotation > 180) _currentRotation -= 360;
     if (_currentRotation < -180) _currentRotation += 360;
 
     final rotation = _currentRotation;
-    // Use current camera zoom - don't override the animator's zoom transitions
-    final zoom = camera.zoom;
+
+    // Smooth zoom (linear interpolation toward target)
+    final zoomDelta = _targetZoom - _currentZoom;
+    final zoomStep = _zoomSmoothingRate * dt; // Max change per frame
+    if (zoomDelta.abs() <= zoomStep) {
+      _currentZoom = _targetZoom;
+    } else {
+      _currentZoom += zoomStep * zoomDelta.sign;
+    }
+    final zoom = _currentZoom;
 
     // Calculate center position accounting for vehicle offset
 
