@@ -47,7 +47,8 @@ class MapCubit extends Cubit<MapState> {
   static const double _zoomMax = 17.5; // Maximum zoom for complex turns (~150m look-ahead)
 
   // Vehicle positioning - public so VehicleIndicator can use the same value
-  static const Offset mapCenterOffset = Offset(0, 120); // Vehicle positioned toward bottom for better look-ahead (reduced for street name display)
+  static const Offset mapCenterOffset =
+      Offset(0, 120); // Vehicle positioned toward bottom for better look-ahead (reduced for street name display)
 
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
@@ -60,7 +61,7 @@ class MapCubit extends Cubit<MapState> {
   // ============================================================================
 
   /// Target update rate for position interpolation - change this to adjust smoothness vs CPU usage
-  static const double _drUpdateHz = 30.0;
+  static const double _drUpdateHz = 15.0;
 
   /// Derived: interval between updates (computed from _drUpdateHz)
   static Duration get _drUpdateInterval => Duration(milliseconds: (1000 / _drUpdateHz).round());
@@ -90,7 +91,7 @@ class MapCubit extends Cubit<MapState> {
   double _targetZoom = 16.0; // Target zoom from navigation
   static const double _rotationMaxRate = 110.0; // Max degrees per second for large rotations
   static const double _rotationAnimationDuration = 1.0; // Seconds for rotations <= 110 degrees
-  static const double _rotationHysteresis = 5.0; // Only change target rotation if difference > this (degrees)
+  static const double _rotationTargetSmoothing = 8.0; // How fast target rotation converges (per second) - dampens noise
   static const double _zoomSmoothingRate = 1.0; // Zoom levels per second
   static const double _zoomHysteresis = 0.3; // Only change target zoom if difference > this
 
@@ -585,7 +586,8 @@ class MapCubit extends Cubit<MapState> {
       final segStart = waypoints[currentSegment];
       final segEnd = waypoints[currentSegment + 1];
       final dLat = segEnd.latitude - segStart.latitude;
-      final dLng = segEnd.longitude - segStart.longitude;
+      // Scale longitude by cos(lat) to account for meridian convergence
+      final dLng = (segEnd.longitude - segStart.longitude) * math.cos(segStart.latitude * math.pi / 180);
       // atan2 gives angle from positive x-axis (east), we need from north
       // heading = 90 - atan2(dLat, dLng) in degrees, normalized to [0, 360)
       heading = (90 - math.atan2(dLat, dLng) * 180 / math.pi) % 360;
@@ -601,9 +603,8 @@ class MapCubit extends Cubit<MapState> {
 
     if (dx == 0 && dy == 0) return segStart;
 
-    final t = ((point.longitude - segStart.longitude) * dx +
-            (point.latitude - segStart.latitude) * dy) /
-        (dx * dx + dy * dy);
+    final t =
+        ((point.longitude - segStart.longitude) * dx + (point.latitude - segStart.latitude) * dy) / (dx * dx + dy * dy);
 
     final tClamped = t.clamp(0.0, 1.0);
 
@@ -630,9 +631,7 @@ class MapCubit extends Cubit<MapState> {
     final now = DateTime.now();
 
     // Calculate dt since last frame
-    final dt = _lastFrameTime != null
-        ? now.difference(_lastFrameTime!).inMicroseconds / 1000000.0
-        : 1.0 / _drUpdateHz;
+    final dt = _lastFrameTime != null ? now.difference(_lastFrameTime!).inMicroseconds / 1000000.0 : 1.0 / _drUpdateHz;
     _lastFrameTime = now;
 
     // Clamp dt to reasonable range (skip negative, cap at 150ms to prevent jumps)
@@ -794,23 +793,22 @@ class MapCubit extends Cubit<MapState> {
       _currentRotation = targetRotation;
       _targetRotation = targetRotation;
     } else {
-      // Apply hysteresis to target rotation
-      double rotationDiff = targetRotation - _targetRotation;
-      if (rotationDiff > 180) rotationDiff -= 360;
-      if (rotationDiff < -180) rotationDiff += 360;
-      if (rotationDiff.abs() > _rotationHysteresis) {
-        _targetRotation = targetRotation;
-      }
+      // Smooth the target itself - dampens noise while allowing sustained changes to accumulate
+      double targetDiff = targetRotation - _targetRotation;
+      if (targetDiff > 180) targetDiff -= 360;
+      if (targetDiff < -180) targetDiff += 360;
+      final targetBlend = (_rotationTargetSmoothing * dt).clamp(0.0, 1.0);
+      _targetRotation += targetDiff * targetBlend;
+      if (_targetRotation > 180) _targetRotation -= 360;
+      if (_targetRotation < -180) _targetRotation += 360;
 
-      // Smooth rotation with duration-based interpolation
+      // Smooth current rotation toward target with duration-based interpolation
       double rotationDelta = _targetRotation - _currentRotation;
       if (rotationDelta > 180) rotationDelta -= 360;
       if (rotationDelta < -180) rotationDelta += 360;
 
       final absDelta = rotationDelta.abs();
-      final rotationRate = absDelta <= _rotationMaxRate
-          ? absDelta / _rotationAnimationDuration
-          : _rotationMaxRate;
+      final rotationRate = absDelta <= _rotationMaxRate ? absDelta / _rotationAnimationDuration : _rotationMaxRate;
 
       final rotationStep = rotationRate * dt;
       if (absDelta <= rotationStep || rotationRate == 0) {
@@ -865,5 +863,14 @@ class MapCubit extends Cubit<MapState> {
     } catch (e) {
       // Silently ignore - widget likely disposed during animation
     }
+
+    // Debug: log rotation values
+    _debugFrameCount++;
+    if (_debugFrameCount % 30 == 0) {
+      final gpsHeading = _lastGpsData?.course ?? 0;
+      print("MapCubit ROT: gps=${gpsHeading.toStringAsFixed(1)}°, pred=${prediction.heading.toStringAsFixed(1)}°, target=${_targetRotation.toStringAsFixed(1)}°, current=${_currentRotation.toStringAsFixed(1)}°, applied=${rotation.toStringAsFixed(1)}°");
+    }
   }
+
+  int _debugFrameCount = 0;
 }
