@@ -518,11 +518,13 @@ class MapCubit extends Cubit<MapState> {
   // Dead Reckoning - Smooth position interpolation between GPS updates
   // ============================================================================
 
+  /// Result of projecting along a route - includes position and heading
   /// Projects a position forward along a route by the given distance (meters)
   /// Only searches forward from _lastRouteSegment to prevent jumping backwards
-  LatLng _projectAlongRoute(LatLng currentPos, List<LatLng> waypoints, double distanceM) {
-    if (waypoints.isEmpty) return currentPos;
-    if (waypoints.length == 1) return waypoints.first;
+  /// Returns both the new position and the heading (course) along the route segment
+  ({LatLng position, double heading}) _projectAlongRoute(LatLng currentPos, List<LatLng> waypoints, double distanceM) {
+    if (waypoints.isEmpty) return (position: currentPos, heading: _lastGpsData?.course ?? 0);
+    if (waypoints.length == 1) return (position: waypoints.first, heading: _lastGpsData?.course ?? 0);
 
     // Clamp last segment to valid range
     if (_lastRouteSegment >= waypoints.length - 1) {
@@ -559,10 +561,12 @@ class MapCubit extends Cubit<MapState> {
     // Now advance along the route from nearestPoint by distanceM
     double remaining = distanceM;
     LatLng pos = nearestPoint;
+    int currentSegment = nearestSegment;
 
     for (int i = nearestSegment; i < waypoints.length - 1 && remaining > 0; i++) {
       final segEnd = waypoints[i + 1];
       final distToEnd = distanceCalculator.distance(pos, segEnd);
+      currentSegment = i;
 
       if (distToEnd <= remaining) {
         // Move to end of this segment and continue
@@ -580,7 +584,19 @@ class MapCubit extends Cubit<MapState> {
       }
     }
 
-    return pos;
+    // Calculate heading from current route segment direction
+    double heading = _lastGpsData?.course ?? 0;
+    if (currentSegment < waypoints.length - 1) {
+      final segStart = waypoints[currentSegment];
+      final segEnd = waypoints[currentSegment + 1];
+      final dLat = segEnd.latitude - segStart.latitude;
+      final dLng = segEnd.longitude - segStart.longitude;
+      // atan2 gives angle from positive x-axis (east), we need from north
+      // heading = 90 - atan2(dLat, dLng) in degrees, normalized to [0, 360)
+      heading = (90 - math.atan2(dLat, dLng) * 180 / math.pi) % 360;
+    }
+
+    return (position: pos, heading: heading);
   }
 
   /// Projects a point onto a line segment, returning the closest point on the segment
@@ -674,10 +690,12 @@ class MapCubit extends Cubit<MapState> {
       final route = navState?.route;
 
       if (navState?.isNavigating == true && route != null && route.waypoints.length >= 2) {
-        // Project along route
-        final newPos = _projectAlongRoute(LatLng(estLat, estLng), route.waypoints, distance);
-        estLat = newPos.latitude;
-        estLng = newPos.longitude;
+        // Project along route - get both position and heading from route
+        final projection = _projectAlongRoute(LatLng(estLat, estLng), route.waypoints, distance);
+        estLat = projection.position.latitude;
+        estLng = projection.position.longitude;
+        // Update target rotation from route heading (with hysteresis applied in _updateCameraDirectly)
+        _targetRotation = -projection.heading;
       } else {
         // No route - use GPS course for straight-line projection
         final courseRadians = gpsData.courseRadians;
@@ -703,7 +721,11 @@ class MapCubit extends Cubit<MapState> {
         estLat = target.latitude;
         estLng = target.longitude;
         _lastRouteSegment = 0; // Reset route segment tracking too
-        print("MapCubit DR: RESET - error=${errorM.toStringAsFixed(0)}m > ${_drImmediateResetThreshold}m, discarding predictions");
+        // Also reset heading to GPS heading
+        final gpsHeading = _lastGpsData?.course ?? 0;
+        _currentRotation = -gpsHeading;
+        _targetRotation = -gpsHeading;
+        print("MapCubit DR: RESET - error=${errorM.toStringAsFixed(0)}m > ${_drImmediateResetThreshold}m, discarding predictions, heading=${gpsHeading.toStringAsFixed(0)}°");
       } else {
         double blendRate;
         double maxBlend;
@@ -767,14 +789,21 @@ class MapCubit extends Cubit<MapState> {
     final controller = current.controller;
     final camera = controller.camera;
 
-    // Update target rotation with hysteresis to dampen small heading wobbles
-    final newTargetRotation = isOffRoute ? 0.0 : -course;
-    double rotationDiff = newTargetRotation - _targetRotation;
-    // Handle wraparound for comparison
-    if (rotationDiff > 180) rotationDiff -= 360;
-    if (rotationDiff < -180) rotationDiff += 360;
-    if (rotationDiff.abs() > _rotationHysteresis) {
-      _targetRotation = newTargetRotation;
+    // Update target rotation:
+    // - When navigating along a route, heading is already set from route projection in _onDrTick
+    // - When off-route or no route, use GPS course with hysteresis
+    final route = navState?.route;
+    final isNavigatingAlongRoute = navState?.isNavigating == true && route != null && route.waypoints.length >= 2 && !isOffRoute;
+
+    if (!isNavigatingAlongRoute) {
+      final newTargetRotation = isOffRoute ? 0.0 : -course;
+      double rotationDiff = newTargetRotation - _targetRotation;
+      // Handle wraparound for comparison
+      if (rotationDiff > 180) rotationDiff -= 360;
+      if (rotationDiff < -180) rotationDiff += 360;
+      if (rotationDiff.abs() > _rotationHysteresis) {
+        _targetRotation = newTargetRotation;
+      }
     }
 
     // Smooth rotation with linear interpolation (handle wraparound at ±180°)
