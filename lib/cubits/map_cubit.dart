@@ -70,7 +70,6 @@ class MapCubit extends Cubit<MapState> {
   static const double _drSnapAnimationSeconds = 1.0; // Duration for snap animation
   static const double _drImmediateResetThreshold = 500.0; // If error exceeds this (meters), immediately reset position
   static const double _drMinSpeedMs = 0.1; // Minimum speed to apply dead reckoning (m/s)
-  static const int _drLogIntervalFrames = 30; // Log every N frames (once per second at 30Hz)
 
   // Dead reckoning runtime state
   Timer? _drTimer;
@@ -78,7 +77,6 @@ class MapCubit extends Cubit<MapState> {
   LatLng? _estimatedPosition; // Continuous position estimate (moves every frame)
   LatLng? _gpsCorrectionTarget; // GPS position projected forward for latency compensation
   DateTime? _lastFrameTime;
-  int _frameCount = 0;
   int _lastRouteSegment = 0; // Track which route segment we're on to prevent jumping
 
   // Smoothed rotation and zoom (interpolated each frame)
@@ -197,11 +195,8 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<void> _onShutdownStateChange(ShutdownState shutdownState) async {
-    // This logic might need to move to NavigationCubit if it's purely about navigation state
-    // For now, keeping it here if it affects map display during shutdown
     if (shutdownState.status == ShutdownStatus.shuttingDown) {
-      // Potentially clear map-specific route display if NavigationCubit handles clearing the actual route
-      print("MapCubit: Scooter shutting down. Consider map state adjustments.");
+      // Map state adjustments during shutdown handled by NavigationCubit
     }
   }
 
@@ -240,10 +235,7 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _moveAndRotate(LatLng center, double course, {Duration? duration, Curve? curve}) {
-    if (_mapLocked) {
-      print("MapCubit: Map is locked, skipping _moveAndRotate.");
-      return;
-    }
+    if (_mapLocked) return;
 
     // Check if map is ready before trying to animate
     final currentState = state;
@@ -397,8 +389,6 @@ class MapCubit extends Cubit<MapState> {
 
       // Initialize estimated position if this is first GPS
       _estimatedPosition ??= _gpsCorrectionTarget;
-
-      print("MapCubit GPS (NEW): raw=${data.latitude.toStringAsFixed(6)},${data.longitude.toStringAsFixed(6)} -> target=${_gpsCorrectionTarget!.latitude.toStringAsFixed(6)},${_gpsCorrectionTarget!.longitude.toStringAsFixed(6)}, speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h");
     }
 
     // Update orientation in state (marker rotation)
@@ -623,7 +613,6 @@ class MapCubit extends Cubit<MapState> {
   void _startDrTimer() {
     _stopDrTimer();
     _drTimer = Timer.periodic(_drUpdateInterval, _onDrTick);
-    print("MapCubit: Started dead reckoning timer at ${_drUpdateHz}Hz");
   }
 
   /// Stops the dead reckoning timer
@@ -632,12 +621,9 @@ class MapCubit extends Cubit<MapState> {
     _drTimer = null;
   }
 
-  DateTime? _drStartTime;
-
   /// Called at 30Hz by the timer for smooth position updates
   void _onDrTick(Timer timer) {
     final now = DateTime.now();
-    _drStartTime ??= now;
 
     // Calculate dt since last frame
     final dt = _lastFrameTime != null
@@ -726,7 +712,6 @@ class MapCubit extends Cubit<MapState> {
         heading = gpsData.course;
         immediateReset = true;
         _lastRouteSegment = 0;
-        print("MapCubit DR: RESET - error=${errorM.toStringAsFixed(0)}m, discarding predictions");
       } else {
         // Gradual correction with adaptive blend rate
         double blendRate;
@@ -874,17 +859,7 @@ class MapCubit extends Cubit<MapState> {
     try {
       controller.moveAndRotate(centerPosition, camera.clampZoom(zoom), rotation);
     } catch (e) {
-      print("MapCubit: moveAndRotate error: $e");
-    }
-
-    // Logging
-    _frameCount++;
-    if (_frameCount % _drLogIntervalFrames == 0) {
-      final errorM = _gpsCorrectionTarget != null
-          ? distanceCalculator.distance(prediction.position, _gpsCorrectionTarget!)
-          : 0.0;
-      final speedKmh = _engineSync.state.speed;
-      print("MapCubit DR: pos=${prediction.position.latitude.toStringAsFixed(6)},${prediction.position.longitude.toStringAsFixed(6)}, heading=${prediction.heading.toStringAsFixed(0)}°, speed=${speedKmh.toStringAsFixed(1)}km/h, gpsErr=${errorM.toStringAsFixed(1)}m");
+      // Silently ignore - widget likely disposed during animation
     }
   }
 }
