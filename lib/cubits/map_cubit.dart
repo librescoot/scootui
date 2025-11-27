@@ -86,8 +86,8 @@ class MapCubit extends Cubit<MapState> {
   double _targetRotation = 0.0; // Target rotation from GPS
   double _currentZoom = 16.0; // Current smoothed zoom
   double _targetZoom = 16.0; // Target zoom from navigation
-  static const double _rotationMaxRate = 90.0; // Max degrees per second for large rotations
-  static const double _rotationAnimationDuration = 1.0; // Seconds for rotations <= 90 degrees
+  static const double _rotationMaxRate = 110.0; // Max degrees per second for large rotations
+  static const double _rotationAnimationDuration = 1.0; // Seconds for rotations <= 110 degrees
   static const double _rotationHysteresis = 5.0; // Only change target rotation if difference > this (degrees)
   static const double _zoomSmoothingRate = 1.0; // Zoom levels per second
   static const double _zoomHysteresis = 0.3; // Only change target zoom if difference > this
