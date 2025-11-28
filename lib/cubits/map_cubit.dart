@@ -16,6 +16,7 @@ import '../map/mbtiles_provider.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/tiles_repository.dart';
 import '../routing/models.dart';
+import '../routing/route_helpers.dart';
 import '../state/enums.dart';
 import '../state/gps.dart';
 import '../state/settings.dart';
@@ -55,6 +56,7 @@ class MapCubit extends Cubit<MapState> {
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
   SettingsData? _currentSettings; // Store current settings for map type and render mode
   ThemeState? _currentTheme; // Store current theme state
+  Route? _lastPreloadedRoute; // Track last route we preloaded tiles for
 
   static MapCubit create(BuildContext context) {
     final cubit = MapCubit(
@@ -166,6 +168,46 @@ class MapCubit extends Cubit<MapState> {
     // Update dynamic zoom based on navigation context
     // Store the current navigation state for zoom calculations
     _currentNavigationState = navState;
+
+    // Handle tile preloading for new routes
+    final currentState = state;
+    if (currentState is MapOffline) {
+      final provider = currentState.tiles;
+      if (provider is AsyncMbTilesProvider) {
+        final route = navState.route;
+
+        // Check if we have a new route to preload
+        if (route != null && route != _lastPreloadedRoute) {
+          // Clear old preload if we had one
+          if (_lastPreloadedRoute != null) {
+            provider.clearPreload();
+          }
+
+          // Calculate tiles for the new route
+          // Use the map's max zoom, not the dynamic zoom (which can exceed tile availability)
+          final requestedZoom = _calculateDynamicZoom().floor();
+          final maxAvailableZoom = provider.maximumZoom;
+          final preloadZoom = requestedZoom.clamp(provider.minimumZoom, maxAvailableZoom);
+
+          print('MapCubit: Preloading route tiles - requested zoom: $requestedZoom, using zoom: $preloadZoom (max available: $maxAvailableZoom)');
+
+          final routeTiles = RouteHelpers.calculateRouteTiles(
+            route.waypoints,
+            preloadZoom.toDouble(),
+            buffer: 1,
+          );
+
+          // Start preloading with zoom validation
+          provider.preloadTilesAtZoom(routeTiles, preloadZoom);
+          _lastPreloadedRoute = route;
+        } else if (route == null && _lastPreloadedRoute != null) {
+          // Navigation ended, clear preload
+          provider.clearPreload();
+          _lastPreloadedRoute = null;
+          print('MapCubit: Cleared tile preload (navigation ended)');
+        }
+      }
+    }
 
     // Trigger map update with new zoom if currently navigating
     // Use snapped position when available and on-route, otherwise use current position
