@@ -294,7 +294,7 @@ def main():
         parser.error('Both destination latitude and longitude must be provided together')
 
     # Simulation timing - easily adjustable
-    updates_per_second = 2.0  # Change this to adjust update frequency
+    updates_per_second = 1.0  # Change this to adjust update frequency
     update_interval = 1.0 / updates_per_second
 
     # Initialize variables
@@ -380,10 +380,26 @@ def main():
                 if not is_ready_to_drive:
                     print(f"Vehicle not ready (state: {vehicle_state}), pausing simulation...")
 
-            # If vehicle is not ready to drive, skip this update cycle
+            # If vehicle is not ready to drive, decelerate to 0 then pause
             if not is_ready_to_drive:
-                time.sleep(update_interval)
-                continue
+                if current_speed > 0:
+                    # Ramp speed down before pausing
+                    prev_speed = current_speed
+                    speed_delta_per_update = max_deceleration * update_interval
+                    current_speed = max(0, current_speed - speed_delta_per_update)
+                    engine_speed = int(round(current_speed))
+                    redis_commands = [
+                        f"HSET gps speed {current_speed * 0.96:.2f}",
+                        "PUBLISH gps timestamp",
+                        f"HSET engine-ecu speed {engine_speed}",
+                    ]
+                    execute_redis_batch(redis_commands)
+                    print(f"Decelerating to stop: {engine_speed} km/h")
+                    time.sleep(update_interval)
+                    continue
+                else:
+                    time.sleep(update_interval)
+                    continue
 
             if not route_waypoints or waypoint_index >= len(route_waypoints) - 1:
                 # Determine destination: Redis first, then specified args, then random
@@ -502,6 +518,23 @@ def main():
 
             # Check if we've reached the destination
             if waypoint_index >= len(route_waypoints) - 1:
+                if current_speed > 0:
+                    # Ramp speed down before finishing
+                    prev_speed = current_speed
+                    speed_delta_per_update = max_deceleration * update_interval
+                    current_speed = max(0, current_speed - speed_delta_per_update)
+                    engine_speed = int(round(current_speed))
+                    lat_formatted = f"{lat:.6f}"
+                    lon_formatted = f"{lon:.6f}"
+                    redis_commands = [
+                        f"HSET gps latitude {lat_formatted} longitude {lon_formatted} course {course} speed {current_speed * 0.96:.2f}",
+                        "PUBLISH gps timestamp",
+                        f"HSET engine-ecu speed {engine_speed}",
+                    ]
+                    execute_redis_batch(redis_commands)
+                    print(f"Arriving at destination, decelerating: {engine_speed} km/h")
+                    time.sleep(update_interval)
+                    continue
                 print(f"\nDestination reached!")
                 print(f"Final position: lat={lat:.6f}, lon={lon:.6f}")
                 print(f"Final odometer: {int(rounded_odometer)}m")
@@ -539,12 +572,8 @@ def main():
             battery_charge_pct = int(battery_state * 100)
 
             redis_commands = [
-                f"HSET gps latitude {lat_formatted}",
-                f"PUBLISH gps latitude",
-                f"HSET gps longitude {lon_formatted}",
-                f"PUBLISH gps longitude",
-                f"HSET gps course {course}",
-                f"PUBLISH gps course",
+                f"HSET gps latitude {lat_formatted} longitude {lon_formatted} course {course} speed {current_speed * 0.96:.2f}",
+                "PUBLISH gps timestamp",
                 f"HSET engine-ecu speed {engine_speed}",
                 f"HSET engine-ecu odometer {int(rounded_odometer)}",
                 f"HSET engine-ecu motor:voltage {motor_voltage_mv}",
