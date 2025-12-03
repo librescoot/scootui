@@ -32,8 +32,7 @@ class TripCubit extends Cubit<TripState> {
 
   EngineData? _tripStart;
   DateTime? _tripStartTime;
-  DateTime? _drivingSessionStart;
-  Duration _totalActiveDrivingTime = Duration.zero;
+  final Stopwatch _drivingStopwatch = Stopwatch();
 
   EngineData? _latest;
   bool _isReadyToDrive = false;
@@ -54,20 +53,26 @@ class TripCubit extends Cubit<TripState> {
       if (_tripStart == null) {
         _tripStart = data;
         _tripStartTime = DateTime.now();
+        // Start stopwatch if already ready to drive
+        if (_isReadyToDrive && !_drivingStopwatch.isRunning) {
+          _drivingStopwatch.start();
+        }
       }
       
       // Check for odometer reset
       if (data.odometer < _tripStart!.odometer) {
         _tripStart = data;
         _tripStartTime = DateTime.now();
-        _totalActiveDrivingTime = Duration.zero;
-        _drivingSessionStart = _isReadyToDrive ? DateTime.now() : null;
+        _drivingStopwatch.reset();
+        if (_isReadyToDrive) {
+          _drivingStopwatch.start();
+        }
       }
 
       // Only calculate distance and emit when ready to drive
       if (_isReadyToDrive) {
         final distance = data.odometer - _tripStart!.odometer;
-        emit(TripState(distance, _tripStartTime!, _getCurrentActiveDrivingTime()));
+        emit(TripState(distance, _tripStartTime!, _drivingStopwatch.elapsed));
       }
     }
   }
@@ -87,22 +92,11 @@ class TripCubit extends Cubit<TripState> {
   }
 
   void _startDrivingSession() {
-    _drivingSessionStart = DateTime.now();
+    _drivingStopwatch.start();
   }
 
   void _endDrivingSession() {
-    if (_drivingSessionStart != null) {
-      _totalActiveDrivingTime += DateTime.now().difference(_drivingSessionStart!);
-      _drivingSessionStart = null;
-    }
-  }
-
-  Duration _getCurrentActiveDrivingTime() {
-    var currentActive = _totalActiveDrivingTime;
-    if (_drivingSessionStart != null) {
-      currentActive += DateTime.now().difference(_drivingSessionStart!);
-    }
-    return currentActive;
+    _drivingStopwatch.stop();
   }
 
   void _startUpdateTimer() {
@@ -111,18 +105,18 @@ class TripCubit extends Cubit<TripState> {
     _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_tripStartTime != null) {
         _timerTicks++;
-        
+
         // Always emit to update duration (every second)
         // But only update when ticks are divisible by 3 for smoother average speed
         if (_timerTicks % 3 == 0 || _timerTicks == 1) {
-          final distance = _latest != null && _tripStart != null 
-              ? _latest!.odometer - _tripStart!.odometer 
+          final distance = _latest != null && _tripStart != null
+              ? _latest!.odometer - _tripStart!.odometer
               : 0.0;
-          emit(TripState(distance, _tripStartTime!, _getCurrentActiveDrivingTime()));
+          emit(TripState(distance, _tripStartTime!, _drivingStopwatch.elapsed));
         } else {
           // Just update duration, keep same distance for stable average speed
           final currentState = state;
-          emit(TripState(currentState.distanceTravelled, _tripStartTime!, _getCurrentActiveDrivingTime()));
+          emit(TripState(currentState.distanceTravelled, _tripStartTime!, _drivingStopwatch.elapsed));
         }
       }
     });
@@ -136,8 +130,10 @@ class TripCubit extends Cubit<TripState> {
   void reset() {
     _tripStart = _latest;
     _tripStartTime = DateTime.now();
-    _totalActiveDrivingTime = Duration.zero;
-    _drivingSessionStart = _isReadyToDrive ? DateTime.now() : null;
+    _drivingStopwatch.reset();
+    if (_isReadyToDrive) {
+      _drivingStopwatch.start();
+    }
     emit(TripState(0, _tripStartTime!, Duration.zero));
   }
 
