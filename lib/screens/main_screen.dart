@@ -99,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
       return SizedBox(
         width: EnvConfig.resolution.width,
         height: EnvConfig.resolution.height,
-        child: const MaintenanceScreen(),
+        child: MaintenanceScreen(vehicleState: vehicleState),
       );
     }
 
