@@ -125,7 +125,9 @@ class MapTransformAnimator {
   });
 
   /// Animates to a new map transformation state.
-  void animateTo(MapTransform target) {
+  /// [animationDuration] optionally overrides the default duration for this animation.
+  /// [animationCurve] optionally overrides the default curve for this animation.
+  void animateTo(MapTransform target, {Duration? animationDuration, Curve? animationCurve}) {
     // If animation is running, smoothly transition by using current animated value as start
     final isAnimating = _animationController?.isAnimating ?? false;
 
@@ -146,9 +148,9 @@ class MapTransformAnimator {
       );
     }
 
-    // Create animation controller
+    // Create animation controller with specified or default duration
     _animationController = AnimationController(
-      duration: duration,
+      duration: animationDuration ?? duration,
       vsync: tickerProvider,
     );
 
@@ -160,7 +162,7 @@ class MapTransformAnimator {
 
     _animation = tween.animate(CurvedAnimation(
       parent: _animationController!,
-      curve: curve,
+      curve: animationCurve ?? curve,
     ));
 
     // Listen to animation updates and apply to map
