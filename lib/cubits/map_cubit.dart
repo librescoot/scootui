@@ -89,11 +89,17 @@ class MapCubit extends Cubit<MapState> {
   double _targetRotation = 0.0; // Target rotation from GPS
   double _currentZoom = 16.0; // Current smoothed zoom
   double _targetZoom = 16.0; // Target zoom from navigation
+  double _lastValidHeading = 0.0; // Last heading when moving above threshold
   static const double _rotationMaxRate = 110.0; // Max degrees per second for large rotations
   static const double _rotationAnimationDuration = 1.0; // Seconds for rotations <= 110 degrees
   static const double _rotationTargetSmoothing = 8.0; // How fast target rotation converges (per second) - dampens noise
   static const double _zoomSmoothingRate = 1.0; // Zoom levels per second
   static const double _zoomHysteresis = 0.3; // Only change target zoom if difference > this
+
+  // Speed-based heading damping (matches modem-service behavior)
+  static const double _speedThresholdKmh = 1.0; // Below this: freeze heading
+  static const double _headingRampSpeedKmh = 10.0; // Above this: full responsiveness
+  static const double _stationaryDampingFactor = 0.99; // Near-freeze when stationary
 
   static MapCubit create(BuildContext context) {
     final cubit = MapCubit(
@@ -700,6 +706,14 @@ class MapCubit extends Cubit<MapState> {
         estLat += dLat;
         estLng += dLng;
       }
+
+      // Update last valid heading when moving above threshold
+      if (ecuSpeedKmh >= _speedThresholdKmh) {
+        _lastValidHeading = heading;
+      }
+    } else {
+      // Stationary - freeze heading at last valid value
+      heading = _lastValidHeading;
     }
 
     // Blend toward GPS correction target
@@ -793,11 +807,29 @@ class MapCubit extends Cubit<MapState> {
       _currentRotation = targetRotation;
       _targetRotation = targetRotation;
     } else {
+      // Calculate speed-proportional damping factor
+      final ecuSpeedKmh = _engineSync.state.speed.toDouble();
+      double dampingMultiplier = 1.0; // Default: no damping
+
+      if (ecuSpeedKmh < _speedThresholdKmh) {
+        // Stationary: 0.99 damping (near-freeze)
+        dampingMultiplier = _stationaryDampingFactor;
+      } else if (ecuSpeedKmh < _headingRampSpeedKmh) {
+        // Low speed: linear interpolation (0.99 → 1.0)
+        final speedRatio = (ecuSpeedKmh - _speedThresholdKmh) /
+                           (_headingRampSpeedKmh - _speedThresholdKmh);
+        dampingMultiplier = _stationaryDampingFactor +
+                           (1.0 - _stationaryDampingFactor) * speedRatio;
+      }
+
       // Smooth the target itself - dampens noise while allowing sustained changes to accumulate
       double targetDiff = targetRotation - _targetRotation;
       if (targetDiff > 180) targetDiff -= 360;
       if (targetDiff < -180) targetDiff += 360;
-      final targetBlend = (_rotationTargetSmoothing * dt).clamp(0.0, 1.0);
+
+      // Apply damping to rotation target smoothing
+      final effectiveSmoothing = _rotationTargetSmoothing * dampingMultiplier;
+      final targetBlend = (effectiveSmoothing * dt).clamp(0.0, 1.0);
       _targetRotation += targetDiff * targetBlend;
       if (_targetRotation > 180) _targetRotation -= 360;
       if (_targetRotation < -180) _targetRotation += 360;
@@ -868,7 +900,8 @@ class MapCubit extends Cubit<MapState> {
     _debugFrameCount++;
     if (_debugFrameCount % 30 == 0) {
       final gpsHeading = _lastGpsData?.course ?? 0;
-      print("MapCubit ROT: gps=${gpsHeading.toStringAsFixed(1)}°, pred=${prediction.heading.toStringAsFixed(1)}°, target=${_targetRotation.toStringAsFixed(1)}°, current=${_currentRotation.toStringAsFixed(1)}°, applied=${rotation.toStringAsFixed(1)}°");
+      final ecuSpeedKmh = _engineSync.state.speed.toDouble();
+      print("MapCubit ROT: speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h, gps=${gpsHeading.toStringAsFixed(1)}°, pred=${prediction.heading.toStringAsFixed(1)}°, lastValid=${_lastValidHeading.toStringAsFixed(1)}°, target=${_targetRotation.toStringAsFixed(1)}°, current=${_currentRotation.toStringAsFixed(1)}°, applied=${rotation.toStringAsFixed(1)}°");
     }
   }
 
