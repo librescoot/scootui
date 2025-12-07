@@ -290,6 +290,69 @@ class _ClusterScreenState extends State<ClusterScreen> {
                     ),
                   ),
 
+                // Auto-standby warning overlay
+                BlocBuilder<AutoStandbySync, AutoStandbyData>(
+                  builder: (context, autoStandby) {
+                    final remaining = autoStandby.autoStandbyRemaining;
+                    if (remaining > 0 && remaining <= 30) {
+                      return Positioned(
+                        top: 80,
+                        left: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Vehicle will enter standby in',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '$remaining',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'seconds',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Press brake or move kickstand to cancel',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 13,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
                 // Debug overlay - controlled by DebugOverlayCubit
                 BlocBuilder<DebugOverlayCubit, DebugMode>(
                   builder: (context, debugMode) {

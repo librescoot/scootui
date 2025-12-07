@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/mdb_repository.dart';
+import '../state/auto_standby.dart';
 import '../state/aux_battery.dart';
 import '../state/battery.dart';
 import '../state/bluetooth.dart';
@@ -41,6 +42,15 @@ class VehicleSync extends SyncableCubit<VehicleData> {
 
     super.redisRepository.push("scooter:blinker", command.name);
   }
+}
+
+class AutoStandbySync extends SyncableCubit<AutoStandbyData> {
+  static AutoStandbyData watch(BuildContext context) => context.watch<AutoStandbySync>().state;
+
+  static AutoStandbySync create(BuildContext context) =>
+      AutoStandbySync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  AutoStandbySync(MDBRepository repo) : super(redisRepository: repo, initialState: AutoStandbyData());
 }
 
 class BatterySync extends SyncableCubit<BatteryData> {
