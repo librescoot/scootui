@@ -24,6 +24,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ThemeCubit.create),
   BlocProvider(create: EngineSync.create),
   BlocProvider(create: VehicleSync.create),
+  BlocProvider(create: AutoStandbySync.create),
   BlocProvider(create: Battery0Sync.create),
   BlocProvider(create: Battery1Sync.create),
   BlocProvider(create: CbBatterySync.create),
