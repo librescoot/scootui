@@ -159,7 +159,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
         showBatteryFault;
   }
 
-  Widget _buildBottomRow(BuildContext context, dynamic vehicleState, ThemeData theme, bool isDark, double powerOutput) {
+  Widget _buildBottomRow(BuildContext context, dynamic vehicleState, ThemeData theme, bool isDark, double powerOutput, num motorCurrent, dynamic settings) {
     final hasTelltales = _hasTelltales(context, vehicleState);
 
     return SizedBox(
@@ -175,7 +175,9 @@ class _ClusterScreenState extends State<ClusterScreen> {
                 key: const ValueKey('power'),
                 width: 200, // Fixed width to constrain PowerDisplay
                 child: PowerDisplay(
-                  powerOutput: powerOutput / 1000,
+                  powerOutput: powerOutput,
+                  motorCurrent: motorCurrent.toDouble(),
+                  displayMode: settings.powerDisplayMode,
                 ),
               ),
       ),
@@ -186,7 +188,8 @@ class _ClusterScreenState extends State<ClusterScreen> {
   Widget build(BuildContext context) {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
-    final (odometer, powerOutput) = EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
+    final (odometer, powerOutput, motorCurrent) = EngineSync.select(context, (data) => (data.odometer, data.powerOutput, data.motorCurrent));
+    final settings = SettingsSync.watch(context);
 
     return Container(
       width: EnvConfig.resolution.width,
@@ -247,7 +250,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                             const Expanded(child: SizedBox()),
 
                             // Bottom row with telltales or power display
-                            _buildBottomRow(context, VehicleSync.watch(context), theme, isDark, powerOutput),
+                            _buildBottomRow(context, VehicleSync.watch(context), theme, isDark, powerOutput, motorCurrent, settings),
                           ],
                         ),
                       ),

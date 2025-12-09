@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
+import '../../state/enums.dart';
 
 class PowerDisplay extends StatefulWidget {
   final double powerOutput;
+  final double motorCurrent;
+  final PowerDisplayMode displayMode;
   final double maxRegenPower;
   final double maxDischargePower;
+  final double maxRegenCurrent;
+  final double maxDischargeCurrent;
+  final double boostThresholdCurrent;
 
   const PowerDisplay({
     super.key,
     required this.powerOutput,
+    required this.motorCurrent,
+    this.displayMode = PowerDisplayMode.kw,
     this.maxRegenPower = 0.54, // 0.54kW max regen (10A × 54V)
     this.maxDischargePower = 4.0, // 4kW max discharge
+    this.maxRegenCurrent = 10.0, // 10A max regen
+    this.maxDischargeCurrent = 80.0, // 80A max discharge
+    this.boostThresholdCurrent = 50.0, // 50A threshold for boost color
   });
 
   @override
@@ -21,7 +32,13 @@ class PowerDisplay extends StatefulWidget {
 class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderStateMixin {
   late AnimationController _powerController;
   late Animation<double> _powerAnimation;
-  double _lastPowerKW = 0.0;
+  double _lastValue = 0.0;
+
+  double _getCurrentValue() {
+    return widget.displayMode == PowerDisplayMode.kw
+        ? widget.powerOutput / 1000 // Convert W to kW
+        : widget.motorCurrent / 1000; // Convert mA to A
+  }
 
   @override
   void initState() {
@@ -39,7 +56,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
         curve: Curves.easeOutCubic,
       ),
     );
-    _lastPowerKW = widget.powerOutput / 1000;
+    _lastValue = _getCurrentValue();
   }
 
   @override
@@ -52,13 +69,13 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
   void didUpdateWidget(PowerDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final newPowerKW = widget.powerOutput;
+    final newValue = _getCurrentValue();
 
-    // Only animate if power has changed significantly
-    if ((newPowerKW - _lastPowerKW).abs() > 0.01) {
+    // Only animate if value has changed significantly
+    if ((newValue - _lastValue).abs() > 0.01) {
       _powerAnimation = Tween<double>(
-        begin: _lastPowerKW,
-        end: newPowerKW,
+        begin: _lastValue,
+        end: newValue,
       ).animate(
         CurvedAnimation(
           parent: _powerController,
@@ -67,7 +84,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
       );
 
       _powerController.forward(from: 0.0);
-      _lastPowerKW = newPowerKW;
+      _lastValue = newValue;
     }
   }
 
@@ -78,13 +95,29 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
     return AnimatedBuilder(
       animation: _powerAnimation,
       builder: (context, child) {
-        final powerKW = _powerAnimation.value;
-        final isRegenerating = powerKW < 0;
-        final absKW = powerKW.abs();
+        final value = _powerAnimation.value;
+        final isRegenerating = value < 0;
+        final absValue = value.abs();
+
+        // Get max values and unit based on display mode
+        final bool isAmpsMode = widget.displayMode == PowerDisplayMode.amps;
+        final maxRegen = isAmpsMode ? widget.maxRegenCurrent : widget.maxRegenPower;
+        final maxDischarge = isAmpsMode ? widget.maxDischargeCurrent : widget.maxDischargePower;
+        final unit = isAmpsMode ? 'A' : 'kW';
 
         // Calculate width factor based on power direction
-        final maxPower = isRegenerating ? widget.maxRegenPower : widget.maxDischargePower;
-        final progress = (absKW / maxPower).clamp(0.0, 1.0);
+        final maxValue = isRegenerating ? maxRegen : maxDischarge;
+        final progress = (absValue / maxValue).clamp(0.0, 1.0);
+
+        // Determine bar color based on mode and value
+        Color barColor;
+        if (isRegenerating) {
+          barColor = Colors.green.shade600; // Regen is always green
+        } else if (isAmpsMode && value > widget.boostThresholdCurrent) {
+          barColor = Colors.orange.shade600; // Boost mode (50A-80A)
+        } else {
+          barColor = Colors.blue.shade600; // Normal discharge
+        }
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -124,10 +157,10 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                 builder: (context, constraints) {
                   final totalWidth = constraints.maxWidth;
 
-                  // Calculate asymmetric layout: regen gets 11.9%, discharge gets 88.1%
-                  final totalPower = widget.maxRegenPower + widget.maxDischargePower;
-                  final regenWidth = totalWidth * (widget.maxRegenPower / totalPower);
-                  final dischargeWidth = totalWidth * (widget.maxDischargePower / totalPower);
+                  // Calculate asymmetric layout
+                  final totalRange = maxRegen + maxDischarge;
+                  final regenWidth = totalWidth * (maxRegen / totalRange);
+                  final dischargeWidth = totalWidth * (maxDischarge / totalRange);
                   final zeroPoint = regenWidth; // Zero point is at end of regen section
 
                   // Calculate actual bar width based on power direction and magnitude
@@ -137,10 +170,10 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
 
                   final midThreshold = 0.15;
 
-                  // Calculate position for the power value label
+                  // Calculate position for the value label
                   double labelPosition;
-                  if (powerKW.abs() <= midThreshold) {
-                    // When power is close to zero, position near zero point
+                  if (absValue <= midThreshold) {
+                    // When value is close to zero, position near zero point
                     labelPosition = zeroPoint - 20; // Center around zero point
                   } else if (isRegenerating) {
                     // For regenerating, position label at the left edge of the bar
@@ -184,7 +217,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                                   height: 4,
                                   width: barWidth,
                                   decoration: BoxDecoration(
-                                    color: isRegenerating ? Colors.green.shade600 : Colors.blue.shade600,
+                                    color: barColor,
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
@@ -209,7 +242,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                         ),
                       ),
 
-                      // Power value with animated text (now positioned below the bar)
+                      // Value with animated text (positioned below the bar)
                       Positioned(
                         left: labelPosition.clamp(0, totalWidth - 40), // Prevent overflowing
                         top: 8, // Position below the bar
@@ -217,12 +250,12 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                           duration: const Duration(milliseconds: 500),
                           curve: Curves.easeOutCubic,
                           tween: Tween<double>(
-                            begin: _lastPowerKW.abs(),
-                            end: absKW,
+                            begin: _lastValue.abs(),
+                            end: absValue,
                           ),
-                          builder: (context, value, child) {
+                          builder: (context, animValue, child) {
                             return Text(
-                              '${value.toStringAsFixed(1)} kW',
+                              '${animValue.toStringAsFixed(isAmpsMode ? 0 : 1)} $unit',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDark ? Colors.white70 : Colors.black54,

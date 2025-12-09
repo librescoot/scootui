@@ -42,6 +42,10 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   @StateField(name: 'dashboard.map.render-mode', defaultValue: 'raster')
   MapRenderMode mapRenderMode;
 
+  @override
+  @StateField(name: 'dashboard.power-display-mode', defaultValue: 'kw')
+  PowerDisplayMode powerDisplayMode;
+
   // Constructor for initial values
   SettingsData({
     this.showRawSpeed,
@@ -53,6 +57,7 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
     this.showClock,
     this.mapType = MapType.offline,
     this.mapRenderMode = MapRenderMode.raster,
+    this.powerDisplayMode = PowerDisplayMode.kw,
   });
 
   // Factory for a completely initial state

@@ -16,6 +16,11 @@ final $_MapRenderModeMap = {
   "raster": MapRenderMode.raster,
 };
 
+final $_PowerDisplayModeMap = {
+  "kw": PowerDisplayMode.kw,
+  "amps": PowerDisplayMode.amps,
+};
+
 abstract mixin class $SettingsData implements Syncable<SettingsData> {
   String? get showRawSpeed;
   String? get batteryDisplayMode;
@@ -26,6 +31,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   String? get showClock;
   MapType get mapType;
   MapRenderMode get mapRenderMode;
+  PowerDisplayMode get powerDisplayMode;
   get syncSettings => SyncSettings(
       "settings",
       Duration(microseconds: 5000000),
@@ -93,6 +99,13 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             typeName: "MapRenderMode",
             defaultValue: "raster",
             interval: null),
+        SyncFieldSettings(
+            name: "powerDisplayMode",
+            variable: "dashboard.power-display-mode",
+            type: SyncFieldType.enum_,
+            typeName: "PowerDisplayMode",
+            defaultValue: "kw",
+            interval: null),
       ],
       "null",
       []);
@@ -114,6 +127,9 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       mapRenderMode: "dashboard.map.render-mode" != name
           ? mapRenderMode
           : $_MapRenderModeMap[value] ?? MapRenderMode.raster,
+      powerDisplayMode: "dashboard.power-display-mode" != name
+          ? powerDisplayMode
+          : $_PowerDisplayModeMap[value] ?? PowerDisplayMode.kw,
     );
   }
 
@@ -129,6 +145,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       showClock: showClock,
       mapType: mapType,
       mapRenderMode: mapRenderMode,
+      powerDisplayMode: powerDisplayMode,
     );
   }
 
@@ -141,7 +158,8 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
         showInternet,
         showClock,
         mapType,
-        mapRenderMode
+        mapRenderMode,
+        powerDisplayMode
       ];
   @override
   String toString() {
@@ -157,6 +175,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
     buf.writeln("	showClock = $showClock");
     buf.writeln("	mapType = $mapType");
     buf.writeln("	mapRenderMode = $mapRenderMode");
+    buf.writeln("	powerDisplayMode = $powerDisplayMode");
     buf.writeln(")");
 
     return buf.toString();
