@@ -7,7 +7,6 @@ import 'package:path_provider/path_provider.dart';
 import '../cubits/debug_overlay_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
-import '../cubits/trip_cubit.dart';
 import '../env_config.dart';
 import '../widgets/debug/debug_overlay.dart';
 import '../widgets/navigation/turn_by_turn_widget.dart';
@@ -16,6 +15,7 @@ import '../widgets/speedometer/speedometer_display.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 import '../widgets/status_bars/unified_bottom_status_bar.dart';
 import '../widgets/indicators/indicator_lights.dart';
+import '../state/auto_standby.dart';
 import '../state/enums.dart';
 import '../state/vehicle.dart';
 import '../cubits/navigation_cubit.dart';
@@ -42,10 +42,6 @@ class ClusterScreen extends StatefulWidget {
 
 class _ClusterScreenState extends State<ClusterScreen> {
   String? _errorMessage;
-
-  // Track previous odometer values for animation
-  double _previousTrip = 0.0;
-  double _previousTotal = 0.0;
 
   // Track blinker state to force animation restart on changes
   BlinkerState? _previousBlinkerState;
@@ -191,17 +187,6 @@ class _ClusterScreenState extends State<ClusterScreen> {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
 
     final (odometer, powerOutput) = EngineSync.select(context, (data) => (data.odometer, data.powerOutput));
-    final trip = TripCubit.watch(context);
-
-    // Store current odometer values before update
-    final currentTrip = trip.distanceTravelled / 1000;
-    final currentTotal = odometer / 1000;
-
-    // Update previous values for next animation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _previousTrip = currentTrip;
-      _previousTotal = currentTotal;
-    });
 
     return Container(
       width: EnvConfig.resolution.width,
