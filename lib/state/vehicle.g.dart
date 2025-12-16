@@ -41,6 +41,7 @@ final $_ScooterStateMap = {
   "suspending": ScooterState.suspending,
   "suspending-imminent": ScooterState.suspendingImminent,
   "updating": ScooterState.updating,
+  "waiting-seatbox": ScooterState.waitingSeatbox,
   "waiting-hibernation": ScooterState.waitingHibernation,
   "waiting-hibernation-advanced": ScooterState.waitingHibernationAdvanced,
   "waiting-hibernation-seatbox": ScooterState.waitingHibernationSeatbox,
@@ -68,6 +69,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
   Toggle get brakeRight;
   Kickstand get kickstand;
   ScooterState get state;
+  String get stateRaw;
   HandleBarLockSensor get handleBarLockSensor;
   HandleBarPosition get handleBarPosition;
   Toggle get seatboxButton;
@@ -119,6 +121,13 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
             type: SyncFieldType.enum_,
             typeName: "ScooterState",
             defaultValue: "off",
+            interval: null),
+        SyncFieldSettings(
+            name: "stateRaw",
+            variable: "state",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
             interval: null),
         SyncFieldSettings(
             name: "handleBarLockSensor",
@@ -185,6 +194,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
       state: "state" != name
           ? state
           : $_ScooterStateMap[value] ?? ScooterState.off,
+      stateRaw: "state" != name ? stateRaw : value,
       handleBarLockSensor: "handlebar:lock-sensor" != name
           ? handleBarLockSensor
           : $_HandleBarLockSensorMap[value] ?? HandleBarLockSensor.locked,
@@ -214,6 +224,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
       brakeRight: brakeRight,
       kickstand: kickstand,
       state: state,
+      stateRaw: stateRaw,
       handleBarLockSensor: handleBarLockSensor,
       handleBarPosition: handleBarPosition,
       seatboxButton: seatboxButton,
@@ -230,6 +241,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
         brakeRight,
         kickstand,
         state,
+        stateRaw,
         handleBarLockSensor,
         handleBarPosition,
         seatboxButton,
@@ -248,6 +260,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
     buf.writeln("	brakeRight = $brakeRight");
     buf.writeln("	kickstand = $kickstand");
     buf.writeln("	state = $state");
+    buf.writeln("	stateRaw = $stateRaw");
     buf.writeln("	handleBarLockSensor = $handleBarLockSensor");
     buf.writeln("	handleBarPosition = $handleBarPosition");
     buf.writeln("	seatboxButton = $seatboxButton");

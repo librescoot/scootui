@@ -74,7 +74,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
             child: _buildDebugPanel(
               context,
               content: Text(
-                vehicle.state.toString().split('.').last,
+                vehicle.stateRaw,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,

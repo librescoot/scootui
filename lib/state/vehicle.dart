@@ -74,6 +74,10 @@ class VehicleData with $VehicleData {
   ScooterState state;
 
   @override
+  @StateField(name: "state", defaultValue: "")
+  String stateRaw;
+
+  @override
   @StateField(name: "handlebar:lock-sensor", defaultValue: "locked")
   HandleBarLockSensor handleBarLockSensor;
 
@@ -105,6 +109,7 @@ class VehicleData with $VehicleData {
     this.blinkerSwitch = BlinkerSwitch.off,
     this.blinkerState = BlinkerState.off,
     this.state = ScooterState.off,
+    this.stateRaw = "",
     this.kickstand = Kickstand.down,
     this.handleBarLockSensor = HandleBarLockSensor.locked,
     this.brakeLeft = Toggle.off,

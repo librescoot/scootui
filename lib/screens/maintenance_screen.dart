@@ -1,21 +1,9 @@
 import 'package:flutter/material.dart';
-import '../state/vehicle.dart';
 
 class MaintenanceScreen extends StatelessWidget {
-  final ScooterState? vehicleState;
+  final String? stateRaw;
 
-  const MaintenanceScreen({super.key, this.vehicleState});
-
-  String _formatStateName(ScooterState state) {
-    final name = state.name;
-    // Convert camelCase to separate words with hyphens
-    final result = name.replaceAllMapped(
-      RegExp(r'([A-Z])'),
-      (match) => '-${match.group(1)!.toLowerCase()}',
-    );
-    // Remove leading hyphen if present
-    return result.startsWith('-') ? result.substring(1) : result;
-  }
+  const MaintenanceScreen({super.key, this.stateRaw});
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +21,14 @@ class MaintenanceScreen extends StatelessWidget {
               ),
             ),
           ),
-          if (vehicleState != null)
+          if (stateRaw != null && stateRaw!.isNotEmpty)
             Positioned(
               bottom: 8,
               left: 0,
               right: 0,
               child: Center(
                 child: Text(
-                  _formatStateName(vehicleState!),
+                  stateRaw!,
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
