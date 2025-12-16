@@ -24,6 +24,7 @@ enum ScooterState {
   suspending,
   suspendingImminent,
   updating,
+  waitingSeatbox,
   waitingHibernation,
   waitingHibernationAdvanced,
   waitingHibernationSeatbox,
