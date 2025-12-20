@@ -473,6 +473,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
       ScooterState.waitingHibernationAdvanced => Colors.deepPurple[700]!,
       ScooterState.waitingHibernationSeatbox => Colors.purple,
       ScooterState.waitingHibernationConfirm => Colors.deepPurple[900]!,
+      ScooterState.waitingSeatbox => Colors.purple,
     };
   }
 
