@@ -64,9 +64,9 @@ class _MainScreenState extends State<MainScreen> {
           debugPrint('Poweroff check: UID=$uid');
 
           if (uid == '0') {
-            debugPrint('Poweroff: Scheduling poweroff in 2 seconds...');
+            debugPrint('Poweroff: Scheduling poweroff in 1.5 seconds...');
             _poweroffScheduled = true;
-            Future.delayed(const Duration(seconds: 2), () {
+            Future.delayed(const Duration(milliseconds: 1500), () {
               if (Platform.isLinux) {
                 debugPrint('Poweroff: Executing poweroff command');
                 Process.run('poweroff', []);

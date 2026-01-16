@@ -131,7 +131,7 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
   }
 
   Widget _buildBottomRow(BuildContext context, dynamic vehicleState,
-      ThemeData theme, bool isDark, double powerOutput) {
+      ThemeData theme, bool isDark, double powerOutput, num motorCurrent, dynamic settings) {
     final hasTelltales = _hasTelltales(context, vehicleState);
 
     return SizedBox(
@@ -148,7 +148,9 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
                 key: const ValueKey('power'),
                 width: 200,
                 child: PowerDisplay(
-                  powerOutput: powerOutput / 1000,
+                  powerOutput: powerOutput,
+                  motorCurrent: motorCurrent.toDouble(),
+                  displayMode: settings.powerDisplayMode,
                 ),
               ),
       ),
@@ -254,7 +256,8 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
   Widget build(BuildContext context) {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
     final vehicleState = VehicleSync.watch(context);
-    final powerOutput = EngineSync.select(context, (data) => data.powerOutput);
+    final (powerOutput, motorCurrent) = EngineSync.select(context, (data) => (data.powerOutput, data.motorCurrent));
+    final settings = SettingsSync.watch(context);
 
     return Container(
       width: EnvConfig.resolution.width,
@@ -299,7 +302,7 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
                       const Expanded(child: SizedBox()),
 
                       // Bottom row with telltales or power display
-                      _buildBottomRow(context, vehicleState, theme, isDark, powerOutput),
+                      _buildBottomRow(context, vehicleState, theme, isDark, powerOutput, motorCurrent, settings),
                     ],
                   ),
                 ),
