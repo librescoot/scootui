@@ -9,6 +9,7 @@ import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
 import '../globals/mdb_type.dart';
 import '../models/menu_node.dart';
+import '../repositories/mdb_repository.dart';
 import '../services/settings_service.dart';
 import '../state/enums.dart';
 
@@ -40,15 +41,25 @@ MenuNode buildMenuTree(BuildContext context) {
       ),
 
       // Toggle Hazard Lights (only show for stock UNU MDB)
-      MenuNode.action(
-        id: 'hazard_lights',
-        title: 'Toggle Hazard Lights',
-        onAction: (context) {
-          context.read<VehicleSync>().toggleHazardLights();
-          context.read<MenuCubit>().hideMenu();
-        },
-        isVisible: (context) => isStockUnuMdb.value,
-      ),
+       MenuNode.action(
+         id: 'hazard_lights',
+         title: 'Toggle Hazard Lights',
+         onAction: (context) {
+           context.read<VehicleSync>().toggleHazardLights();
+           context.read<MenuCubit>().hideMenu();
+         },
+         isVisible: (context) => isStockUnuMdb.value,
+       ),
+
+       // Enter UMS mode
+       MenuNode.action(
+         id: 'enter_ums_mode',
+         title: 'Enter UMS mode',
+         onAction: (context) async {
+           await context.read<MDBRepository>().set('usb', 'mode', 'ums');
+           context.read<MenuCubit>().hideMenu();
+         },
+       ),
 
       // Switch to Cluster View (conditional - only show when on map)
       MenuNode.action(
@@ -446,13 +457,29 @@ MenuNode buildMenuTree(BuildContext context) {
                     },
                   ),
                 ],
-              ),
-            ],
-          ),
-        ],
-      ),
+               ),
+             ],
+           ),
 
-      // Reset Trip Statistics
+           // System submenu
+           MenuNode.submenu(
+             id: 'settings_system',
+             title: 'System',
+             children: [
+               MenuNode.action(
+                 id: 'enter_ums_mode',
+                 title: 'Enter UMS mode',
+                 onAction: (context) async {
+                   await context.read<MDBRepository>().set('usb', 'mode', 'ums-by-dbc');
+                   context.read<MenuCubit>().hideMenu();
+                 },
+               ),
+             ],
+           ),
+         ],
+       ),
+
+       // Reset Trip Statistics
       MenuNode.action(
         id: 'reset_trip',
         title: 'Reset Trip Statistics',
