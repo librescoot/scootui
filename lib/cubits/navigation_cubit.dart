@@ -38,6 +38,10 @@ class NavigationCubit extends Cubit<NavigationState> {
   bool _arrivalToastShown = false;
   String? _lastShownError;
 
+  // Vector tile cache to avoid re-parsing tiles
+  final Map<String, VectorTile> _tileCache = {};
+  static const int _maxCachedTiles = 50;
+
   final distanceCalculator = Distance();
 
   NavigationCubit({
@@ -490,14 +494,31 @@ class NavigationCubit extends Cubit<NavigationState> {
       final tileX = _lonToTileX(queryPosition.longitude, zoom);
       final tileY = _latToTileYTMS(queryPosition.latitude, zoom);
 
-      // Get the tile
-      final tileData = _mbTiles!.getTile(x: tileX, y: tileY, z: zoom);
-      if (tileData == null) {
-        return;
-      }
+      // Create cache key
+      final cacheKey = '$zoom:$tileX:$tileY';
 
-      // Parse vector tile
-      final vectorTile = VectorTile.fromBytes(bytes: tileData);
+      // Check cache first
+      VectorTile vectorTile;
+      if (_tileCache.containsKey(cacheKey)) {
+        vectorTile = _tileCache[cacheKey]!;
+      } else {
+        // Get the tile data
+        final tileData = _mbTiles!.getTile(x: tileX, y: tileY, z: zoom);
+        if (tileData == null) {
+          return;
+        }
+
+        // Parse vector tile and cache it
+        vectorTile = VectorTile.fromBytes(bytes: tileData);
+
+        // Implement LRU eviction if cache is full
+        if (_tileCache.length >= _maxCachedTiles) {
+          // Remove oldest entry (first key)
+          _tileCache.remove(_tileCache.keys.first);
+        }
+
+        _tileCache[cacheKey] = vectorTile;
+      }
       final streetsLayer = vectorTile.layers.firstWhere(
         (layer) => layer.name == 'streets',
         orElse: () => throw StateError('No streets layer'),
