@@ -10,6 +10,7 @@ import '../cubits/trip_cubit.dart';
 import '../globals/mdb_type.dart';
 import '../models/menu_node.dart';
 import '../repositories/mdb_repository.dart';
+import '../screens/about_screen.dart';
 import '../services/settings_service.dart';
 import '../state/enums.dart';
 
@@ -495,6 +496,19 @@ MenuNode buildMenuTree(BuildContext context) {
         title: 'Exit Menu',
         onAction: (context) {
           context.read<MenuCubit>().hideMenu();
+        },
+      ),
+
+      // About / Licenses
+      MenuNode.action(
+        id: 'about',
+        title: 'About / Licenses',
+        leadingIcon: Icons.info_outline,
+        onAction: (context) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AboutScreen()),
+          );
         },
       ),
     ],
