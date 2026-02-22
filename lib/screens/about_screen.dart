@@ -37,8 +37,6 @@ class AboutScreen extends StatelessWidget {
                 applicationName: 'ScootUI',
                 applicationVersion: '1.0.0',
                 applicationIcon: const Icon(Icons.motorcycle, size: 24),
-                version: '',
-                licenseText: '',
               );
             },
           ),
