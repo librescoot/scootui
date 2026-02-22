@@ -32,7 +32,7 @@ class _NonCommercialOverlayState extends State<NonCommercialOverlay> {
 
     final backgroundColor = isDark ? Colors.black.withOpacity(0.8) : Colors.white.withOpacity(0.9);
     final textColor = isDark ? Colors.white : Colors.black;
-    final borderColor = Colors.white;
+    final borderColor = isDark ? Colors.white : Colors.black;
 
     return Positioned(
       bottom: 10,
