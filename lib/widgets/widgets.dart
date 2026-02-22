@@ -1,5 +1,6 @@
 // Speedometer widgets
 // Power display widgets
+export 'non_commercial_overlay.dart';
 export 'power/power_display.dart';
 export 'speedometer/speedometer_display.dart';
 export 'status_bars/battery_display.dart';

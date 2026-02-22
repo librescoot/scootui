@@ -14,6 +14,7 @@ import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/hibernation/manual_hibernation_overlay.dart';
 import '../widgets/menu/menu_overlay.dart';
+import '../widgets/non_commercial_overlay.dart';
 import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
 import '../widgets/version_overlay.dart';
@@ -183,6 +184,9 @@ class _MainScreenState extends State<MainScreen> {
 
             // Version information overlay (triggered by both brakes in parked state)
             VersionOverlay(),
+
+            // Non-commercial software declaration (always visible)
+            const NonCommercialOverlay(),
           ],
         ),
       ),
