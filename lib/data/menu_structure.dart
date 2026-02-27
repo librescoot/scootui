@@ -51,16 +51,6 @@ MenuNode buildMenuTree(BuildContext context) {
          isVisible: (context) => isStockUnuMdb.value,
        ),
 
-       // Enter UMS mode
-       MenuNode.action(
-         id: 'enter_ums_mode',
-         title: 'Enter UMS mode',
-         onAction: (context) async {
-           await context.read<MDBRepository>().set('usb', 'mode', 'ums');
-           context.read<MenuCubit>().hideMenu();
-         },
-       ),
-
       // Switch to Cluster View (conditional - only show when on map)
       MenuNode.action(
         id: 'switch_cluster',
