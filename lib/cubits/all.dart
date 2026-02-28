@@ -50,6 +50,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: MapCubit.create),
   BlocProvider(create: (context) => CarPlayCubit()),
   BlocProvider(create: OtaSync.create),
+  BlocProvider(create: UsbSync.create),
   BlocProvider(create: OtaCubit.create),
   BlocProvider(create: ScreenCubit.create),
   BlocProvider(create: MenuCubit.create),

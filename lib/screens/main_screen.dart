@@ -16,6 +16,7 @@ import '../widgets/hibernation/manual_hibernation_overlay.dart';
 import '../widgets/menu/menu_overlay.dart';
 import '../widgets/shortcut_menu/shortcut_menu_overlay.dart';
 import '../widgets/shutdown/shutdown_overlay.dart';
+import '../widgets/ums/ums_overlay.dart';
 import '../widgets/version_overlay.dart';
 import 'address_selection_screen.dart';
 import 'carplay_screen.dart';
@@ -121,6 +122,7 @@ class _MainScreenState extends State<MainScreen> {
 
             // Overlay essential components that should always be visible
             ShutdownOverlay(),
+            const UmsOverlay(),
             const ManualHibernationOverlay(),
             BluetoothPinCodeOverlay(),
           ],
@@ -175,6 +177,9 @@ class _MainScreenState extends State<MainScreen> {
 
             // Shutdown overlay (with translucency over active screen)
             ShutdownOverlay(),
+
+            // UMS overlay (full-screen when USB Mass Storage is active)
+            const UmsOverlay(),
 
             // Manual hibernation overlay
             const ManualHibernationOverlay(),

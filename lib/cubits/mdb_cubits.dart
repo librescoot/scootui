@@ -15,6 +15,7 @@ import '../state/navigation.dart';
 import '../state/ota.dart';
 import '../state/settings.dart';
 import '../state/speed_limit.dart';
+import '../state/usb.dart';
 import '../state/vehicle.dart';
 import 'syncable_cubit.dart';
 
@@ -158,6 +159,14 @@ class OtaSync extends SyncableCubit<OtaData> {
   static OtaSync create(BuildContext context) => OtaSync(RepositoryProvider.of<MDBRepository>(context))..start();
 
   OtaSync(MDBRepository repo) : super(redisRepository: repo, initialState: OtaData());
+}
+
+class UsbSync extends SyncableCubit<UsbData> {
+  static UsbData watch(BuildContext context) => context.watch<UsbSync>().state;
+
+  static UsbSync create(BuildContext context) => UsbSync(RepositoryProvider.of<MDBRepository>(context))..start();
+
+  UsbSync(MDBRepository repo) : super(redisRepository: repo, initialState: UsbData());
 }
 
 class SpeedLimitSync extends SyncableCubit<SpeedLimitData> {

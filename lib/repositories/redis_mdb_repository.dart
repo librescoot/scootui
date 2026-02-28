@@ -114,6 +114,9 @@ class RedisMDBRepository implements MDBRepository {
   final ConnectionPool _pool;
   static const Duration _operationTimeout = Duration(seconds: 10);
 
+  // When true, suppresses connection state toast notifications (used during UMS mode)
+  bool suppressConnectionToasts = false;
+
   // Connection state management
   RedisConnectionState _connectionState = RedisConnectionState.connected;
   final _connectionStateController = StreamController<RedisConnectionState>.broadcast();
@@ -148,7 +151,8 @@ class RedisMDBRepository implements MDBRepository {
     _connectionState = newState;
     _connectionStateController.add(newState);
 
-    // Show user notifications for state changes
+    if (suppressConnectionToasts) return;
+
     if (newState == RedisConnectionState.disconnected) {
       ToastService.showError('Connection to vehicle system lost');
     } else if (newState == RedisConnectionState.reconnecting && oldState == RedisConnectionState.disconnected) {
