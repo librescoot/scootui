@@ -203,7 +203,7 @@ class CbBatterySync extends SyncableCubit<CbBatteryData> {
     vehicleSync.stream.listen((vehicleState) {
       // Check if seatbox just closed
       if (vehicleState.seatboxLock == SeatboxLock.closed) {
-        this.refreshAllFields();
+        refreshAllFields();
       }
     });
   }
@@ -219,7 +219,7 @@ class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
     vehicleSync.stream.listen((vehicleState) {
       // Check if seatbox just closed
       if (vehicleState.seatboxLock == SeatboxLock.closed) {
-        this.refreshAllFields();
+        refreshAllFields();
       }
     });
   }
