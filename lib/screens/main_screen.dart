@@ -53,7 +53,9 @@ class _MainScreenState extends State<MainScreen> {
         _lastVehicleState != ScooterState.shuttingDown &&
         !_poweroffScheduled) {
       // State just changed to shutting down
-      final dbcUpdating = otaData.dbcStatus != "idle";
+      final dbcUpdating = otaData.dbcStatus == "downloading" ||
+          otaData.dbcStatus == "installing" ||
+          otaData.dbcStatus == "rebooting";
 
       debugPrint('Poweroff check: state=shuttingDown, dbcUpdating=$dbcUpdating, platform=${Platform.operatingSystem}');
 
