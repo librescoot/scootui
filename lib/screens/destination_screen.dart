@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:rbush/rbush.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, VectorTileLayer;
 
 import '../cubits/address_cubit.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
-import '../repositories/address_repository.dart';
+
 import '../utils/theme_aware_cache.dart';
 
 class DestinationScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class DestinationScreen extends StatefulWidget {
 }
 
 class _DestinationScreenState extends State<DestinationScreen> with SingleTickerProviderStateMixin {
-  Address? _currentDestination;
+  LatLng? _currentDestination;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +68,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
     }
 
     final addressState = address.state;
-    late final Map<String, Address> addrs;
+    late final List<LatLng> addrs;
     switch (addressState) {
       case AddressStateLoading():
         return const Center(child: CircularProgressIndicator());
@@ -150,9 +151,9 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
         // ),
         CameraFilteredMarkerLayer(
           minZoom: 17.5,
-          markers: addrs.values
+          markers: addrs
               .map((e) => Marker(
-                    point: e.coordinates,
+                    point: e,
                     child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -174,7 +175,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
               color: Colors.grey,
               child: Center(
                 child: Text(
-                  _currentDestination!.id,
+                  '${_currentDestination!.latitude.toStringAsFixed(5)}, ${_currentDestination!.longitude.toStringAsFixed(5)}',
                   style: TextStyle(fontSize: 36),
                 ),
               ),
