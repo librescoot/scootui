@@ -37,7 +37,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   ScooterState? _lastVehicleState;
   bool _poweroffScheduled = false;
-  bool _bluetoothWasError = false;
 
   @override
   Widget build(BuildContext context) {
