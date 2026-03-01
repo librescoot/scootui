@@ -4,7 +4,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../repositories/address_repository.dart' as addresses;
-import '../repositories/address_repository.dart';
 import '../repositories/tiles_repository.dart' as tiles;
 
 part 'address_state.dart';

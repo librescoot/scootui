@@ -11,7 +11,6 @@ import '../widgets/indicators/indicator_lights.dart';
 import '../widgets/power/power_display.dart';
 import '../state/enums.dart';
 import '../state/vehicle.dart';
-import '../state/battery.dart';
 import '../cubits/mdb_cubits.dart';
 
 class CarPlayScreen extends StatefulWidget {

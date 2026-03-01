@@ -17,7 +17,6 @@ class _Icons {
   static const String connected3 = 'librescoot-internet-modem-connected-3.svg';
   static const String connected4 = 'librescoot-internet-modem-connected-4.svg';
   static const String diconnected = 'librescoot-internet-modem-disconnected.svg';
-  static const String off = 'librescoot-internet-modem-off.svg';
   static const String bluetoothConnected = 'librescoot-bluetooth-connected.svg';
   static const String bluetoothDisconnected = 'librescoot-bluetooth-disconnected.svg';
   static const String bluetoothError = 'librescoot-bluetooth-error.svg';

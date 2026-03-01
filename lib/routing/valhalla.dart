@@ -13,38 +13,8 @@ class ValhallaService {
   static const int _connectTimeoutSeconds = 5;
   static const int _receiveTimeoutSeconds = 5;
 
-  // Valhalla maneuver type constants
-  static const int _kStart = 1;
-  static const int _kStartRight = 2;
-  static const int _kStartLeft = 3;
-  static const int _kDestination = 4;
-  static const int _kDestinationRight = 5;
-  static const int _kDestinationLeft = 6;
-  static const int _kContinue = 7;
-  static const int _kBecomes = 8;
-  static const int _kSlightRight = 9;
-  static const int _kRight = 10;
-  static const int _kSharpRight = 11;
-  static const int _kUturnRight = 12;
-  static const int _kUturn = 13;
-  static const int _kSharpLeft = 14;
-  static const int _kLeft = 15;
-  static const int _kSlightLeft = 16;
-  static const int _kRampStraight = 17;
-  static const int _kRampRight = 18;
-  static const int _kRampLeft = 19;
-  static const int _kExitRight = 20;
-  static const int _kExitLeft = 21;
-  static const int _kStayStraight = 22;
-  static const int _kStayRight = 23;
-  static const int _kStayLeft = 24;
-  static const int _kMerge = 25;
   static const int _kRoundaboutEnter = 26;
   static const int _kRoundaboutExit = 27;
-  static const int _kFerryEnter = 28;
-  static const int _kFerryExit = 29;
-  static const int _kMergeRight = 37;
-  static const int _kMergeLeft = 38;
 
   // Valhalla maneuver types that map to our instruction types
   static final Map<int, RouteInstruction Function(double, Duration, LatLng, int, String?, String?, String?, String?, String?, bool)> _maneuverMap = {

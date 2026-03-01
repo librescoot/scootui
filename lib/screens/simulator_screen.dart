@@ -100,9 +100,6 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   int _auxBatteryVoltage = 12500; // 12.5V in mV
   String _auxBatteryChargeStatus = 'not-charging';
 
-  // Expanded sections
-  bool _vehicleStateExpanded = false;
-
   // GPS timestamp simulation
   Timer? _gpsTimestampTimer;
 

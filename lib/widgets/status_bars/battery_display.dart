@@ -8,7 +8,6 @@ import '../../services/toast_service.dart';
 import '../../state/aux_battery.dart';
 import '../../state/battery.dart';
 import '../../state/cb_battery.dart';
-import '../../state/settings.dart';
 import '../../state/vehicle.dart';
 import '../../utils/condition_debouncer.dart';
 import '../../utils/fault_codes.dart';

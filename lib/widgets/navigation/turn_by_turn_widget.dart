@@ -34,100 +34,6 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildDestinationAddressBar(NavigationState state, bool isDark) {
-    final route = state.route;
-    if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
-
-    final upcomingInstructions = state.upcomingInstructions;
-    final firstUpcomingIndex = route.instructions.indexWhere(
-      (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
-    );
-
-    double remainingDistance = 0.0;
-    Duration timeRemaining = Duration.zero;
-
-    if (firstUpcomingIndex >= 0) {
-      final firstUpcoming = upcomingInstructions.first;
-      final firstOriginal = route.instructions[firstUpcomingIndex];
-
-      remainingDistance = firstUpcoming.distance;
-      remainingDistance += firstOriginal.distance;
-
-      for (int i = firstUpcomingIndex + 1; i < route.instructions.length; i++) {
-        remainingDistance += route.instructions[i].distance;
-        timeRemaining += route.instructions[i].duration;
-      }
-
-      if (firstOriginal.distance > 0) {
-        final speedInSegment = firstOriginal.distance > 0
-            ? firstOriginal.duration.inSeconds / firstOriginal.distance
-            : 0.0;
-        final timeToFirstManeuver = Duration(seconds: (firstUpcoming.distance * speedInSegment).round());
-        timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
-      } else {
-        timeRemaining += firstOriginal.duration;
-      }
-    }
-
-    final now = DateTime.now();
-    final eta = now.add(timeRemaining);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.black.withOpacity(0.9) : Colors.white.withOpacity(0.95),
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? Colors.white10 : Colors.black12,
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.place,
-            size: 14,
-            color: isDark ? Colors.white54 : Colors.black54,
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: _AutoScrollText(
-              text: state.destinationAddress!,
-              style: TextStyle(
-                color: isDark ? Colors.white70 : Colors.black87,
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _buildTimeInfoItem(
-            icon: Icons.straighten,
-            label: 'Distance',
-            value: _formatDistanceKm(remainingDistance),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 8),
-          _buildTimeInfoItem(
-            icon: Icons.timer,
-            label: 'Remaining',
-            value: _formatDuration(timeRemaining),
-            isDark: isDark,
-          ),
-          const SizedBox(width: 8),
-          _buildTimeInfoItem(
-            icon: Icons.flag,
-            label: 'ETA',
-            value: _formatTime(eta),
-            isDark: isDark,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCompactTimeInfoBar(NavigationState state, bool isDark) {
     final route = state.route;
     if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
@@ -208,114 +114,6 @@ class TurnByTurnWidget extends StatelessWidget {
             isDark: isDark,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTimeInfoBar(NavigationState state, bool isDark) {
-    final route = state.route;
-    if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
-
-    final upcomingInstructions = state.upcomingInstructions;
-    final firstUpcomingIndex = route.instructions.indexWhere(
-      (inst) => inst.originalShapeIndex == upcomingInstructions.first.originalShapeIndex,
-    );
-
-    double remainingDistance = 0.0;
-    Duration timeRemaining = Duration.zero;
-
-    if (firstUpcomingIndex >= 0) {
-      final firstUpcoming = upcomingInstructions.first;
-      final firstOriginal = route.instructions[firstUpcomingIndex];
-
-      // Start with distance to the first instruction's maneuver point
-      remainingDistance = firstUpcoming.distance;
-
-      // Add the segment starting at that maneuver point
-      remainingDistance += firstOriginal.distance;
-
-      // Add all subsequent segments
-      for (int i = firstUpcomingIndex + 1; i < route.instructions.length; i++) {
-        remainingDistance += route.instructions[i].distance;
-        timeRemaining += route.instructions[i].duration;
-      }
-
-      // Calculate time remaining: adjust first instruction's time based on progress
-      if (firstOriginal.distance > 0) {
-        // Estimate time to first maneuver (assume same speed as first segment)
-        final speedInSegment = firstOriginal.distance > 0
-            ? firstOriginal.duration.inSeconds / firstOriginal.distance
-            : 0.0;
-        final timeToFirstManeuver = Duration(seconds: (firstUpcoming.distance * speedInSegment).round());
-
-        // Total time = time to first maneuver + duration of first segment + subsequent segments
-        timeRemaining = timeToFirstManeuver + firstOriginal.duration + timeRemaining;
-      } else {
-        timeRemaining += firstOriginal.duration;
-      }
-    }
-
-    // Calculate ETA
-    final now = DateTime.now();
-    final eta = now.add(timeRemaining);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 360),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.black.withOpacity(0.95) : Colors.white.withOpacity(0.98),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.25) : Colors.black.withOpacity(0.2),
-            width: 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Destination address (if available)
-            if (state.destinationAddress != null && state.destinationAddress!.isNotEmpty) ...[
-              Icon(
-                Icons.place,
-                size: 14,
-                color: isDark ? Colors.white54 : Colors.black54,
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: _AutoScrollText(
-                  text: state.destinationAddress!,
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.black87,
-                    fontSize: 12,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-            ],
-            _buildTimeInfoItem(
-              icon: Icons.straighten,
-              label: 'Distance',
-              value: _formatDistanceKm(remainingDistance),
-              isDark: isDark,
-            ),
-            const SizedBox(width: 8),
-            _buildTimeInfoItem(
-              icon: Icons.timer,
-              label: 'Remaining',
-              value: _formatDuration(timeRemaining),
-              isDark: isDark,
-            ),
-            const SizedBox(width: 8),
-            _buildTimeInfoItem(
-              icon: Icons.flag,
-              label: 'ETA',
-              value: _formatTime(eta),
-              isDark: isDark,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -434,13 +232,8 @@ class TurnByTurnWidget extends StatelessWidget {
       }
     }
 
-    final hasAddress = state.destinationAddress != null && state.destinationAddress!.isNotEmpty;
-
     return Column(
       children: [
-        // Full-width destination address bar (disabled for now)
-        if (false && hasAddress) _buildDestinationAddressBar(state, isDark),
-
         // Turn-by-turn instruction box
         Stack(
           clipBehavior: Clip.none,
