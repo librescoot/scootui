@@ -381,8 +381,8 @@ class _AboutScreenState extends State<AboutScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildControlHint('Left Brake', context.l10n.aboutScrollAction, fg, subtle),
-                  _buildControlHint('Right Brake', context.l10n.aboutBackAction, fg, subtle),
+                  _buildControlHint(context.l10n.controlLeftBrake, context.l10n.aboutScrollAction, fg, subtle),
+                  _buildControlHint(context.l10n.controlRightBrake, context.l10n.aboutBackAction, fg, subtle),
                 ],
               ),
             ),

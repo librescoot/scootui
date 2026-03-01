@@ -28,7 +28,7 @@ MenuNode buildMenuTree(BuildContext context) {
 
   return MenuNode.submenu(
     id: 'root',
-    title: 'Main Menu',
+    title: l10n.menuTitle,
     headerTitle: l10n.menuTitle,
     children: [
       // CarPlay/Android Auto (conditional)

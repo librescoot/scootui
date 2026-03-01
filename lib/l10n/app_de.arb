@@ -172,6 +172,10 @@
 
   "controlLeftBrake": "Linke Bremse",
   "controlRightBrake": "Rechte Bremse",
+  "controlNextItem": "Nächster Eintrag",
+  "controlSelect": "Auswählen",
+  "controlPressRightBrakeConfirm": "Rechte Bremse zum Bestätigen",
+  "controlPressLeftBrakeEdit": "Linke Bremse zum Bearbeiten",
 
   "odometerTrip": "STRECKE",
   "odometerTotal": "GESAMT",

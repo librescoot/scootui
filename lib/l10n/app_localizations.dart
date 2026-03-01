@@ -1064,6 +1064,30 @@ abstract class AppLocalizations {
   /// **'Right Brake'**
   String get controlRightBrake;
 
+  /// No description provided for @controlNextItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Item'**
+  String get controlNextItem;
+
+  /// No description provided for @controlSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get controlSelect;
+
+  /// No description provided for @controlPressRightBrakeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Right Brake to Confirm'**
+  String get controlPressRightBrakeConfirm;
+
+  /// No description provided for @controlPressLeftBrakeEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Left Brake to Edit'**
+  String get controlPressLeftBrakeEdit;
+
   /// No description provided for @odometerTrip.
   ///
   /// In en, this message translates to:

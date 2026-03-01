@@ -298,6 +298,10 @@
 
   "controlLeftBrake": "Left Brake",
   "controlRightBrake": "Right Brake",
+  "controlNextItem": "Next Item",
+  "controlSelect": "Select",
+  "controlPressRightBrakeConfirm": "Press Right Brake to Confirm",
+  "controlPressLeftBrakeEdit": "Press Left Brake to Edit",
 
   "odometerTrip": "TRIP",
   "odometerTotal": "TOTAL",

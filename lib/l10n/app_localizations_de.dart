@@ -543,6 +543,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get controlRightBrake => 'Rechte Bremse';
 
   @override
+  String get controlNextItem => 'Nächster Eintrag';
+
+  @override
+  String get controlSelect => 'Auswählen';
+
+  @override
+  String get controlPressRightBrakeConfirm => 'Rechte Bremse zum Bestätigen';
+
+  @override
+  String get controlPressLeftBrakeEdit => 'Linke Bremse zum Bearbeiten';
+
+  @override
   String get odometerTrip => 'STRECKE';
 
   @override

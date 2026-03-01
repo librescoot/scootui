@@ -543,6 +543,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get controlRightBrake => 'Right Brake';
 
   @override
+  String get controlNextItem => 'Next Item';
+
+  @override
+  String get controlSelect => 'Select';
+
+  @override
+  String get controlPressRightBrakeConfirm => 'Press Right Brake to Confirm';
+
+  @override
+  String get controlPressLeftBrakeEdit => 'Press Left Brake to Edit';
+
+  @override
   String get odometerTrip => 'TRIP';
 
   @override
