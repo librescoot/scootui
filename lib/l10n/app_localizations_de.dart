@@ -555,6 +555,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get controlPressLeftBrakeEdit => 'Linke Bremse zum Bearbeiten';
 
   @override
+  String get statusBarDuration => 'DAUER';
+
+  @override
+  String get statusBarAvgSpeed => 'Ø TEMPO';
+
+  @override
+  String get statusBarTrip => 'STRECKE';
+
+  @override
+  String get statusBarTotal => 'GESAMT';
+
+  @override
+  String get statusBarKmh => 'km/h';
+
+  @override
   String get odometerTrip => 'STRECKE';
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
+import '../../l10n/l10n.dart';
 
 class UnifiedBottomStatusBar extends StatelessWidget {
   final Widget? centerWidget;
@@ -55,7 +56,7 @@ class UnifiedBottomStatusBar extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('DURATION', isDark),
+                          _buildLabel(context.l10n.statusBarDuration, isDark),
                           _buildValue(_formatTripTime(trip.tripDuration), textColor),
                         ],
                       ),
@@ -65,7 +66,7 @@ class UnifiedBottomStatusBar extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Ø SPEED', isDark),
+                          _buildLabel(context.l10n.statusBarAvgSpeed, isDark),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -74,7 +75,7 @@ class UnifiedBottomStatusBar extends StatelessWidget {
                               _buildValue(trip.averageSpeed.toStringAsFixed(1), textColor),
                               const SizedBox(width: 2),
                               Text(
-                                'km/h',
+                                context.l10n.statusBarKmh,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: isDark ? Colors.white54 : Colors.black54,
@@ -116,7 +117,7 @@ class UnifiedBottomStatusBar extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _buildLabel('TRIP', isDark),
+                          _buildLabel(context.l10n.statusBarTrip, isDark),
                           _buildValue(currentTrip.toStringAsFixed(1), textColor),
                         ],
                       ),
@@ -126,7 +127,7 @@ class UnifiedBottomStatusBar extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _buildLabel('TOTAL', isDark),
+                          _buildLabel(context.l10n.statusBarTotal, isDark),
                           _buildValue(currentTotal.toStringAsFixed(1), textColor),
                         ],
                       ),

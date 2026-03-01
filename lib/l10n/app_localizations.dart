@@ -1088,6 +1088,36 @@ abstract class AppLocalizations {
   /// **'Press Left Brake to Edit'**
   String get controlPressLeftBrakeEdit;
 
+  /// No description provided for @statusBarDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'DURATION'**
+  String get statusBarDuration;
+
+  /// No description provided for @statusBarAvgSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Ø SPEED'**
+  String get statusBarAvgSpeed;
+
+  /// No description provided for @statusBarTrip.
+  ///
+  /// In en, this message translates to:
+  /// **'TRIP'**
+  String get statusBarTrip;
+
+  /// No description provided for @statusBarTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL'**
+  String get statusBarTotal;
+
+  /// No description provided for @statusBarKmh.
+  ///
+  /// In en, this message translates to:
+  /// **'km/h'**
+  String get statusBarKmh;
+
   /// No description provided for @odometerTrip.
   ///
   /// In en, this message translates to:

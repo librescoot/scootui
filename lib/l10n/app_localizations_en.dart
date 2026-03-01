@@ -555,6 +555,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get controlPressLeftBrakeEdit => 'Press Left Brake to Edit';
 
   @override
+  String get statusBarDuration => 'DURATION';
+
+  @override
+  String get statusBarAvgSpeed => 'Ø SPEED';
+
+  @override
+  String get statusBarTrip => 'TRIP';
+
+  @override
+  String get statusBarTotal => 'TOTAL';
+
+  @override
+  String get statusBarKmh => 'km/h';
+
+  @override
   String get odometerTrip => 'TRIP';
 
   @override

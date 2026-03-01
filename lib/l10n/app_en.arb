@@ -303,6 +303,12 @@
   "controlPressRightBrakeConfirm": "Press Right Brake to Confirm",
   "controlPressLeftBrakeEdit": "Press Left Brake to Edit",
 
+  "statusBarDuration": "DURATION",
+  "statusBarAvgSpeed": "Ø SPEED",
+  "statusBarTrip": "TRIP",
+  "statusBarTotal": "TOTAL",
+  "statusBarKmh": "km/h",
+
   "odometerTrip": "TRIP",
   "odometerTotal": "TOTAL",
   "odometerAvgSpeed": "AVG SPEED",

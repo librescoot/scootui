@@ -177,6 +177,12 @@
   "controlPressRightBrakeConfirm": "Rechte Bremse zum Bestätigen",
   "controlPressLeftBrakeEdit": "Linke Bremse zum Bearbeiten",
 
+  "statusBarDuration": "DAUER",
+  "statusBarAvgSpeed": "Ø TEMPO",
+  "statusBarTrip": "STRECKE",
+  "statusBarTotal": "GESAMT",
+  "statusBarKmh": "km/h",
+
   "odometerTrip": "STRECKE",
   "odometerTotal": "GESAMT",
   "odometerAvgSpeed": "Ø TEMPO",
