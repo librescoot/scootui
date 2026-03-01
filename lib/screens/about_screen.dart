@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../services/toast_service.dart';
 import '../widgets/general/control_gestures_detector.dart';
 
 const _websiteUrl = 'https://librescoot.org';
@@ -57,14 +60,27 @@ class AboutScreen extends StatefulWidget {
   State<AboutScreen> createState() => _AboutScreenState();
 }
 
+// Easter egg: down×4, up×3, down×2, up×1 then exit
+// true=down (left tap), false=up (left hold)
+const _eggSeq = [true, true, true, true, false, false, false, true, true, false];
+
 class _AboutScreenState extends State<AboutScreen> {
   final _scrollController = ScrollController();
   static const _scrollStep = 80.0;
+  int _eggStep = 0;
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _trackEgg(bool isDown) {
+    if (isDown == _eggSeq[_eggStep]) {
+      _eggStep++;
+    } else {
+      _eggStep = isDown == _eggSeq[0] ? 1 : 0;
+    }
   }
 
   void _scrollDown() {
@@ -76,6 +92,7 @@ class _AboutScreenState extends State<AboutScreen> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
     );
+    _trackEgg(true);
   }
 
   void _scrollUp() {
@@ -87,6 +104,25 @@ class _AboutScreenState extends State<AboutScreen> {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
     );
+    _trackEgg(false);
+  }
+
+  void _close() {
+    if (_eggStep == _eggSeq.length) _toggleXpTheme();
+    context.read<ScreenCubit>().closeAbout();
+  }
+
+  Future<void> _toggleXpTheme() async {
+    const path = '/etc/plymouth/theme-override';
+    final file = File(path);
+    final current = file.existsSync() ? file.readAsStringSync().trim() : '';
+    if (current == 'windowsxp') {
+      file.writeAsStringSync('librescoot\n');
+      ToastService.showInfo('Boot theme: LibreScoot restored.');
+    } else {
+      file.writeAsStringSync('windowsxp\n');
+      ToastService.showSuccess('Genuine Advantage activated.');
+    }
   }
 
   String get _copyrightYear {
@@ -111,7 +147,7 @@ class _AboutScreenState extends State<AboutScreen> {
       requireInitialRelease: true,
       onLeftTap: _scrollDown,
       onLeftHold: _scrollUp,
-      onRightTap: () => context.read<ScreenCubit>().closeAbout(),
+      onRightTap: _close,
       child: Container(
         color: bg,
         child: Column(
