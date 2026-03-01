@@ -92,7 +92,7 @@ class ShutdownOverlay extends StatelessWidget {
                 const SizedBox(height: 10),
                 // Text
                 Text(
-                  l10n.otaUpdateMessage(action: actionText, version: versionText),
+                  l10n.otaUpdateMessage(actionText, versionText),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -149,7 +149,7 @@ class ShutdownOverlay extends StatelessWidget {
               const SizedBox(height: 10),
               // Text
               Text(
-                l10n.otaUpdateMessage(action: actionText, version: versionText),
+                l10n.otaUpdateMessage(actionText, versionText),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,

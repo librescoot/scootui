@@ -11,6 +11,7 @@ import '../repositories/tiles_repository.dart';
 import '../routing/models.dart';
 import '../routing/route_helpers.dart';
 import '../routing/valhalla.dart';
+import '../services/l10n_service.dart';
 import '../services/toast_service.dart';
 import '../state/gps.dart';
 import '../state/navigation.dart';
@@ -132,7 +133,7 @@ class NavigationCubit extends Cubit<NavigationState> {
     try {
       final position = _currentPosition;
       if (position == null) {
-        const errorMsg = 'Current position not available';
+        final errorMsg = L10nService.current.navCurrentPositionNotAvailable;
         ToastService.showError(errorMsg);
         emit(state.copyWith(
           status: NavigationStatus.error,
@@ -145,7 +146,7 @@ class NavigationCubit extends Cubit<NavigationState> {
       final route = await valhallaService.getRoute(position, destination);
 
       if (route.waypoints.isEmpty) {
-        const errorMsg = 'Could not calculate route';
+        final errorMsg = L10nService.current.navCouldNotCalculateRoute;
         if (_lastShownError != errorMsg) {
           ToastService.showError(errorMsg);
           _lastShownError = errorMsg;
@@ -177,7 +178,7 @@ class NavigationCubit extends Cubit<NavigationState> {
       if (errorMsg.contains('400') || errorMsg.contains('Invalid route request')) {
         print("NavigationCubit: Destination is unreachable, clearing navigation.");
         await clearNavigation();
-        const clearMsg = 'Destination is unreachable. Please select a different location.';
+        final clearMsg = L10nService.current.navDestinationUnreachable;
         if (_lastShownError != clearMsg) {
           ToastService.showError(clearMsg);
           _lastShownError = clearMsg;
@@ -243,8 +244,8 @@ class NavigationCubit extends Cubit<NavigationState> {
             destination: destination,
             destinationAddress: data.address.isNotEmpty ? data.address : null,
             status: NavigationStatus.idle,
-            error: "Waiting for recent GPS fix to calculate route.",
-            pendingConditions: ["Waiting for GPS fix"]));
+            error: L10nService.current.navWaitingForGpsRoute,
+            pendingConditions: [L10nService.current.navWaitingForGps]));
         return;
       }
 
@@ -263,7 +264,7 @@ class NavigationCubit extends Cubit<NavigationState> {
       if (_currentPosition != null) {
         print(
             "NavigationCubit: Conditions met to calculate route. CurrentPos: $_currentPosition, NewDest: $destination, OldDest: ${state.destination}, Status: ${state.status}");
-        ToastService.showInfo('New navigation destination received. Calculating route...');
+        ToastService.showInfo(L10nService.current.navNewDestination);
         // Clear pending conditions since we can now calculate route
         emit(state.copyWith(pendingConditions: []));
         _calculateRoute(destination, address: data.address.isNotEmpty ? data.address : null);
@@ -360,7 +361,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         _vehicleData.state != ScooterState.shuttingDown) {
       print("NavigationCubit: Resuming navigation after moving away from destination.");
       _arrivalToastShown = false;
-      ToastService.showInfo('Resuming navigation.');
+      ToastService.showInfo(L10nService.current.navResumingNavigation);
       emit(state.copyWith(
         status: NavigationStatus.navigating,
         distanceToDestination: distanceToDestination,
@@ -371,7 +372,7 @@ class NavigationCubit extends Cubit<NavigationState> {
     // Check if we've arrived
     if (distanceToDestination < _arrivalProximityMeters) {
       if (!_arrivalToastShown) {
-        ToastService.showSuccess('You have arrived at your destination!');
+        ToastService.showSuccess(L10nService.current.navArrivedAtDestination);
         _arrivalToastShown = true;
       }
       emit(state.copyWith(
@@ -404,7 +405,7 @@ class NavigationCubit extends Cubit<NavigationState> {
         duration: Duration.zero,
         location: closestPoint,
         originalShapeIndex: 0,
-        instructionText: "Return to the route",
+        instructionText: L10nService.current.navReturnToRoute,
       );
       upcomingInstructions = [returnInstruction, ...upcomingInstructions];
     }
@@ -419,7 +420,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
     // Check if we need to reroute
     if (isOffRoute && (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
-      ToastService.showWarning('Off route. Attempting to reroute...');
+      ToastService.showWarning(L10nService.current.navOffRouteRerouting);
       _reroute(position, destination);
     }
   }
@@ -434,7 +435,7 @@ class NavigationCubit extends Cubit<NavigationState> {
       final route = await valhallaService.getRoute(position, destination);
 
       if (route.waypoints.isEmpty) {
-        const errorMsg = 'Could not calculate new route';
+        final errorMsg = L10nService.current.navCouldNotCalculateNewRoute;
         if (_lastShownError != errorMsg) {
           ToastService.showError(errorMsg);
           _lastShownError = errorMsg;

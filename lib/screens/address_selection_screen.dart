@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../cubits/address_cubit.dart';
+import '../l10n/l10n.dart';
 // import '../cubits/navigation_cubit.dart'; // Not needed directly for setting destination via Redis
 import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
@@ -156,12 +157,12 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
           ),
           ControlHints(
             leftAction: switch (addressCubit.state) {
-              AddressStateLoaded() => _isConfirming ? 'Edit' : 'Scroll',
+              AddressStateLoaded() => _isConfirming ? context.l10n.addressEditAction : context.l10n.addressScrollAction,
               _ => null,
             },
             rightAction: switch (addressCubit.state) {
-              AddressStateLoaded() => _isConfirming ? 'Confirm' : 'Next',
-              AddressStateError() => 'Close',
+              AddressStateLoaded() => _isConfirming ? context.l10n.addressConfirmAction : context.l10n.addressNextAction,
+              AddressStateError() => context.l10n.addressCloseAction,
               _ => null,
             },
           ),
@@ -179,7 +180,7 @@ class _DialTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Enter Destination Code',
+      context.l10n.addressScreenTitle,
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,

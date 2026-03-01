@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/trip_cubit.dart';
+import '../../l10n/l10n.dart';
 
 class OdometerDisplay extends StatelessWidget {
   final double tripDistance;
@@ -24,14 +25,14 @@ class OdometerDisplay extends StatelessWidget {
             children: [
               // Trip distance
               _DistanceDisplay(
-                label: 'TRIP',
+                label: context.l10n.odometerTrip,
                 value: _formatDistance(tripDistance),
                 alignment: CrossAxisAlignment.start,
               ),
 
               // Total distance
               _DistanceDisplay(
-                label: 'TOTAL',
+                label: context.l10n.odometerTotal,
                 value: _formatDistance(totalDistance),
                 alignment: CrossAxisAlignment.end,
               ),
@@ -155,8 +156,8 @@ class TripDisplay extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildLabel('AVG SPEED', isDark),
-              _buildValue('${trip.averageSpeed.toStringAsFixed(1)} km/h', isDark),
+              _buildLabel(context.l10n.odometerAvgSpeed, isDark),
+              _buildValue(context.l10n.odometerAvgSpeedValue(trip.averageSpeed.toStringAsFixed(1)), isDark),
             ],
           ),
 
@@ -164,7 +165,7 @@ class TripDisplay extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              _buildLabel('TRIP TIME', isDark),
+              _buildLabel(context.l10n.odometerTripTime, isDark),
               _buildValue(_formatTripTime(trip.tripDuration), isDark),
             ],
           ),

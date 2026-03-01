@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../l10n/l10n.dart';
 import '../../cubits/navigation_cubit.dart';
 import '../../cubits/navigation_state.dart';
 import '../../routing/models.dart';
@@ -29,12 +30,12 @@ class TurnByTurnWidget extends StatelessWidget {
         }
 
         // Return the two-box layout directly, no wrapper
-        return compact ? _buildCompactView(state, isDark) : _buildFullView(state, isDark);
+        return compact ? _buildCompactView(state, isDark) : _buildFullView(context, state, isDark);
       },
     );
   }
 
-  Widget _buildCompactTimeInfoBar(NavigationState state, bool isDark) {
+  Widget _buildCompactTimeInfoBar(BuildContext context, NavigationState state, bool isDark) {
     final route = state.route;
     if (route == null || state.upcomingInstructions.isEmpty) return const SizedBox.shrink();
 
@@ -95,21 +96,21 @@ class TurnByTurnWidget extends StatelessWidget {
         children: [
           _buildTimeInfoItem(
             icon: Icons.straighten,
-            label: 'Distance',
+            label: context.l10n.navDistance,
             value: _formatDistanceKm(remainingDistance),
             isDark: isDark,
           ),
           const SizedBox(width: 8),
           _buildTimeInfoItem(
             icon: Icons.timer,
-            label: 'Remaining',
+            label: context.l10n.navRemaining,
             value: _formatDuration(timeRemaining),
             isDark: isDark,
           ),
           const SizedBox(width: 8),
           _buildTimeInfoItem(
             icon: Icons.flag,
-            label: 'ETA',
+            label: context.l10n.navEta,
             value: _formatTime(eta),
             isDark: isDark,
           ),
@@ -215,7 +216,7 @@ class TurnByTurnWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFullView(NavigationState state, bool isDark) {
+  Widget _buildFullView(BuildContext context, NavigationState state, bool isDark) {
     final instructions = state.upcomingInstructions;
     if (instructions.isEmpty) return const SizedBox.shrink();
     final instruction = instructions.first;
@@ -283,7 +284,7 @@ class TurnByTurnWidget extends StatelessWidget {
                           const SizedBox(height: 4),
                           // Main instruction text
                           Text(
-                            _getInstructionText(instruction, null),
+                            _getInstructionText(context, instruction, null),
                             style: TextStyle(
                               color: isDark ? Colors.white70 : Colors.black87,
                               fontSize: 18,
@@ -300,7 +301,7 @@ class TurnByTurnWidget extends StatelessWidget {
                               !_hasMultiCueHint(instruction)) ...[
                             const SizedBox(height: 4),
                             Text(
-                              'Then ${_getShortInstructionText(nextInstruction)}',
+                              context.l10n.navThen(_getShortInstructionText(context, nextInstruction)),
                               style: TextStyle(
                                 color: isDark ? Colors.white38 : Colors.black45,
                                 fontSize: 14,
@@ -322,7 +323,7 @@ class TurnByTurnWidget extends StatelessWidget {
             Positioned(
               right: 0,
               top: 0,
-              child: _buildCompactTimeInfoBar(state, isDark),
+              child: _buildCompactTimeInfoBar(context, state, isDark),
             ),
           ],
         ),
@@ -442,13 +443,14 @@ class TurnByTurnWidget extends StatelessWidget {
     };
   }
 
-  String _getInstructionText(RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
+  String _getInstructionText(BuildContext context, RouteInstruction instruction, [RouteInstruction? nextInstruction]) {
+    final l10n = context.l10n;
     // For very long distances (>=1km), show "Continue for X.X km" message
     // Use same rounding as _formatDistance to ensure consistency
     if (instruction.distance >= 1000) {
       final roundedDistance = (((instruction.distance + 99) ~/ 100) * 100) / 1000;
       final distanceKm = roundedDistance.toStringAsFixed(1);
-      return 'Continue for $distanceKm km';
+      return l10n.navContinueFor(distanceKm);
     }
 
     String baseText = '';
@@ -511,60 +513,60 @@ class TurnByTurnWidget extends StatelessWidget {
     if (baseText.isEmpty) {
       baseText = switch (instruction) {
         Keep(direction: final direction, streetName: final streetName) =>
-          streetName != null ? 'Keep ${direction.name} on $streetName' : 'Keep ${direction.name}',
+          streetName != null ? l10n.navKeepDirectionOnto(direction.name, streetName) : l10n.navKeepDirection(direction.name),
         Turn(direction: final direction, streetName: final streetName) =>
-          streetName != null ? 'Turn ${direction.name} onto $streetName' : 'Turn ${direction.name}',
+          streetName != null ? l10n.navTurnDirectionOnto(direction.name, streetName) : l10n.navTurnDirection(direction.name),
         Roundabout(exitNumber: final exitNumber, streetName: final streetName) =>
-          streetName != null ? 'Take exit $exitNumber onto $streetName' : 'Take exit $exitNumber',
+          streetName != null ? l10n.navTakeExitOnto('$exitNumber', streetName) : l10n.navTakeExit('$exitNumber'),
         Exit(side: final side, streetName: final streetName) =>
-          streetName != null ? 'Take the ${side.name} exit to $streetName' : 'Take the ${side.name} exit',
+          streetName != null ? l10n.navTakeSideExitTo(side.name, streetName) : l10n.navTakeSideExit(side.name),
         Merge(direction: final direction, streetName: final streetName) =>
-          streetName != null ? 'Merge ${direction.name} onto $streetName' : 'Merge ${direction.name}',
-        Other(streetName: final streetName) => streetName != null ? 'Continue on $streetName' : 'Continue',
+          streetName != null ? l10n.navMergeDirectionOnto(direction.name, streetName) : l10n.navMergeDirection(direction.name),
+        Other(streetName: final streetName) => streetName != null ? l10n.navContinueOnStreet(streetName) : l10n.navContinue,
       };
     }
 
     return baseText;
   }
 
-  String _getShortInstructionText(RouteInstruction instruction) {
-    // Generate short instruction text for "then" clauses
+  String _getShortInstructionText(BuildContext context, RouteInstruction instruction) {
+    final l10n = context.l10n;
     return switch (instruction) {
       Keep(direction: final direction) => switch (direction) {
-          KeepDirection.straight => 'continue straight',
-          _ => 'keep ${direction.name}',
+          KeepDirection.straight => l10n.navShortContinueStraight,
+          _ => l10n.navShortKeepDirection(direction.name),
         },
       Turn(direction: final direction) => switch (direction) {
-          TurnDirection.left => 'turn left',
-          TurnDirection.right => 'turn right',
-          TurnDirection.slightLeft => 'turn slightly left',
-          TurnDirection.slightRight => 'turn slightly right',
-          TurnDirection.sharpLeft => 'turn sharply left',
-          TurnDirection.sharpRight => 'turn sharply right',
-          TurnDirection.uTurn180 => 'make a U-turn',
-          TurnDirection.rightUTurn => 'make a right U-turn',
-          TurnDirection.uTurn => 'make a U-turn',
+          TurnDirection.left => l10n.navShortTurnLeft,
+          TurnDirection.right => l10n.navShortTurnRight,
+          TurnDirection.slightLeft => l10n.navShortTurnSlightlyLeft,
+          TurnDirection.slightRight => l10n.navShortTurnSlightlyRight,
+          TurnDirection.sharpLeft => l10n.navShortTurnSharplyLeft,
+          TurnDirection.sharpRight => l10n.navShortTurnSharplyRight,
+          TurnDirection.uTurn180 => l10n.navShortUturn,
+          TurnDirection.rightUTurn => l10n.navShortUturnRight,
+          TurnDirection.uTurn => l10n.navShortUturn,
         },
-      Roundabout(exitNumber: final exitNumber) => _getOrdinalExitText(exitNumber),
+      Roundabout(exitNumber: final exitNumber) => _getOrdinalExitText(context, exitNumber),
       Merge(direction: final direction) => switch (direction) {
-          MergeDirection.straight => 'merge',
-          MergeDirection.left => 'merge left',
-          MergeDirection.right => 'merge right',
+          MergeDirection.straight => l10n.navShortMerge,
+          MergeDirection.left => l10n.navShortMergeLeft,
+          MergeDirection.right => l10n.navShortMergeRight,
         },
-      Other() => 'continue',
-      Exit(side: final side) => 'take the ${side.name} exit',
+      Other() => l10n.navShortContinue,
+      Exit(side: final side) => l10n.navShortTakeSideExit(side.name),
     };
   }
 
-  String _getOrdinalExitText(int exitNumber) {
-    // Handle ordinal suffixes for any exit number
+  String _getOrdinalExitText(BuildContext context, int exitNumber) {
+    final l10n = context.l10n;
     final suffix = switch (exitNumber % 10) {
       1 when exitNumber % 100 != 11 => 'st',
       2 when exitNumber % 100 != 12 => 'nd',
       3 when exitNumber % 100 != 13 => 'rd',
       _ => 'th',
     };
-    return 'take the $exitNumber$suffix exit';
+    return l10n.navShortTakeNumberedExit('$exitNumber$suffix');
   }
 
   Widget _buildRoundaboutIcon(RoundaboutSide side, int exitNumber, double? bearingBefore, double size, bool isDark) {

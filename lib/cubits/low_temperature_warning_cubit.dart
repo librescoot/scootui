@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../services/l10n_service.dart';
 import '../services/toast_service.dart';
 import '../state/battery.dart';
 import '../state/cb_battery.dart';
@@ -84,27 +85,27 @@ class LowTemperatureWarningCubit extends Cubit<bool> {
 
     // Check engine temperature (engine-ecu temperature)
     if (engine != null && engine.temperature <= _engineTempThreshold && engine.temperature != 0) {
-      lowTempSources.add('Motor');
+      lowTempSources.add(L10nService.current.lowTempMotor);
     }
 
     // Check battery:0 temperature:2 and temperature:3
     if (battery0 != null && battery0.present) {
       if (battery0.temperature2 <= _batteryTempThreshold && battery0.temperature2 != 0) {
-        lowTempSources.add('Battery');
+        lowTempSources.add(L10nService.current.lowTempBattery);
       } else if (battery0.temperature3 <= _batteryTempThreshold && battery0.temperature3 != 0) {
-        lowTempSources.add('Battery');
+        lowTempSources.add(L10nService.current.lowTempBattery);
       }
     }
 
     // Check cb-battery temperature
     if (cbBattery != null && cbBattery.present && cbBattery.temperature <= _cbBatteryTempThreshold && cbBattery.temperature != 0) {
-      lowTempSources.add('12V Battery');
+      lowTempSources.add(L10nService.current.lowTemp12vBattery);
     }
 
     if (lowTempSources.isNotEmpty) {
       _hasShownWarning = true;
       emit(true);
-      ToastService.showWarning('Low Temperatures - Ride Carefully');
+      ToastService.showWarning(L10nService.current.lowTempWarning);
     }
   }
 

@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../config.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
+import '../../l10n/l10n.dart';
+import '../../services/l10n_service.dart';
 import '../../services/toast_service.dart';
 import '../../state/aux_battery.dart';
 import '../../state/battery.dart';
@@ -31,7 +33,7 @@ class BatteryStatusDisplay extends StatelessWidget {
 
   const BatteryStatusDisplay({super.key, required this.battery});
 
-  Widget _buildLabel(String labelText, Color textColor, bool showAsRange) {
+  Widget _buildLabel(BuildContext context, String labelText, Color textColor, bool showAsRange) {
     if (!showAsRange) {
       return Text(
         labelText,
@@ -74,7 +76,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         ),
         const SizedBox(width: 2),
         Text(
-          'km',
+          context.l10n.batteryKm,
           style: TextStyle(
             fontSize: 12,
             color: textColor.withOpacity(0.54),
@@ -295,7 +297,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         finalIcon,
         if (labelText != null) ...[
           const SizedBox(width: 2),
-          _buildLabel(labelText, textColor, settings.showBatteryAsRange),
+          _buildLabel(context, labelText, textColor, settings.showBatteryAsRange),
         ],
       ],
     );
@@ -471,21 +473,21 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     // Show toast notifications
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (showCbWarning) {
-        _showToastIfNeeded("CB Battery not charging", _cbWarningShown,
+        _showToastIfNeeded(L10nService.current.batteryCbNotCharging, _cbWarningShown,
             (shown) => _cbWarningShown = shown);
       } else {
         _cbWarningShown = false;
       }
 
       if (showAuxLowChargeWarning) {
-        _showToastIfNeeded("AUX Battery low and not charging", _auxLowChargeWarningShown,
+        _showToastIfNeeded(L10nService.current.batteryAuxLowNotCharging, _auxLowChargeWarningShown,
             (shown) => _auxLowChargeWarningShown = shown);
       } else {
         _auxLowChargeWarningShown = false;
       }
 
       if (showAuxLowVoltageWarning) {
-        _showToastIfNeeded("AUX Battery voltage low", _auxLowVoltageWarningShown,
+        _showToastIfNeeded(L10nService.current.batteryAuxVoltageLow, _auxLowVoltageWarningShown,
             (shown) => _auxLowVoltageWarningShown = shown);
       } else {
         _auxLowVoltageWarningShown = false;
@@ -493,8 +495,8 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
 
       if (showAuxCriticalVoltageWarning) {
         final message = mainBattery.present
-            ? "AUX Battery voltage very low - may need replacement"
-            : "AUX Battery voltage very low - insert main battery to charge";
+            ? L10nService.current.batteryAuxVoltageVeryLowReplace
+            : L10nService.current.batteryAuxVoltageVeryLowCharge;
         _showToastIfNeeded(message, _auxCriticalVoltageWarningShown,
             (shown) => _auxCriticalVoltageWarningShown = shown);
       } else {
@@ -606,13 +608,13 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
     if (soc < _lastSoc!) {
       String? message;
       if (soc == 0 && _lastSoc! > 0) {
-        message = "Battery empty. Recharge battery";
+        message = L10nService.current.batteryEmptyRecharge;
       } else if (soc < 5 && _lastSoc! >= 5) {
-        message = "Max speed is reduced. Battery is below 5%";
+        message = L10nService.current.batteryMaxSpeedReduced;
       } else if (soc <= 10 && _lastSoc! > 10) {
-        message = "Battery low. Power reduced. Please recharge battery";
+        message = L10nService.current.batteryLowPowerReduced;
       } else if (soc < 20 && _lastSoc! >= 20) {
-        message = "Battery low. Power reduced. Recharge battery";
+        message = L10nService.current.batteryLowPowerReducedShort;
       }
 
       if (message != null) {
@@ -645,7 +647,7 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
         final hasCritical = FaultFormatter.hasAnyCritical(battery0.fault);
         final title = battery0.fault.length > 1
             ? FaultFormatter.getMultipleFaultsTitle(battery0.fault)
-            : "Battery 0";
+            : L10nService.current.batterySlot0;
 
         if (hasCritical) {
           ToastService.showError("$title: $faultMessage");
@@ -665,7 +667,7 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
         final hasCritical = FaultFormatter.hasAnyCritical(battery1.fault);
         final title = battery1.fault.length > 1
             ? FaultFormatter.getMultipleFaultsTitle(battery1.fault)
-            : "Battery 1";
+            : L10nService.current.batterySlot1;
 
         if (hasCritical) {
           ToastService.showError("$title: $faultMessage");

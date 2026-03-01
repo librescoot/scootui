@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
+import '../../l10n/l10n.dart';
 import '../../state/enums.dart';
 
 class PowerDisplay extends StatefulWidget {
@@ -129,7 +130,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'REGEN',
+                    context.l10n.powerRegen,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
@@ -138,7 +139,7 @@ class _PowerDisplayState extends State<PowerDisplay> with SingleTickerProviderSt
                     ),
                   ),
                   Text(
-                    'DISCHARGE',
+                    context.l10n.powerDischarge,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,

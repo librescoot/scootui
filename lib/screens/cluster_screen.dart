@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../cubits/debug_overlay_cubit.dart';
+import '../l10n/l10n.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/theme_cubit.dart';
 import '../env_config.dart';
@@ -297,7 +298,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Vehicle will enter standby in',
+                                context.l10n.standbyWarning,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -316,7 +317,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                'seconds',
+                                context.l10n.standbySeconds,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -325,7 +326,7 @@ class _ClusterScreenState extends State<ClusterScreen> {
                               ),
                               SizedBox(height: 12),
                               Text(
-                                'Press brake or move kickstand to cancel',
+                                context.l10n.standbyCancel,
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
                                   fontSize: 13,

@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../l10n/l10n.dart';
+import '../services/l10n_service.dart';
 import '../services/toast_service.dart';
 import '../widgets/general/control_gestures_detector.dart';
 
@@ -124,8 +126,8 @@ class _AboutScreenState extends State<AboutScreen> {
         ? RegExp(r'Theme=(\S+)').firstMatch(conf.readAsStringSync())?.group(1) ?? ''
         : '';
     final (next, message) = current == 'windowsxp'
-        ? ('librescoot', 'Boot theme: LibreScoot restored.')
-        : ('windowsxp', 'Genuine Advantage activated.');
+        ? ('librescoot', L10nService.current.aboutBootThemeRestored)
+        : ('windowsxp', L10nService.current.aboutGenuineAdvantage);
     const template = '[Daemon]\nTheme=%s\nShowDelay=0\nDeviceTimeout=5\nIgnoreSerialConsoles=yes\n';
     conf.writeAsStringSync(template.replaceFirst('%s', next));
     if (next == 'librescoot') {
@@ -216,7 +218,7 @@ class _AboutScreenState extends State<AboutScreen> {
                     const SizedBox(height: 8),
 
                     Text(
-                      'FOSS firmware for unu Scooter Pro e-mopeds',
+                      context.l10n.aboutFossDescription,
                       style: TextStyle(
                         fontSize: 13,
                         color: subtle,
@@ -278,7 +280,7 @@ class _AboutScreenState extends State<AboutScreen> {
                                     size: 16),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'NON-COMMERCIAL SOFTWARE',
+                                  context.l10n.aboutNonCommercialTitle,
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -292,15 +294,13 @@ class _AboutScreenState extends State<AboutScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Commercial distribution, resale, or preinstallation '
-                              'on devices for sale is prohibited under $_licenseId.',
+                              context.l10n.aboutCommercialProhibited(_licenseId),
                               style: TextStyle(
                                   fontSize: 12, color: fg, height: 1.5),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'If you paid money for this software, you may '
-                              'have been the victim of a scam. Please report it at $_websiteUrl.',
+                              context.l10n.aboutScamWarning(_websiteUrl),
                               style: TextStyle(
                                   fontSize: 12,
                                   color: fg,
@@ -322,7 +322,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'OPEN SOURCE COMPONENTS',
+                          context.l10n.aboutOpenSourceComponents,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -381,8 +381,8 @@ class _AboutScreenState extends State<AboutScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildControlHint('Left Brake', 'Scroll', fg, subtle),
-                  _buildControlHint('Right Brake', 'Back', fg, subtle),
+                  _buildControlHint('Left Brake', context.l10n.aboutScrollAction, fg, subtle),
+                  _buildControlHint('Right Brake', context.l10n.aboutBackAction, fg, subtle),
                 ],
               ),
             ),

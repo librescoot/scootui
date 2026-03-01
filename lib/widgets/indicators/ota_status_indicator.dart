@@ -76,7 +76,7 @@ class OtaStatusIndicator extends StatelessWidget {
       }
     }
 
-    final versionText = updateVersion.isNotEmpty ? l10n.otaLibrescootVersion(version: updateVersion) : l10n.otaUpdate;
+    final versionText = updateVersion.isNotEmpty ? l10n.otaLibrescootVersion(updateVersion) : l10n.otaUpdate;
 
     // Build tooltip message - use detailed error message if available
     final String tooltipMessage;
