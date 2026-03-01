@@ -10,4 +10,5 @@ sealed class ScreenState with _$ScreenState {
   const factory ScreenState.debug() = ScreenDebug;
   const factory ScreenState.carplay() = ScreenCarPlay;
   const factory ScreenState.shuttingDown() = ScreenShuttingDown;
+  const factory ScreenState.about() = ScreenAbout;
 }
