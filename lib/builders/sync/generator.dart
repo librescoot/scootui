@@ -66,7 +66,7 @@ class StateGenerator extends GeneratorForAnnotation<StateClass> {
           setFields.add(setFieldFromObject(child.name, child.type, ann));
         }
 
-        for (final ann in _stateDiscriminatorChecker.annotationsOf(child)) {
+        for (final _ in _stateDiscriminatorChecker.annotationsOf(child)) {
           if (discriminator != null) {
             throw ArgumentError(
                 "There can only be one discriminator in a state class");

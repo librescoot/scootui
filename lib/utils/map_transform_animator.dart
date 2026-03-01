@@ -1,10 +1,9 @@
-import 'dart:math' show cos, sin, pi, Point;
+import 'dart:math' show cos, sin, Point;
 import 'dart:ui';
 
 import 'package:flutter/animation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map/src/map/controller/map_controller_impl.dart';
-import 'package:flutter_map/src/map/camera/camera.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Represents the complete transformation state of the map.

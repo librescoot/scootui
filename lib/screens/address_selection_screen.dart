@@ -10,8 +10,6 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../env_config.dart';
-import '../repositories/address_repository.dart';
-import '../repositories/mdb_repository.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/general/control_hints.dart';
 import '../widgets/location_dial/location_dial.dart';

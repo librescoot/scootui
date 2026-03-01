@@ -69,19 +69,6 @@ class RoundaboutIconPainter extends CustomPainter {
     _drawStubWithArrow(canvas, center, exitAngle, ringRadius, exitStubLength, stubWidth, activeColor);
   }
 
-  /// Convert bearing (degrees, 0=North) to canvas radians
-  /// Bearing 0°=North, 90°=East, 180°=South, 270°=West
-  /// Canvas: 0°=East/Right, 90°=South/Down, 180°=West/Left, 270°=North/Up
-  double _bearingToRadians(double bearingDegrees) {
-    // Convert bearing to canvas coordinates:
-    // Bearing 0° (North) -> Canvas -90° (270°)
-    // Bearing 90° (East) -> Canvas 0°
-    // Bearing 180° (South) -> Canvas 90°
-    // Bearing 270° (West) -> Canvas 180°
-    final canvasDegrees = bearingDegrees - 90;
-    return canvasDegrees * math.pi / 180;
-  }
-
   /// Calculate exit angle and sweep angle based on exit number
   /// In right-hand traffic, you keep right going clockwise around the roundabout
   /// But in canvas coords, this means going COUNTER-clockwise (negative sweep)

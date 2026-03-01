@@ -80,7 +80,7 @@ class AddressDatabase {
       addresses = addressList.whereType<LatLng>().toList();
     } else if (addressesJson is List) {
       // New format v2: array of [lat, lon]
-      addresses = (addressesJson as List<dynamic>).map((coords) {
+      addresses = addressesJson.map((coords) {
         final c = coords as List<dynamic>;
         return LatLng(c[0] as double, c[1] as double);
       }).toList();
@@ -200,17 +200,6 @@ class AddressRepository {
     await file.parent.create(recursive: true);
     await file.writeAsString(jsonEncode(database.toJson()));
   }
-}
-
-String _toBase32(int number) {
-  const chars = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  if (number == 0) return '0';
-  var result = '';
-  while (number > 0) {
-    result = chars[number % 32] + result;
-    number = number ~/ 32;
-  }
-  return result;
 }
 
 Future<Addresses> _processTiles(tiles.TilesRepository tilesRepository) async {

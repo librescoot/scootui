@@ -236,22 +236,6 @@ class SettingsService {
     }
   }
 
-  /// Saves the current settings to the config file
-  Future<void> _saveToFile() async {
-    if (_configFilePath == null || _configFilePath!.isEmpty || kIsWeb) {
-      debugPrint('🔧 SettingsService: Skipping file save for web platform or null path');
-      return;
-    }
-
-    try {
-      debugPrint('🔧 SettingsService: Saving settings to file: $_settings');
-      final file = File(_configFilePath!);
-      await file.writeAsString(jsonEncode(_settings));
-    } catch (e) {
-      debugPrint('🔧 SettingsService: Error saving settings to file: $e');
-    }
-  }
-
   /// Gets a theme setting with fallback to default
   ThemeMode getThemeSetting() {
     final value = _settings[AppConfig.themeSettingKey];
