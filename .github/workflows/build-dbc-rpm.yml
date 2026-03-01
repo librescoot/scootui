@@ -66,42 +66,41 @@ jobs:
       - name: Patch entrypoint.sh to apply scootui overrides after local.conf is written
         working-directory: librescoot
         run: |
-          # Problem: entrypoint.sh's clone_layer resets meta-librescoot (wiping recipe patches),
-          # and entrypoint.sh overwrites local.conf AFTER appending SRCREV overrides (wiping them).
-          # Fix: inject our override block just before "Starting build process..." so it runs
-          # after the local.conf overwrite. build.sh will detect dirty git and rebuild the Docker
-          # image (fast — only the entrypoint.sh COPY layer is invalidated).
+          # entrypoint.sh's clone_layer resets meta-librescoot (wiping any recipe file patches),
+          # and overwrites local.conf AFTER its SRCREV-append loop (so those appends are lost too).
+          # Fix: inject an override block just before "Starting build process..." so our
+          # SCOOTUI_SRCREV/BRANCH/VERSION_UPDATE appends happen after the local.conf overwrite.
+          # build.sh detects a dirty git tree and rebuilds the Docker image (fast: only the
+          # COPY layer for entrypoint.sh is invalidated; apt layers are cached).
           python3 << 'PYEOF'
           with open('docker/entrypoint.sh', 'r') as f:
               content = f.read()
-
-          inject = """
-# Apply scootui overrides after local.conf is overwritten by target config.
-# SCOOTUI_BRANCH overrides the recipe's SCOOTUI_BRANCH ??= "main".
-# SCOOTUI_SRCREV overrides the recipe's SCOOTUI_SRCREV ??= "${AUTOREV}".
-# SRCREV = "${SCOOTUI_SRCREV}" in the recipe then uses our pinned commit.
-if [ -n "$SCOOTUI_SRCREV" ]; then
-    echo "SCOOTUI_SRCREV = \\"${SCOOTUI_SRCREV}\\"" >> /yocto/build/conf/local.conf
-fi
-if [ -n "$SCOOTUI_BRANCH" ]; then
-    echo "SCOOTUI_BRANCH = \\"${SCOOTUI_BRANCH}\\"" >> /yocto/build/conf/local.conf
-fi
-if [ -n "$SCOOTUI_VERSION_UPDATE" ]; then
-    echo "PV:pn-scootui = \\"${SCOOTUI_VERSION_UPDATE}\\"" >> /yocto/build/conf/local.conf
-fi
-
-"""
+          lines = [
+              '# Apply scootui overrides after local.conf is overwritten by target config.',
+              '# SCOOTUI_BRANCH overrides SCOOTUI_BRANCH ??= "main" in the recipe.',
+              '# SCOOTUI_SRCREV overrides SCOOTUI_SRCREV ??= "${AUTOREV}" in the recipe.',
+              '# SRCREV = "${SCOOTUI_SRCREV}" in the recipe then pins the fetched commit.',
+              'if [ -n "$SCOOTUI_SRCREV" ]; then',
+              '    echo "SCOOTUI_SRCREV = \\"${SCOOTUI_SRCREV}\\"" >> /yocto/build/conf/local.conf',
+              'fi',
+              'if [ -n "$SCOOTUI_BRANCH" ]; then',
+              '    echo "SCOOTUI_BRANCH = \\"${SCOOTUI_BRANCH}\\"" >> /yocto/build/conf/local.conf',
+              'fi',
+              'if [ -n "$SCOOTUI_VERSION_UPDATE" ]; then',
+              '    echo "PV:pn-scootui = \\"${SCOOTUI_VERSION_UPDATE}\\"" >> /yocto/build/conf/local.conf',
+              'fi',
+              '',
+          ]
+          inject = '\n'.join(lines) + '\n'
           marker = 'echo "Starting build process..."'
-          assert marker in content
+          assert marker in content, 'Marker not found in entrypoint.sh'
           content = content.replace(marker, inject + marker, 1)
-
           with open('docker/entrypoint.sh', 'w') as f:
               f.write(content)
-          print("Patched docker/entrypoint.sh")
+          print('Patched docker/entrypoint.sh successfully')
           PYEOF
-
           echo "=== DEBUG: injected block ==="
-          grep -A20 "Apply scootui overrides" docker/entrypoint.sh
+          grep -A15 "Apply scootui overrides" docker/entrypoint.sh || echo "NOT FOUND"
 
       - name: Build scootui package for DBC
         working-directory: librescoot
