@@ -63,28 +63,44 @@ jobs:
           echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
           echo "Detected scootui branch: $SCOOTUI_BRANCH"
 
-      - name: Patch scootui recipe to use local branch checkout
+      - name: Patch entrypoint.sh to apply scootui overrides after local.conf is written
         working-directory: librescoot
         run: |
-          RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
-
-          # Use sudo to modify the recipe file if needed
-          if [ -f "$RECIPE_FILE" ]; then
-            sudo sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
-          else
-            echo "WARNING: Recipe file not found at $RECIPE_FILE, will be created during build"
-          fi
-
-          echo "=== DEBUG: Patched scootui recipe ==="
-          cat "$RECIPE_FILE" 2>/dev/null || echo "Recipe not yet available"
-
-          # Copy the scootui checkout to where Yocto can access it
-          sudo mkdir -p yocto/scootui
-          sudo cp -r ../scootui/* yocto/scootui/
-          sudo chown -R 999:999 yocto/scootui
-
-          echo "=== DEBUG: Scootui source copied to yocto/scootui ==="
-          ls -la yocto/scootui/ | head -20
+          # entrypoint.sh's clone_layer resets meta-librescoot (wiping any recipe file patches),
+          # and overwrites local.conf AFTER its SRCREV-append loop (so those appends are lost too).
+          # Fix: inject an override block just before "Starting build process..." so our
+          # SCOOTUI_SRCREV/BRANCH/VERSION_UPDATE appends happen after the local.conf overwrite.
+          # build.sh detects a dirty git tree and rebuilds the Docker image (fast: only the
+          # COPY layer for entrypoint.sh is invalidated; apt layers are cached).
+          python3 << 'PYEOF'
+          with open('docker/entrypoint.sh', 'r') as f:
+              content = f.read()
+          lines = [
+              '# Apply scootui overrides after local.conf is overwritten by target config.',
+              '# SCOOTUI_BRANCH overrides SCOOTUI_BRANCH ??= "main" in the recipe.',
+              '# SCOOTUI_SRCREV overrides SCOOTUI_SRCREV ??= "${AUTOREV}" in the recipe.',
+              '# SRCREV = "${SCOOTUI_SRCREV}" in the recipe then pins the fetched commit.',
+              'if [ -n "$SCOOTUI_SRCREV" ]; then',
+              '    echo "SCOOTUI_SRCREV = \\"${SCOOTUI_SRCREV}\\"" >> /yocto/build/conf/local.conf',
+              'fi',
+              'if [ -n "$SCOOTUI_BRANCH" ]; then',
+              '    echo "SCOOTUI_BRANCH = \\"${SCOOTUI_BRANCH}\\"" >> /yocto/build/conf/local.conf',
+              'fi',
+              'if [ -n "$SCOOTUI_VERSION_UPDATE" ]; then',
+              '    echo "PV:pn-scootui = \\"${SCOOTUI_VERSION_UPDATE}\\"" >> /yocto/build/conf/local.conf',
+              'fi',
+              '',
+          ]
+          inject = '\n'.join(lines) + '\n'
+          marker = 'echo "Starting build process..."'
+          assert marker in content, 'Marker not found in entrypoint.sh'
+          content = content.replace(marker, inject + marker, 1)
+          with open('docker/entrypoint.sh', 'w') as f:
+              f.write(content)
+          print('Patched docker/entrypoint.sh successfully')
+          PYEOF
+          echo "=== DEBUG: injected block ==="
+          grep -A15 "Apply scootui overrides" docker/entrypoint.sh || echo "NOT FOUND"
 
       - name: Build scootui package for DBC
         working-directory: librescoot
@@ -94,22 +110,16 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
 
-          echo "=== DEBUG: Environment variables to be passed ==="
-          echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
-          echo "SCOOTUI_VERSION_UPDATE=0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}"
-          echo "SCOOTUI_SRCREV=${{ steps.scootui-ref.outputs.commit }}"
-          echo "SCOOTUI_BRANCH=${{ steps.scootui-ref.outputs.branch }}"
-
-          echo "=== DEBUG: Modified build.sh content ==="
-          grep "docker run" build.sh
-
           # Clean up any existing container from previous runs
           sudo docker rm -f yocto-build 2>/dev/null || true
 
-          # Build only the scootui package for DBC target with version update and branch
+          # build.sh already passes SCOOTUI_SRCREV and SCOOTUI_BRANCH as -e flags to Docker.
+          # Our patched entrypoint.sh will write them to local.conf after the target overwrite.
           BUILD_CHANNEL="nightly" \
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
+          SCOOTUI_SRCREV="${{ steps.scootui-ref.outputs.commit }}" \
+          SCOOTUI_BRANCH="${{ steps.scootui-ref.outputs.branch }}" \
           PACKAGE="scootui" \
           ./build.sh dbc
 

@@ -14,16 +14,18 @@ part 'screen_state.dart';
 class ScreenCubit extends Cubit<ScreenState> {
   final SettingsService _settingsService;
   final VehicleSync _vehicleSync;
-  late StreamSubscription _settingsSubscription; // Add subscription
+  late StreamSubscription _settingsSubscription;
   late StreamSubscription _vehicleSubscription;
+  ScreenState? _screenBeforeAbout;
 
 
   ScreenCubit(this._settingsService, this._vehicleSync)
       : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
     _settingsSubscription = _settingsService.settingsStream.listen((settings) {
-      final screenMode = _settingsService.getScreenSetting(); // Get updated screen mode
-      emit(_getInitialState(screenMode)); // Emit new state based on updated mode
+      if (state is ScreenAbout) return;
+      final screenMode = _settingsService.getScreenSetting();
+      emit(_getInitialState(screenMode));
     });
 
     // Subscribe to vehicle state updates
@@ -76,6 +78,16 @@ class ScreenCubit extends Cubit<ScreenState> {
     // Directly emit the CarPlay state without persisting
     emit(const ScreenState.carplay());
     // CarPlay mode should not be persisted - app should return to normal mode on restart
+  }
+
+  void showAbout() {
+    _screenBeforeAbout = state;
+    emit(const ScreenState.about());
+  }
+
+  void closeAbout() {
+    emit(_screenBeforeAbout ?? const ScreenState.cluster());
+    _screenBeforeAbout = null;
   }
 
   void _persistScreenMode(String mode) {

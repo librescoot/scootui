@@ -479,6 +479,16 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
+      // About & Licenses
+      MenuNode.action(
+        id: 'about',
+        title: 'About & Licenses',
+        onAction: (context) {
+          context.read<MenuCubit>().hideMenu();
+          context.read<ScreenCubit>().showAbout();
+        },
+      ),
+
       // Exit Menu
       MenuNode.action(
         id: 'exit',

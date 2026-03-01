@@ -26,10 +26,21 @@ class ControlGestureDetector extends StatefulWidget {
   final Duration doubleTapDelay;
   final Duration holdDelay;
 
+  /// Seed the previous-state tracking with the actual current vehicle data so
+  /// that a brake already held when this widget is created is not treated as a
+  /// new press once the cooldown expires.
+  final VehicleData? initialData;
+
+  /// When true, all input is ignored until both brakes have been seen in the
+  /// released state. Use this when the screen is opened by a brake press so
+  /// that same press does not immediately trigger an action.
+  final bool requireInitialRelease;
+
   const ControlGestureDetector({
     super.key,
     required this.stream,
     required this.child,
+    this.initialData,
     this.onLeftPress,
     this.onLeftRelease,
     this.onLeftTap,
@@ -43,6 +54,7 @@ class ControlGestureDetector extends StatefulWidget {
     this.doubleTapDelay = const Duration(milliseconds: 300),
     this.holdDelay = const Duration(milliseconds: 500),
     this.cooldown = const Duration(milliseconds: 100),
+    this.requireInitialRelease = false,
   });
 
   @override
@@ -52,11 +64,9 @@ class ControlGestureDetector extends StatefulWidget {
 class _ControlGestureDetectorState extends State<ControlGestureDetector> {
   late final StreamSubscription<VehicleData> _sub;
   late final DateTime _activationTime;
+  late bool _armed;
 
-  final Map<ControlKey, Toggle> _prev = {
-    ControlKey.left: Toggle.off,
-    ControlKey.right: Toggle.off,
-  };
+  late final Map<ControlKey, Toggle> _prev;
 
   final Map<ControlKey, DateTime?> _pressStart = {
     ControlKey.left: null,
@@ -76,6 +86,11 @@ class _ControlGestureDetectorState extends State<ControlGestureDetector> {
     _activationTime = widget.cooldown != null
         ? DateTime.now().add(widget.cooldown!)
         : DateTime.now();
+    _armed = !widget.requireInitialRelease;
+    _prev = {
+      ControlKey.left: widget.initialData?.brakeLeft ?? Toggle.off,
+      ControlKey.right: widget.initialData?.brakeRight ?? Toggle.off,
+    };
     _sub = widget.stream.listen(_handleUpdate);
   }
 
@@ -85,6 +100,16 @@ class _ControlGestureDetectorState extends State<ControlGestureDetector> {
 
     // ignore controls if the cooldown period has not elapsed
     if (DateTime.now().isBefore(_activationTime)) return;
+
+    // if waiting for initial release, keep _prev in sync and wait
+    if (!_armed) {
+      if (data.brakeLeft == Toggle.off && data.brakeRight == Toggle.off) {
+        _armed = true;
+      }
+      _prev[ControlKey.left] = data.brakeLeft;
+      _prev[ControlKey.right] = data.brakeRight;
+      return;
+    }
 
     _handleKey(
       key: ControlKey.left,
