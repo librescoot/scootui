@@ -63,28 +63,21 @@ jobs:
           echo "branch=$SCOOTUI_BRANCH" >> $GITHUB_OUTPUT
           echo "Detected scootui branch: $SCOOTUI_BRANCH"
 
-      - name: Patch scootui recipe to use local branch checkout
+      - name: Patch scootui recipe branch and SRCREV
         working-directory: librescoot
         run: |
           RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
 
-          # Use sudo to modify the recipe file if needed
           if [ -f "$RECIPE_FILE" ]; then
-            sudo sed -i 's|SRC_URI = "git://github.com/librescoot/scootui.git;lfs=0;branch=main;protocol=https;destsuffix=git"|SRC_URI = "file://../../../scootui"|' "$RECIPE_FILE"
+            # Fix the branch to our actual branch and add nobranch=1 so Yocto
+            # doesn't reject the commit for not being reachable from main.
+            # SRCREV is set via SRCREV_scootui env var (picked up by entrypoint.sh).
+            sudo sed -i 's|branch=${SCOOTUI_BRANCH}|branch=${{ steps.scootui-ref.outputs.branch }};nobranch=1|' "$RECIPE_FILE"
+            echo "=== DEBUG: Patched scootui recipe ==="
+            grep "SRC_URI\|SRCREV\|SCOOTUI_BRANCH" "$RECIPE_FILE"
           else
             echo "WARNING: Recipe file not found at $RECIPE_FILE, will be created during build"
           fi
-
-          echo "=== DEBUG: Patched scootui recipe ==="
-          cat "$RECIPE_FILE" 2>/dev/null || echo "Recipe not yet available"
-
-          # Copy the scootui checkout to where Yocto can access it
-          sudo mkdir -p yocto/scootui
-          sudo cp -r ../scootui/* yocto/scootui/
-          sudo chown -R 999:999 yocto/scootui
-
-          echo "=== DEBUG: Scootui source copied to yocto/scootui ==="
-          ls -la yocto/scootui/ | head -20
 
       - name: Build scootui package for DBC
         working-directory: librescoot
@@ -94,22 +87,18 @@ jobs:
           sed -i 's/docker run -it/docker run -i/' interactive.sh
           sed -i 's/docker run -i/docker run -i -e EULA=1/' build.sh
 
-          echo "=== DEBUG: Environment variables to be passed ==="
-          echo "LIBRESCOOT_VERSION=${{ needs.generate-timestamp.outputs.timestamp }}"
-          echo "SCOOTUI_VERSION_UPDATE=0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}"
-          echo "SCOOTUI_SRCREV=${{ steps.scootui-ref.outputs.commit }}"
-          echo "SCOOTUI_BRANCH=${{ steps.scootui-ref.outputs.branch }}"
-
           echo "=== DEBUG: Modified build.sh content ==="
           grep "docker run" build.sh
 
           # Clean up any existing container from previous runs
           sudo docker rm -f yocto-build 2>/dev/null || true
 
-          # Build only the scootui package for DBC target with version update and branch
+          # SRCREV_scootui is picked up by entrypoint.sh and written to local.conf
+          # as SRCREV:pn-scootui, pinning the build to this exact commit.
           BUILD_CHANNEL="nightly" \
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
+          SRCREV_scootui="${{ steps.scootui-ref.outputs.commit }}" \
           PACKAGE="scootui" \
           ./build.sh dbc
 
