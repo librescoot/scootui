@@ -6,7 +6,7 @@ import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../widgets/general/control_gestures_detector.dart';
 
-const _websiteUrl = 'https://librescoot.github.io';
+const _websiteUrl = 'https://librescoot.org';
 const _licenseId = 'CC BY-NC-SA 4.0';
 const _licenseUrl = 'https://creativecommons.org/licenses/by-nc-sa/4.0/';
 const _copyrightStart = 2025;
@@ -160,7 +160,7 @@ class _AboutScreenState extends State<AboutScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
 
                     Text(
                       'FOSS firmware for unu Scooter Pro e-mopeds',
@@ -172,43 +172,23 @@ class _AboutScreenState extends State<AboutScreen> {
                       textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 20),
-                    Divider(color: divider, indent: 40, endIndent: 40),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6),
 
-                    // Info rows
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Column(
-                        children: [
-                          _buildInfoRow(
-                            Icons.public,
-                            'Website',
-                            _websiteUrl,
-                            accent,
-                            fg,
-                            subtle,
-                          ),
-                          const SizedBox(height: 10),
-                          _buildInfoRow(
-                            Icons.balance,
-                            'License',
-                            '$_licenseId  ($_licenseUrl)',
-                            accent,
-                            fg,
-                            subtle,
-                          ),
-                          const SizedBox(height: 10),
-                          _buildInfoRow(
-                            Icons.copyright,
-                            'Copyright',
-                            '© $_copyrightYear LibreScoot contributors',
-                            accent,
-                            fg,
-                            subtle,
-                          ),
-                        ],
+                    Text(
+                      _websiteUrl,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: accent,
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      '$_licenseId  ©\u00a0$_copyrightYear LibreScoot contributors',
+                      style: TextStyle(fontSize: 12, color: subtle),
+                      textAlign: TextAlign.center,
                     ),
 
                     const SizedBox(height: 20),
@@ -346,31 +326,6 @@ class _AboutScreenState extends State<AboutScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value,
-      Color accent, Color fg, Color subtle) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: accent),
-        const SizedBox(width: 8),
-        Text(
-          '$label  ',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: subtle,
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(fontSize: 13, color: fg),
-          ),
-        ),
-      ],
     );
   }
 
