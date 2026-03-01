@@ -1,0 +1,388 @@
+{
+  "@@locale": "en",
+
+  "menuTitle": "MENU",
+  "menuToggleHazardLights": "Toggle Hazard Lights",
+  "menuSwitchToCluster": "Switch to Cluster View",
+  "menuSwitchToMap": "Switch to Map View",
+  "menuNavigation": "Navigation",
+  "menuNavigationHeader": "NAVIGATION",
+  "menuEnterDestinationCode": "Enter Destination Code",
+  "menuSavedLocations": "Saved Locations",
+  "menuSavedLocationsHeader": "SAVED LOCATIONS",
+  "menuSaveCurrentLocation": "Save Current Location",
+  "menuStartNavigation": "Start Navigation",
+  "menuDeleteLocation": "Delete Location",
+  "menuStopNavigation": "Stop Navigation",
+  "menuSettings": "Settings",
+  "menuSettingsHeader": "SETTINGS",
+  "menuTheme": "Theme",
+  "menuThemeHeader": "CHANGE THEME",
+  "menuThemeAutomatic": "Automatic",
+  "menuThemeDark": "Dark",
+  "menuThemeLight": "Light",
+  "menuLanguage": "Language",
+  "menuLanguageHeader": "LANGUAGE",
+  "menuStatusBar": "Status Bar",
+  "menuBatteryDisplay": "Battery Display",
+  "menuBatteryPercentage": "Percentage",
+  "menuBatteryRange": "Range (km)",
+  "menuGpsIcon": "GPS Icon",
+  "menuBluetoothIcon": "Bluetooth Icon",
+  "menuCloudIcon": "Cloud Icon",
+  "menuInternetIcon": "Internet Icon",
+  "menuClock": "Clock",
+  "menuAlways": "Always",
+  "menuActiveOrError": "Active or Error",
+  "menuErrorOnly": "Error Only",
+  "menuNever": "Never",
+  "menuMapAndNavigation": "Map & Navigation",
+  "menuRenderingMode": "Rendering Mode",
+  "menuVector": "Vector",
+  "menuRaster": "Raster",
+  "menuMapType": "Map Type",
+  "menuOnline": "Online",
+  "menuOffline": "Offline",
+  "menuSystem": "System",
+  "menuEnterUmsMode": "Enter UMS mode",
+  "menuResetTripStatistics": "Reset Trip Statistics",
+  "menuAboutAndLicenses": "About & Licenses",
+  "menuExitMenu": "Exit Menu",
+
+  "shutdownShuttingDown": "Shutting down...",
+  "shutdownComplete": "Shutdown complete.\nTap keycard to unlock.",
+  "shutdownSuspending": "Suspending...",
+  "shutdownHibernationImminent": "Hibernation imminent...",
+  "shutdownSuspensionImminent": "Suspension imminent...",
+  "shutdownProcessing": "Processing...",
+
+  "otaUpdateMessage": "{action} update{version}.\nYour scooter will turn off when done.\nYou can unlock it again at any point.",
+  "@otaUpdateMessage": {
+    "placeholders": {
+      "action": {"type": "String"},
+      "version": {"type": "String"}
+    }
+  },
+  "otaDownloading": "Downloading",
+  "otaInstalling": "Installing",
+  "otaInitializing": "Initializing update...",
+  "otaCheckingUpdates": "Checking for updates...",
+  "otaCheckFailed": "Update check failed.",
+  "otaDeviceUpdated": "Device updated.",
+  "otaWaitingDashboard": "Waiting for dashboard...",
+  "otaDownloadingUpdates": "Downloading updates...",
+  "otaDownloadFailed": "Download failed.",
+  "otaInstallingUpdates": "Installing updates...",
+  "otaInstallFailed": "Installation failed.",
+  "otaCompleteWaitingDashboardReboot": "Installation complete, waiting for dashboard reboot...",
+  "otaCompleteWaitingReboot": "Installation complete, waiting for reboot...",
+  "otaDownloadingVersionUpdate": "Downloading{versionText} update",
+  "@otaDownloadingVersionUpdate": {
+    "placeholders": {
+      "versionText": {"type": "String"}
+    }
+  },
+  "otaInstallingVersionUpdate": "Installing{versionText} update",
+  "@otaInstallingVersionUpdate": {
+    "placeholders": {
+      "versionText": {"type": "String"}
+    }
+  },
+  "otaWaitingForReboot": "Update installed. Waiting for reboot",
+  "otaUpdateFailedWithMessage": "Update failed: {errorMessage}",
+  "@otaUpdateFailedWithMessage": {
+    "placeholders": {
+      "errorMessage": {"type": "String"}
+    }
+  },
+  "otaUpdateVersionFailed": "Update{versionText} failed",
+  "@otaUpdateVersionFailed": {
+    "placeholders": {
+      "versionText": {"type": "String"}
+    }
+  },
+  "otaStatusWaitingForReboot": "Waiting for reboot",
+  "otaStatusDownloading": "Downloading",
+  "otaStatusInstalling": "Installing",
+  "otaLibrescootVersion": " Librescoot {version}",
+  "@otaLibrescootVersion": {
+    "placeholders": {
+      "version": {"type": "String"}
+    }
+  },
+  "otaUpdate": " update",
+  "otaInvalidRelease": "Invalid release",
+  "otaDownloadFailedShort": "Download failed",
+  "otaInstallFailedShort": "Install failed",
+  "otaRebootFailed": "Reboot failed",
+  "otaUpdateError": "Update error",
+
+  "umsPreparingStorage": "Preparing USB storage...",
+  "umsProcessingFiles": "Processing files...",
+  "umsStatus": "USB Mass Storage: {status}",
+  "@umsStatus": {
+    "placeholders": {
+      "status": {"type": "String"}
+    }
+  },
+  "umsTitle": "USB Mass Storage Mode",
+  "umsConnectToComputer": "Connect to a computer to transfer files.",
+
+  "hibernationTitle": "Manual Hibernation",
+  "hibernationTapKeycardToConfirm": "Tap keycard to confirm",
+  "hibernationKeepHoldingBrakes": "Keep holding brakes to force",
+  "hibernationHoldBrakesForSeconds": "Hold both brakes for {seconds}s to force",
+  "@hibernationHoldBrakesForSeconds": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "hibernationOrHoldBrakes": "Or hold both brakes for 15s to force",
+  "hibernationCancel": "CANCEL",
+  "hibernationKickstand": "Kickstand",
+  "hibernationConfirm": "CONFIRM",
+  "hibernationTapKeycard": "Tap Keycard",
+  "hibernationSeatboxOpen": "Seatbox Open",
+  "hibernationCloseSeatbox": "Close seatbox to hibernate",
+  "hibernationHibernating": "Hibernating...",
+
+  "navRecalculating": "Recalculating route...",
+  "navYouHaveArrived": "You have arrived!",
+  "navDistance": "Distance",
+  "navRemaining": "Remaining",
+  "navEta": "ETA",
+  "navThen": "Then {instruction}",
+  "@navThen": {
+    "placeholders": {
+      "instruction": {"type": "String"}
+    }
+  },
+  "navContinueFor": "Continue for {distanceKm} km",
+  "@navContinueFor": {
+    "placeholders": {
+      "distanceKm": {"type": "String"}
+    }
+  },
+  "navKeepDirection": "Keep {direction}",
+  "@navKeepDirection": {
+    "placeholders": {
+      "direction": {"type": "String"}
+    }
+  },
+  "navKeepDirectionOnto": "Keep {direction} on {street}",
+  "@navKeepDirectionOnto": {
+    "placeholders": {
+      "direction": {"type": "String"},
+      "street": {"type": "String"}
+    }
+  },
+  "navTurnDirection": "Turn {direction}",
+  "@navTurnDirection": {
+    "placeholders": {
+      "direction": {"type": "String"}
+    }
+  },
+  "navTurnDirectionOnto": "Turn {direction} onto {street}",
+  "@navTurnDirectionOnto": {
+    "placeholders": {
+      "direction": {"type": "String"},
+      "street": {"type": "String"}
+    }
+  },
+  "navTakeExit": "Take exit {exitNumber}",
+  "@navTakeExit": {
+    "placeholders": {
+      "exitNumber": {"type": "String"}
+    }
+  },
+  "navTakeExitOnto": "Take exit {exitNumber} onto {street}",
+  "@navTakeExitOnto": {
+    "placeholders": {
+      "exitNumber": {"type": "String"},
+      "street": {"type": "String"}
+    }
+  },
+  "navTakeSideExit": "Take the {side} exit",
+  "@navTakeSideExit": {
+    "placeholders": {
+      "side": {"type": "String"}
+    }
+  },
+  "navTakeSideExitTo": "Take the {side} exit to {street}",
+  "@navTakeSideExitTo": {
+    "placeholders": {
+      "side": {"type": "String"},
+      "street": {"type": "String"}
+    }
+  },
+  "navMergeDirection": "Merge {direction}",
+  "@navMergeDirection": {
+    "placeholders": {
+      "direction": {"type": "String"}
+    }
+  },
+  "navMergeDirectionOnto": "Merge {direction} onto {street}",
+  "@navMergeDirectionOnto": {
+    "placeholders": {
+      "direction": {"type": "String"},
+      "street": {"type": "String"}
+    }
+  },
+  "navContinueOnStreet": "Continue on {street}",
+  "@navContinueOnStreet": {
+    "placeholders": {
+      "street": {"type": "String"}
+    }
+  },
+  "navContinue": "Continue",
+  "navShortContinueStraight": "continue straight",
+  "navShortKeepDirection": "keep {direction}",
+  "@navShortKeepDirection": {
+    "placeholders": {
+      "direction": {"type": "String"}
+    }
+  },
+  "navShortTurnLeft": "turn left",
+  "navShortTurnRight": "turn right",
+  "navShortTurnSlightlyLeft": "turn slightly left",
+  "navShortTurnSlightlyRight": "turn slightly right",
+  "navShortTurnSharplyLeft": "turn sharply left",
+  "navShortTurnSharplyRight": "turn sharply right",
+  "navShortUturn": "make a U-turn",
+  "navShortUturnRight": "make a right U-turn",
+  "navShortMerge": "merge",
+  "navShortMergeLeft": "merge left",
+  "navShortMergeRight": "merge right",
+  "navShortContinue": "continue",
+  "navShortTakeSideExit": "take the {side} exit",
+  "@navShortTakeSideExit": {
+    "placeholders": {
+      "side": {"type": "String"}
+    }
+  },
+  "navShortTakeNumberedExit": "take the {exitNumber} exit",
+  "@navShortTakeNumberedExit": {
+    "placeholders": {
+      "exitNumber": {"type": "String"}
+    }
+  },
+  "navReturnToRoute": "Return to the route",
+  "navCurrentPositionNotAvailable": "Current position not available",
+  "navCouldNotCalculateRoute": "Could not calculate route",
+  "navDestinationUnreachable": "Destination is unreachable. Please select a different location.",
+  "navNewDestination": "New navigation destination received. Calculating route...",
+  "navWaitingForGps": "Waiting for GPS fix",
+  "navWaitingForGpsRoute": "Waiting for recent GPS fix to calculate route.",
+  "navResumingNavigation": "Resuming navigation.",
+  "navArrivedAtDestination": "You have arrived at your destination!",
+  "navOffRouteRerouting": "Off route. Attempting to reroute...",
+  "navCouldNotCalculateNewRoute": "Could not calculate new route",
+
+  "batteryKm": "km",
+  "batteryCbNotCharging": "CB Battery not charging",
+  "batteryAuxLowNotCharging": "AUX Battery low and not charging",
+  "batteryAuxVoltageLow": "AUX Battery voltage low",
+  "batteryAuxVoltageVeryLowReplace": "AUX Battery voltage very low - may need replacement",
+  "batteryAuxVoltageVeryLowCharge": "AUX Battery voltage very low - insert main battery to charge",
+  "batteryEmptyRecharge": "Battery empty. Recharge battery",
+  "batteryMaxSpeedReduced": "Max speed is reduced. Battery is below 5%",
+  "batteryLowPowerReduced": "Battery low. Power reduced. Please recharge battery",
+  "batteryLowPowerReducedShort": "Battery low. Power reduced. Recharge battery",
+  "batterySlot0": "Battery 0",
+  "batterySlot1": "Battery 1",
+
+  "speedKmh": "km/h",
+
+  "powerRegen": "REGEN",
+  "powerDischarge": "DISCHARGE",
+
+  "controlLeftBrake": "Left Brake",
+  "controlRightBrake": "Right Brake",
+
+  "odometerTrip": "TRIP",
+  "odometerTotal": "TOTAL",
+  "odometerAvgSpeed": "AVG SPEED",
+  "odometerAvgSpeedValue": "{speed} km/h",
+  "@odometerAvgSpeedValue": {
+    "placeholders": {
+      "speed": {"type": "String"}
+    }
+  },
+  "odometerTripTime": "TRIP TIME",
+
+  "addressEditAction": "Edit",
+  "addressScrollAction": "Scroll",
+  "addressConfirmAction": "Confirm",
+  "addressNextAction": "Next",
+  "addressCloseAction": "Close",
+  "addressScreenTitle": "Enter Destination Code",
+
+  "standbyWarning": "Vehicle will enter standby in",
+  "standbySeconds": "seconds",
+  "standbyCancel": "Press brake or move kickstand to cancel",
+
+  "bluetoothError": "Bluetooth: {errorMessage}",
+  "@bluetoothError": {
+    "placeholders": {
+      "errorMessage": {"type": "String"}
+    }
+  },
+  "bluetoothCommError": "Bluetooth service communication error",
+  "bluetoothPinInstruction": "Use this code to pair your device",
+
+  "lowTempMotor": "Motor",
+  "lowTempBattery": "Battery",
+  "lowTemp12vBattery": "12V Battery",
+  "lowTempWarning": "Low Temperatures - Ride Carefully",
+
+  "faultSignalWireBroken": "Signal wire broken",
+  "faultCriticalOverTemp": "Critical over-temperature",
+  "faultShortCircuit": "Short circuit",
+  "faultBmsNotFollowing": "BMS not following commands",
+  "faultBmsCommError": "BMS communication error",
+  "faultNfcReaderError": "NFC reader error",
+  "faultOverTempCharging": "Over-temperature while charging",
+  "faultUnderTempCharging": "Under-temperature while charging",
+  "faultOverTempDischarging": "Over-temperature while discharging",
+  "faultUnderTempDischarging": "Under-temperature while discharging",
+  "faultMosfetOverTemp": "MOSFET over-temperature",
+  "faultCellOverVoltage": "Cell over-voltage",
+  "faultCellUnderVoltage": "Cell under-voltage",
+  "faultOverCurrentCharging": "Over-current while charging",
+  "faultOverCurrentDischarging": "Over-current while discharging",
+  "faultPackOverVoltage": "Pack over-voltage",
+  "faultPackUnderVoltage": "Pack under-voltage",
+  "faultReserved": "Reserved",
+  "faultBmsZeroData": "BMS has zero data",
+  "faultUnknown": "Unknown fault",
+  "faultMultipleCritical": "Multiple Critical Issues",
+  "faultMultipleBattery": "Multiple Battery Issues",
+
+  "addressLoading": "Loading address database...",
+  "addressMapNotFound": "Map file not found.",
+  "addressRebuildingHash": "Rebuilding address database due to hash mismatch...",
+  "addressHashMismatch": "Map hash mismatch after rebuild.",
+  "addressCreatingDb": "Creating address database...",
+  "addressBuildFailed": "Failed to build address database.",
+  "savedLocationsFailed": "Failed to load saved locations",
+
+  "aboutNonCommercialTitle": "NON-COMMERCIAL SOFTWARE",
+  "aboutFossDescription": "FOSS firmware for unu Scooter Pro e-mopeds",
+  "aboutCommercialProhibited": "Commercial distribution, resale, or preinstallation on devices for sale is prohibited under {licenseId}.",
+  "@aboutCommercialProhibited": {
+    "placeholders": {
+      "licenseId": {"type": "String"}
+    }
+  },
+  "aboutScamWarning": "If you paid money for this software, you may have been the victim of a scam. Please report it at {websiteUrl}.",
+  "@aboutScamWarning": {
+    "placeholders": {
+      "websiteUrl": {"type": "String"}
+    }
+  },
+  "aboutOpenSourceComponents": "OPEN SOURCE COMPONENTS",
+  "aboutScrollAction": "Scroll",
+  "aboutBackAction": "Back",
+  "aboutBootThemeRestored": "Boot theme: LibreScoot restored.",
+  "aboutGenuineAdvantage": "Genuine Advantage activated."
+}

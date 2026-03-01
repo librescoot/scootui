@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/shutdown_cubit.dart';
+import '../../l10n/l10n.dart';
 
 class ShutdownContent extends StatelessWidget {
   final ShutdownStatus status;
 
   const ShutdownContent({super.key, required this.status});
 
-  String _getStatusText() {
+  String _getStatusText(BuildContext context) {
+    final l10n = context.l10n;
     switch (status) {
       case ShutdownStatus.shuttingDown:
-        return 'Shutting down...';
+        return l10n.shutdownShuttingDown;
       case ShutdownStatus.shutdownComplete:
-        return 'Shutdown complete.\nTap keycard to unlock.';
+        return l10n.shutdownComplete;
       case ShutdownStatus.suspending:
-        return 'Suspending...';
+        return l10n.shutdownSuspending;
       case ShutdownStatus.hibernatingImminent:
-        return 'Hibernation imminent...';
+        return l10n.shutdownHibernationImminent;
       case ShutdownStatus.suspendingImminent:
-        return 'Suspension imminent...';
+        return l10n.shutdownSuspensionImminent;
       case ShutdownStatus.backgroundProcessing:
-        return 'Processing...';
+        return l10n.shutdownProcessing;
       default:
         return '';
     }
@@ -32,7 +34,7 @@ class ShutdownContent extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final statusText = _getStatusText();
+    final statusText = _getStatusText(context);
 
     final showSpinner = status != ShutdownStatus.shutdownComplete;
 

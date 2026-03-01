@@ -120,6 +120,11 @@ class SettingsService {
         _settings[AppConfig.showRawSpeedKey] = showRawSpeed;
       }
 
+      final language = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.languageSettingKey);
+      if (language != null) {
+        _settings[AppConfig.languageSettingKey] = language;
+      }
+
       debugPrint('🔧 SettingsService: Loading valhalla-url from Redis');
       final valhallaUrl = await _mdbRepository.get(AppConfig.redisSettingsPersistentCluster, AppConfig.valhallaEndpointKey);
       debugPrint('🔧 SettingsService: Redis valhalla-url = $valhallaUrl');
@@ -458,6 +463,20 @@ class SettingsService {
     await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.mapTypeKey, value);
 
     // Emit updated settings
+    _settingsController.add(_settings);
+  }
+
+  /// Gets the language setting with fallback to English
+  String getLanguageSetting() {
+    final value = _settings[AppConfig.languageSettingKey] as String?;
+    return value ?? 'en';
+  }
+
+  /// Updates the language setting
+  Future<void> updateLanguageSetting(String languageCode) async {
+    _settings[AppConfig.languageSettingKey] = languageCode;
+    await _mdbRepository.set(
+        AppConfig.redisSettingsPersistentCluster, AppConfig.languageSettingKey, languageCode);
     _settingsController.add(_settings);
   }
 

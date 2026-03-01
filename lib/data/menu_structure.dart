@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../cubits/locale_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/saved_locations_cubit.dart';
@@ -8,6 +9,7 @@ import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../cubits/trip_cubit.dart';
 import '../globals/mdb_type.dart';
+import '../l10n/l10n.dart';
 import '../models/menu_node.dart';
 import '../repositories/mdb_repository.dart';
 import '../services/settings_service.dart';
@@ -15,16 +17,19 @@ import '../state/enums.dart';
 
 /// Builds the complete menu tree structure with current state
 MenuNode buildMenuTree(BuildContext context) {
+  final l10n = context.l10n;
   // Read current state for dynamic values
   final theme = context.read<ThemeCubit>();
   final themeState = theme.state;
   final settings = context.read<SettingsSync>().state;
   final savedLocations = context.read<SavedLocationsCubit>();
+  final localeCubit = context.read<LocaleCubit>();
+  final currentLang = localeCubit.state.languageCode;
 
   return MenuNode.submenu(
     id: 'root',
     title: 'Main Menu',
-    headerTitle: 'MENU',
+    headerTitle: l10n.menuTitle,
     children: [
       // CarPlay/Android Auto (conditional)
       MenuNode.action(
@@ -43,7 +48,7 @@ MenuNode buildMenuTree(BuildContext context) {
       // Toggle Hazard Lights (only show for stock UNU MDB)
        MenuNode.action(
          id: 'hazard_lights',
-         title: 'Toggle Hazard Lights',
+         title: l10n.menuToggleHazardLights,
          onAction: (context) {
            context.read<VehicleSync>().toggleHazardLights();
            context.read<MenuCubit>().hideMenu();
@@ -54,7 +59,7 @@ MenuNode buildMenuTree(BuildContext context) {
       // Switch to Cluster View (conditional - only show when on map)
       MenuNode.action(
         id: 'switch_cluster',
-        title: 'Switch to Cluster View',
+        title: l10n.menuSwitchToCluster,
         onAction: (context) {
           context.read<ScreenCubit>().showCluster();
           context.read<MenuCubit>().hideMenu();
@@ -68,7 +73,7 @@ MenuNode buildMenuTree(BuildContext context) {
       // Switch to Map View (conditional - only show when on cluster)
       MenuNode.action(
         id: 'switch_map',
-        title: 'Switch to Map View',
+        title: l10n.menuSwitchToMap,
         onAction: (context) {
           context.read<ScreenCubit>().showMap();
           context.read<MenuCubit>().hideMenu();
@@ -82,12 +87,12 @@ MenuNode buildMenuTree(BuildContext context) {
       // Navigation submenu
       MenuNode.submenu(
         id: 'navigation',
-        title: 'Navigation',
-        headerTitle: 'NAVIGATION',
+        title: l10n.menuNavigation,
+        headerTitle: l10n.menuNavigationHeader,
         children: [
           MenuNode.action(
             id: 'nav_enter_code',
-            title: 'Enter Destination Code',
+            title: l10n.menuEnterDestinationCode,
             onAction: (context) {
               context.read<ScreenCubit>().showAddressSelection();
               context.read<MenuCubit>().hideMenu();
@@ -95,13 +100,12 @@ MenuNode buildMenuTree(BuildContext context) {
           ),
           MenuNode.submenu(
             id: 'nav_saved_locations',
-            title: 'Saved Locations',
-            headerTitle: 'SAVED LOCATIONS',
+            title: l10n.menuSavedLocations,
+            headerTitle: l10n.menuSavedLocationsHeader,
             children: [
-              // Save Current Location
               MenuNode.action(
                 id: 'save_location',
-                title: 'Save Current Location',
+                title: l10n.menuSaveCurrentLocation,
                 onAction: (context) async {
                   final gps = context.read<GpsSync>().state;
                   final internet = context.read<InternetSync>().state;
@@ -109,14 +113,13 @@ MenuNode buildMenuTree(BuildContext context) {
                   context.read<MenuCubit>().hideMenu();
                 },
               ),
-              // Dynamic saved locations
               ...savedLocations.currentLocations.map((location) => MenuNode.submenu(
                 id: 'location_${location.id}',
                 title: location.label,
                 children: [
                   MenuNode.action(
                     id: 'start_nav_${location.id}',
-                    title: 'Start Navigation',
+                    title: l10n.menuStartNavigation,
                     onAction: (context) async {
                       await context.read<NavigationSync>().setDestination(
                         location.latitude,
@@ -128,7 +131,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.action(
                     id: 'delete_${location.id}',
-                    title: 'Delete Location',
+                    title: l10n.menuDeleteLocation,
                     onAction: (context) async {
                       await context.read<SavedLocationsCubit>().deleteLocation(location.id);
                     },
@@ -139,7 +142,7 @@ MenuNode buildMenuTree(BuildContext context) {
           ),
           MenuNode.action(
             id: 'nav_stop',
-            title: 'Stop Navigation',
+            title: l10n.menuStopNavigation,
             onAction: (context) async {
               await context.read<NavigationSync>().clearDestination();
               context.read<MenuCubit>().hideMenu();
@@ -151,18 +154,18 @@ MenuNode buildMenuTree(BuildContext context) {
       // Settings submenu
       MenuNode.submenu(
         id: 'settings',
-        title: 'Settings',
-        headerTitle: 'SETTINGS',
+        title: l10n.menuSettings,
+        headerTitle: l10n.menuSettingsHeader,
         children: [
           // Theme submenu
           MenuNode.submenu(
             id: 'settings_theme',
-            title: 'Theme',
-            headerTitle: 'CHANGE THEME',
+            title: l10n.menuTheme,
+            headerTitle: l10n.menuThemeHeader,
             children: [
               MenuNode.setting(
                 id: 'theme_auto',
-                title: 'Automatic',
+                title: l10n.menuThemeAutomatic,
                 currentValue: themeState.isAutoMode ? 1 : 0,
                 onAction: (context) {
                   context.read<ThemeCubit>().updateAutoTheme(true);
@@ -170,7 +173,7 @@ MenuNode buildMenuTree(BuildContext context) {
               ),
               MenuNode.setting(
                 id: 'theme_dark',
-                title: 'Dark',
+                title: l10n.menuThemeDark,
                 currentValue: (!themeState.isAutoMode && themeState.isDark) ? 1 : 0,
                 onAction: (context) {
                   context.read<ThemeCubit>().updateTheme(ThemeMode.dark);
@@ -178,7 +181,7 @@ MenuNode buildMenuTree(BuildContext context) {
               ),
               MenuNode.setting(
                 id: 'theme_light',
-                title: 'Light',
+                title: l10n.menuThemeLight,
                 currentValue: (!themeState.isAutoMode && !themeState.isDark) ? 1 : 0,
                 onAction: (context) {
                   context.read<ThemeCubit>().updateTheme(ThemeMode.light);
@@ -187,19 +190,43 @@ MenuNode buildMenuTree(BuildContext context) {
             ],
           ),
 
+          // Language submenu (language names stay untranslated)
+          MenuNode.submenu(
+            id: 'settings_language',
+            title: l10n.menuLanguage,
+            headerTitle: l10n.menuLanguageHeader,
+            children: [
+              MenuNode.setting(
+                id: 'lang_en',
+                title: 'English',
+                currentValue: currentLang == 'en' ? 1 : 0,
+                onAction: (context) {
+                  context.read<LocaleCubit>().setLocale('en');
+                },
+              ),
+              MenuNode.setting(
+                id: 'lang_de',
+                title: 'Deutsch',
+                currentValue: currentLang == 'de' ? 1 : 0,
+                onAction: (context) {
+                  context.read<LocaleCubit>().setLocale('de');
+                },
+              ),
+            ],
+          ),
+
           // Status Bar submenu
           MenuNode.submenu(
             id: 'settings_status_bar',
-            title: 'Status Bar',
+            title: l10n.menuStatusBar,
             children: [
-              // Battery Display
               MenuNode.submenu(
                 id: 'status_battery',
-                title: 'Battery Display',
+                title: l10n.menuBatteryDisplay,
                 children: [
                   MenuNode.setting(
                     id: 'battery_percentage',
-                    title: 'Percentage',
+                    title: l10n.menuBatteryPercentage,
                     currentValue: (settings.batteryDisplayMode ?? 'percentage') == 'percentage' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>()
@@ -208,7 +235,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'battery_range',
-                    title: 'Range (km)',
+                    title: l10n.menuBatteryRange,
                     currentValue: (settings.batteryDisplayMode ?? 'percentage') == 'range' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>()
@@ -217,14 +244,13 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                 ],
               ),
-              // GPS Icon
               MenuNode.submenu(
                 id: 'status_gps',
-                title: 'GPS Icon',
+                title: l10n.menuGpsIcon,
                 children: [
                   MenuNode.setting(
                     id: 'gps_always',
-                    title: 'Always',
+                    title: l10n.menuAlways,
                     currentValue: (settings.showGps ?? 'error') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowGpsSetting('always');
@@ -232,7 +258,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'gps_active_or_error',
-                    title: 'Active or Error',
+                    title: l10n.menuActiveOrError,
                     currentValue: (settings.showGps ?? 'error') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowGpsSetting('active-or-error');
@@ -240,7 +266,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'gps_error',
-                    title: 'Error Only',
+                    title: l10n.menuErrorOnly,
                     currentValue: (settings.showGps ?? 'error') == 'error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowGpsSetting('error');
@@ -248,7 +274,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'gps_never',
-                    title: 'Never',
+                    title: l10n.menuNever,
                     currentValue: (settings.showGps ?? 'error') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowGpsSetting('never');
@@ -256,14 +282,13 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                 ],
               ),
-              // Bluetooth Icon
               MenuNode.submenu(
                 id: 'status_bluetooth',
-                title: 'Bluetooth Icon',
+                title: l10n.menuBluetoothIcon,
                 children: [
                   MenuNode.setting(
                     id: 'bt_always',
-                    title: 'Always',
+                    title: l10n.menuAlways,
                     currentValue: (settings.showBluetooth ?? 'active-or-error') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowBluetoothSetting('always');
@@ -271,7 +296,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'bt_active_or_error',
-                    title: 'Active or Error',
+                    title: l10n.menuActiveOrError,
                     currentValue: (settings.showBluetooth ?? 'active-or-error') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowBluetoothSetting('active-or-error');
@@ -279,7 +304,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'bt_error',
-                    title: 'Error Only',
+                    title: l10n.menuErrorOnly,
                     currentValue: (settings.showBluetooth ?? 'active-or-error') == 'error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowBluetoothSetting('error');
@@ -287,7 +312,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'bt_never',
-                    title: 'Never',
+                    title: l10n.menuNever,
                     currentValue: (settings.showBluetooth ?? 'active-or-error') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowBluetoothSetting('never');
@@ -295,14 +320,13 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                 ],
               ),
-              // Cloud Icon
               MenuNode.submenu(
                 id: 'status_cloud',
-                title: 'Cloud Icon',
+                title: l10n.menuCloudIcon,
                 children: [
                   MenuNode.setting(
                     id: 'cloud_always',
-                    title: 'Always',
+                    title: l10n.menuAlways,
                     currentValue: (settings.showCloud ?? 'error') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowCloudSetting('always');
@@ -310,7 +334,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'cloud_active_or_error',
-                    title: 'Active or Error',
+                    title: l10n.menuActiveOrError,
                     currentValue: (settings.showCloud ?? 'error') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowCloudSetting('active-or-error');
@@ -318,7 +342,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'cloud_error',
-                    title: 'Error Only',
+                    title: l10n.menuErrorOnly,
                     currentValue: (settings.showCloud ?? 'error') == 'error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowCloudSetting('error');
@@ -326,7 +350,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'cloud_never',
-                    title: 'Never',
+                    title: l10n.menuNever,
                     currentValue: (settings.showCloud ?? 'error') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowCloudSetting('never');
@@ -334,14 +358,13 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                 ],
               ),
-              // Internet Icon
               MenuNode.submenu(
                 id: 'status_internet',
-                title: 'Internet Icon',
+                title: l10n.menuInternetIcon,
                 children: [
                   MenuNode.setting(
                     id: 'inet_always',
-                    title: 'Always',
+                    title: l10n.menuAlways,
                     currentValue: (settings.showInternet ?? 'always') == 'always' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowInternetSetting('always');
@@ -349,7 +372,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'inet_active_or_error',
-                    title: 'Active or Error',
+                    title: l10n.menuActiveOrError,
                     currentValue: (settings.showInternet ?? 'always') == 'active-or-error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowInternetSetting('active-or-error');
@@ -357,7 +380,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'inet_error',
-                    title: 'Error Only',
+                    title: l10n.menuErrorOnly,
                     currentValue: (settings.showInternet ?? 'always') == 'error' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowInternetSetting('error');
@@ -365,7 +388,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'inet_never',
-                    title: 'Never',
+                    title: l10n.menuNever,
                     currentValue: (settings.showInternet ?? 'always') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowInternetSetting('never');
@@ -373,14 +396,13 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                 ],
               ),
-              // Clock
               MenuNode.submenu(
                 id: 'status_clock',
-                title: 'Clock',
+                title: l10n.menuClock,
                 children: [
                   MenuNode.setting(
                     id: 'clock_always',
-                    title: 'Always',
+                    title: l10n.menuAlways,
                     currentValue: (settings.showClock ?? 'always') != 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowClockSetting('always');
@@ -388,7 +410,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'clock_never',
-                    title: 'Never',
+                    title: l10n.menuNever,
                     currentValue: (settings.showClock ?? 'always') == 'never' ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateShowClockSetting('never');
@@ -402,15 +424,15 @@ MenuNode buildMenuTree(BuildContext context) {
           // Map & Navigation submenu
           MenuNode.submenu(
             id: 'settings_map',
-            title: 'Map & Navigation',
+            title: l10n.menuMapAndNavigation,
             children: [
               MenuNode.submenu(
                 id: 'map_render_mode',
-                title: 'Rendering Mode',
+                title: l10n.menuRenderingMode,
                 children: [
                   MenuNode.setting(
                     id: 'render_vector',
-                    title: 'Vector',
+                    title: l10n.menuVector,
                     currentValue: settings.mapRenderMode == MapRenderMode.vector ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateMapRenderModeSetting('vector');
@@ -418,7 +440,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'render_raster',
-                    title: 'Raster',
+                    title: l10n.menuRaster,
                     currentValue: settings.mapRenderMode == MapRenderMode.raster ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateMapRenderModeSetting('raster');
@@ -428,11 +450,11 @@ MenuNode buildMenuTree(BuildContext context) {
               ),
               MenuNode.submenu(
                 id: 'map_type',
-                title: 'Map Type',
+                title: l10n.menuMapType,
                 children: [
                   MenuNode.setting(
                     id: 'map_online',
-                    title: 'Online',
+                    title: l10n.menuOnline,
                     currentValue: settings.mapType == MapType.online ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateMapTypeSetting('online');
@@ -440,7 +462,7 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                   MenuNode.setting(
                     id: 'map_offline',
-                    title: 'Offline',
+                    title: l10n.menuOffline,
                     currentValue: settings.mapType == MapType.offline ? 1 : 0,
                     onAction: (context) async {
                       await context.read<SettingsService>().updateMapTypeSetting('offline');
@@ -454,11 +476,11 @@ MenuNode buildMenuTree(BuildContext context) {
            // System submenu
            MenuNode.submenu(
              id: 'settings_system',
-             title: 'System',
+             title: l10n.menuSystem,
              children: [
                MenuNode.action(
                  id: 'enter_ums_mode',
-                 title: 'Enter UMS mode',
+                 title: l10n.menuEnterUmsMode,
                  onAction: (context) async {
                    await context.read<MDBRepository>().set('usb', 'mode', 'ums-by-dbc');
                    context.read<MenuCubit>().hideMenu();
@@ -472,7 +494,7 @@ MenuNode buildMenuTree(BuildContext context) {
        // Reset Trip Statistics
       MenuNode.action(
         id: 'reset_trip',
-        title: 'Reset Trip Statistics',
+        title: l10n.menuResetTripStatistics,
         onAction: (context) {
           context.read<TripCubit>().reset();
           context.read<MenuCubit>().hideMenu();
@@ -482,7 +504,7 @@ MenuNode buildMenuTree(BuildContext context) {
       // About & Licenses
       MenuNode.action(
         id: 'about',
-        title: 'About & Licenses',
+        title: l10n.menuAboutAndLicenses,
         onAction: (context) {
           context.read<MenuCubit>().hideMenu();
           context.read<ScreenCubit>().showAbout();
@@ -492,7 +514,7 @@ MenuNode buildMenuTree(BuildContext context) {
       // Exit Menu
       MenuNode.action(
         id: 'exit',
-        title: 'Exit Menu',
+        title: l10n.menuExitMenu,
         onAction: (context) {
           context.read<MenuCubit>().hideMenu();
         },

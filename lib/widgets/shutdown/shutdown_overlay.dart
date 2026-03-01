@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/l10n.dart';
 import '../../cubits/shutdown_cubit.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../state/vehicle.dart';
@@ -64,8 +65,9 @@ class ShutdownOverlay extends StatelessWidget {
 
     // Full message for locked scooter
     if (isLocked) {
+      final l10n = context.l10n;
       final actionText =
-          dbcStatus == 'downloading' ? 'Downloading' : 'Installing';
+          dbcStatus == 'downloading' ? l10n.otaDownloading : l10n.otaInstalling;
       final versionText = updateVersion.isNotEmpty ? ' $updateVersion' : '';
 
       return Container(
@@ -90,7 +92,7 @@ class ShutdownOverlay extends StatelessWidget {
                 const SizedBox(height: 10),
                 // Text
                 Text(
-                  '$actionText update$versionText.\nYour scooter will turn off when done.\nYou can unlock it again at any point.',
+                  l10n.otaUpdateMessage(action: actionText, version: versionText),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -115,8 +117,9 @@ class ShutdownOverlay extends StatelessWidget {
       ShutdownStatus shutdownStatus) {
     final dbcStatus = otaData.dbcStatus;
     final updateVersion = otaData.dbcUpdateVersion;
+    final l10n = context.l10n;
     final actionText =
-        dbcStatus == 'downloading' ? 'Downloading' : 'Installing';
+        dbcStatus == 'downloading' ? l10n.otaDownloading : l10n.otaInstalling;
     final versionText = updateVersion.isNotEmpty ? ' $updateVersion' : '';
 
     // Use full black background when in stand-by, translucent when shutting down
@@ -146,7 +149,7 @@ class ShutdownOverlay extends StatelessWidget {
               const SizedBox(height: 10),
               // Text
               Text(
-                '$actionText update$versionText.\nYour scooter will turn off when done.\nYou can unlock it again at any point.',
+                l10n.otaUpdateMessage(action: actionText, version: versionText),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -171,10 +174,10 @@ class ShutdownOverlay extends StatelessWidget {
           color: Colors.black.withOpacity(0.7),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(
@@ -182,10 +185,10 @@ class ShutdownOverlay extends StatelessWidget {
                 strokeWidth: 2.0,
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
-              'Processing...',
-              style: TextStyle(
+              context.l10n.shutdownProcessing,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
