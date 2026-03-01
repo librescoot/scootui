@@ -113,11 +113,12 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Future<void> _toggleXpTheme() async {
-    // theme-override is read by plymouth-start.service, but the root fs is
-    // read-only that early so the write to plymouthd.conf fails. Write
-    // plymouthd.conf directly here while the fs is writable at runtime.
+    // /data/plymouth-theme is read by plymouth-start.service at boot.
+    // /data survives OTA updates; /etc/plymouth/plymouthd.conf is overwritten.
+    // Write plymouthd.conf directly too so the change takes effect next boot
+    // without requiring plymouth-start to re-run.
     const confPath = '/etc/plymouth/plymouthd.conf';
-    const overridePath = '/etc/plymouth/theme-override';
+    const dataPath = '/data/plymouth-theme';
     final conf = File(confPath);
     final current = conf.existsSync()
         ? RegExp(r'Theme=(\S+)').firstMatch(conf.readAsStringSync())?.group(1) ?? ''
@@ -127,7 +128,11 @@ class _AboutScreenState extends State<AboutScreen> {
         : ('windowsxp', 'Genuine Advantage activated.');
     const template = '[Daemon]\nTheme=%s\nShowDelay=0\nDeviceTimeout=5\nIgnoreSerialConsoles=yes\n';
     conf.writeAsStringSync(template.replaceFirst('%s', next));
-    File(overridePath).writeAsStringSync('$next\n');
+    if (next == 'librescoot') {
+      File(dataPath).deleteSync();
+    } else {
+      File(dataPath).writeAsStringSync('$next\n');
+    }
     if (next == 'windowsxp') {
       ToastService.showSuccess(message);
     } else {
