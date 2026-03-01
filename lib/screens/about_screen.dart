@@ -107,6 +107,8 @@ class _AboutScreenState extends State<AboutScreen> {
 
     return ControlGestureDetector(
       stream: context.read<VehicleSync>().stream,
+      initialData: context.read<VehicleSync>().state,
+      requireInitialRelease: true,
       onLeftTap: _scrollDown,
       onLeftHold: _scrollUp,
       onRightTap: () => context.read<ScreenCubit>().closeAbout(),
