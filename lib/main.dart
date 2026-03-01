@@ -146,7 +146,7 @@ class ScooterClusterApp extends StatelessWidget {
               builder: (context, locale) {
                 return ToastListenerWrapper(
                   child: MaterialApp(
-                    title: 'Scooter Cluster',
+                    title: 'ScootUI',
                     theme: themeState.lightTheme,
                     darkTheme: themeState.darkTheme,
                     themeMode: themeState.effectiveThemeMode,

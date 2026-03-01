@@ -242,5 +242,19 @@
   "aboutScrollAction": "Scrollen",
   "aboutBackAction": "Zurück",
   "aboutBootThemeRestored": "Boot-Theme: LibreScoot wiederhergestellt.",
-  "aboutGenuineAdvantage": "Genuine Advantage aktiviert."
+  "aboutGenuineAdvantage": "Genuine Advantage aktiviert.",
+
+  "connectionLost": "Verbindung zum Fahrzeugsystem verloren",
+  "connectionReconnecting": "Verbindung zum Fahrzeugsystem wird wiederhergestellt...",
+  "connectionRestored": "Verbindung zum Fahrzeugsystem hergestellt",
+
+  "shortcutPressToConfirm": "Zum Bestätigen drücken",
+
+  "carplayDisconnected": "Verbindung zu CarPlay getrennt",
+  "carplayConnecting": "Verbindung zu CarPlay wird hergestellt...",
+  "carplayConnectingSubtitle": "Verbindung zu localhost:8001...",
+  "carplayInitializingStream": "MJPEG-Stream wird initialisiert",
+  "carplayConnectionError": "CarPlay-Verbindungsfehler",
+  "carplayRetryConnection": "Erneut verbinden",
+  "carplayWaitingForVideo": "Warte auf Video..."
 }

@@ -738,4 +738,37 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aboutGenuineAdvantage => 'Genuine Advantage aktiviert.';
+
+  @override
+  String get connectionLost => 'Verbindung zum Fahrzeugsystem verloren';
+
+  @override
+  String get connectionReconnecting => 'Verbindung zum Fahrzeugsystem wird wiederhergestellt...';
+
+  @override
+  String get connectionRestored => 'Verbindung zum Fahrzeugsystem hergestellt';
+
+  @override
+  String get shortcutPressToConfirm => 'Zum Bestätigen drücken';
+
+  @override
+  String get carplayDisconnected => 'Verbindung zu CarPlay getrennt';
+
+  @override
+  String get carplayConnecting => 'Verbindung zu CarPlay wird hergestellt...';
+
+  @override
+  String get carplayConnectingSubtitle => 'Verbindung zu localhost:8001...';
+
+  @override
+  String get carplayInitializingStream => 'MJPEG-Stream wird initialisiert';
+
+  @override
+  String get carplayConnectionError => 'CarPlay-Verbindungsfehler';
+
+  @override
+  String get carplayRetryConnection => 'Erneut verbinden';
+
+  @override
+  String get carplayWaitingForVideo => 'Warte auf Video...';
 }

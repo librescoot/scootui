@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/carplay_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../l10n/l10n.dart';
 import '../env_config.dart';
 import '../widgets/carplay/carplay_video_widget.dart';
 import '../widgets/status_bars/top_status_bar.dart';
@@ -160,14 +161,14 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
     return switch (state) {
       CarPlayDisconnected() => _buildStatusMessage(
           context,
-          'Disconnected from CarPlay',
-          'Connecting to localhost:8001...',
+          context.l10n.carplayDisconnected,
+          context.l10n.carplayConnectingSubtitle,
           icon: Icons.link_off,
         ),
       CarPlayConnecting() => _buildStatusMessage(
           context,
-          'Connecting to CarPlay...',
-          'Initializing MJPEG stream',
+          context.l10n.carplayConnecting,
+          context.l10n.carplayInitializingStream,
           showSpinner: true,
         ),
       CarPlayConnected() => const CarPlayVideoWidget(),
@@ -225,7 +226,7 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'CarPlay Connection Error',
+              context.l10n.carplayConnectionError,
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: theme.colorScheme.error,
               ),
@@ -243,7 +244,7 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
                 context.read<CarPlayCubit>().retry();
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry Connection'),
+              label: Text(context.l10n.carplayRetryConnection),
             ),
           ],
         ),

@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../l10n/l10n.dart';
+
 /// Widget that displays an MJPEG stream
 class MjpegStreamWidget extends StatefulWidget {
   final String streamUrl;
@@ -202,8 +204,8 @@ class _MjpegStreamWidgetState extends State<MjpegStreamWidget> {
     }
 
     if (_currentFrame == null) {
-      return const Center(
-        child: Text('Waiting for video...'),
+      return Center(
+        child: Text(context.l10n.carplayWaitingForVideo),
       );
     }
 

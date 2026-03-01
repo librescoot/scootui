@@ -1441,6 +1441,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Genuine Advantage activated.'**
   String get aboutGenuineAdvantage;
+
+  /// No description provided for @connectionLost.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection to vehicle system lost'**
+  String get connectionLost;
+
+  /// No description provided for @connectionReconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempting to reconnect to vehicle system...'**
+  String get connectionReconnecting;
+
+  /// No description provided for @connectionRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to vehicle system'**
+  String get connectionRestored;
+
+  /// No description provided for @shortcutPressToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Press to confirm'**
+  String get shortcutPressToConfirm;
+
+  /// No description provided for @carplayDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from CarPlay'**
+  String get carplayDisconnected;
+
+  /// No description provided for @carplayConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to CarPlay...'**
+  String get carplayConnecting;
+
+  /// No description provided for @carplayConnectingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to localhost:8001...'**
+  String get carplayConnectingSubtitle;
+
+  /// No description provided for @carplayInitializingStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Initializing MJPEG stream'**
+  String get carplayInitializingStream;
+
+  /// No description provided for @carplayConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'CarPlay Connection Error'**
+  String get carplayConnectionError;
+
+  /// No description provided for @carplayRetryConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Connection'**
+  String get carplayRetryConnection;
+
+  /// No description provided for @carplayWaitingForVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for video...'**
+  String get carplayWaitingForVideo;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

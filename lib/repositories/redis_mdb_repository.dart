@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:redis/redis.dart';
 
+import '../services/l10n_service.dart';
 import '../services/serial_number_service.dart';
 import '../services/toast_service.dart';
 import 'mdb_repository.dart';
@@ -154,11 +155,11 @@ class RedisMDBRepository implements MDBRepository {
     if (suppressConnectionToasts) return;
 
     if (newState == RedisConnectionState.disconnected) {
-      ToastService.showError('Connection to vehicle system lost');
+      ToastService.showError(L10nService.current.connectionLost);
     } else if (newState == RedisConnectionState.reconnecting && oldState == RedisConnectionState.disconnected) {
-      ToastService.showWarning('Attempting to reconnect to vehicle system...');
+      ToastService.showWarning(L10nService.current.connectionReconnecting);
     } else if (newState == RedisConnectionState.connected && oldState != RedisConnectionState.connected) {
-      ToastService.showSuccess('Connected to vehicle system');
+      ToastService.showSuccess(L10nService.current.connectionRestored);
       _reconnectAttempts = 0;
     }
   }
