@@ -69,10 +69,13 @@ jobs:
           RECIPE_FILE="yocto/sources/meta-librescoot/recipes-graphics/scootui/scootui.bb"
 
           if [ -f "$RECIPE_FILE" ]; then
-            # Fix the branch to our actual branch and add nobranch=1 so Yocto
-            # doesn't reject the commit for not being reachable from main.
-            # SRCREV is set via SRCREV_scootui env var (picked up by entrypoint.sh).
+            # Fix the branch and add nobranch=1 so Yocto doesn't reject the
+            # commit for not being reachable from main.
             sudo sed -i 's|branch=${SCOOTUI_BRANCH}|branch=${{ steps.scootui-ref.outputs.branch }};nobranch=1|' "$RECIPE_FILE"
+            # Hardcode the SRCREV so Yocto fetches this exact commit.
+            # entrypoint.sh has no mechanism to pass SCOOTUI_SRCREV to local.conf,
+            # so we patch the recipe directly instead.
+            sudo sed -i 's|SCOOTUI_SRCREV ??= "${AUTOREV}"|SCOOTUI_SRCREV = "${{ steps.scootui-ref.outputs.commit }}"|' "$RECIPE_FILE"
             echo "=== DEBUG: Patched scootui recipe ==="
             grep "SRC_URI\|SRCREV\|SCOOTUI_BRANCH" "$RECIPE_FILE"
           else
@@ -93,12 +96,9 @@ jobs:
           # Clean up any existing container from previous runs
           sudo docker rm -f yocto-build 2>/dev/null || true
 
-          # SRCREV_scootui is picked up by entrypoint.sh and written to local.conf
-          # as SRCREV:pn-scootui, pinning the build to this exact commit.
           BUILD_CHANNEL="nightly" \
           LIBRESCOOT_VERSION="${{ needs.generate-timestamp.outputs.timestamp }}" \
           SCOOTUI_VERSION_UPDATE="0.4.15+git${{ needs.generate-timestamp.outputs.timestamp }}" \
-          SRCREV_scootui="${{ steps.scootui-ref.outputs.commit }}" \
           PACKAGE="scootui" \
           ./build.sh dbc
 
