@@ -244,6 +244,16 @@ class _AboutScreenState extends State<AboutScreen> {
                               style: TextStyle(
                                   fontSize: 12, color: fg, height: 1.5),
                             ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'If you paid money for this software, you may '
+                              'have been the victim of a scam. Please report it at $_websiteUrl.',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: fg,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w600),
+                            ),
                           ],
                         ),
                       ),
