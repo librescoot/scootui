@@ -164,12 +164,6 @@ abstract class AppLocalizations {
   /// **'Scan for setup instructions'**
   String get navSetupScanForInstructions;
 
-  /// No description provided for @navSetupTapToDismiss.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap anywhere to dismiss'**
-  String get navSetupTapToDismiss;
-
   /// No description provided for @menuEnterDestinationCode.
   ///
   /// In en, this message translates to:

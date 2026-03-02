@@ -46,9 +46,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSetupScanForInstructions => 'Scan for setup instructions';
 
   @override
-  String get navSetupTapToDismiss => 'Tap anywhere to dismiss';
-
-  @override
   String get menuEnterDestinationCode => 'Enter Destination Code';
 
   @override

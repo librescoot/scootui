@@ -46,9 +46,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navSetupScanForInstructions => 'Für Anleitung scannen';
 
   @override
-  String get navSetupTapToDismiss => 'Tippen zum Schließen';
-
-  @override
   String get menuEnterDestinationCode => 'Zielcode eingeben';
 
   @override

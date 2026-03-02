@@ -14,7 +14,6 @@
   "navSetupRoutingEngine": "Routing-Engine",
   "navSetupNoRoutingBody": "Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Für Routing wird eine Valhalla-Engine benötigt — lokal (Routing-Karten erforderlich) oder ein Remote-Server.",
   "navSetupScanForInstructions": "Für Anleitung scannen",
-  "navSetupTapToDismiss": "Tippen zum Schließen",
   "menuEnterDestinationCode": "Zielcode eingeben",
   "menuSavedLocations": "Gespeicherte Orte",
   "menuSavedLocationsHeader": "GESPEICHERTE ORTE",
