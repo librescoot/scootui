@@ -17,13 +17,13 @@ class ScreenCubit extends Cubit<ScreenState> {
   late StreamSubscription _settingsSubscription;
   late StreamSubscription _vehicleSubscription;
   ScreenState? _screenBeforeAbout;
-
+  ScreenState? _screenBeforeNavigationSetup;
 
   ScreenCubit(this._settingsService, this._vehicleSync)
       : super(_getInitialState(_settingsService.getScreenSetting())) {
     // Subscribe to settings updates
     _settingsSubscription = _settingsService.settingsStream.listen((settings) {
-      if (state is ScreenAbout) return;
+      if (state is ScreenAbout || state is ScreenNavigationSetup) return;
       final screenMode = _settingsService.getScreenSetting();
       emit(_getInitialState(screenMode));
     });
@@ -88,6 +88,16 @@ class ScreenCubit extends Cubit<ScreenState> {
   void closeAbout() {
     emit(_screenBeforeAbout ?? const ScreenState.cluster());
     _screenBeforeAbout = null;
+  }
+
+  void showNavigationSetup() {
+    _screenBeforeNavigationSetup = state;
+    emit(const ScreenState.navigationSetup());
+  }
+
+  void closeNavigationSetup() {
+    emit(_screenBeforeNavigationSetup ?? const ScreenState.cluster());
+    _screenBeforeNavigationSetup = null;
   }
 
   void _persistScreenMode(String mode) {

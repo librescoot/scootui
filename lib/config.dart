@@ -42,6 +42,12 @@ class AppConfig {
   /// Redis language setting key
   static const String languageSettingKey = 'dashboard.language';
 
+  /// Redis key for map tiles availability
+  static const String mapsAvailableKey = 'dashboard.maps-available';
+
+  /// Redis key for full navigation availability (maps + routing engine)
+  static const String navigationAvailableKey = 'dashboard.navigation-available';
+
   /// Auto theme light threshold (lux) - switch to light theme above this value
   static const double autoThemeLightThreshold = 25.0;
 
