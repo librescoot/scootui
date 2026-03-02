@@ -215,4 +215,24 @@ class ScreenAbout implements ScreenState {
   }
 }
 
+/// @nodoc
+
+class ScreenNavigationSetup implements ScreenState {
+  const ScreenNavigationSetup();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is ScreenNavigationSetup);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  String toString() {
+    return 'ScreenState.navigationSetup()';
+  }
+}
+
 // dart format on

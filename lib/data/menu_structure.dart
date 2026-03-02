@@ -85,13 +85,25 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Navigation submenu (only shown when maps + routing engine are available)
+      // Navigation unavailable info (shown when routing engine is not available)
+      MenuNode.action(
+        id: 'navigation_setup',
+        title: l10n.menuNavigationSetup,
+        isVisible: (context) =>
+            !context.read<NavigationAvailabilityCubit>().state.routingAvailable,
+        onAction: (context) {
+          context.read<MenuCubit>().hideMenu();
+          context.read<ScreenCubit>().showNavigationSetup();
+        },
+      ),
+
+      // Navigation submenu (only shown when routing engine is available)
       MenuNode.submenu(
         id: 'navigation',
         title: l10n.menuNavigation,
         headerTitle: l10n.menuNavigationHeader,
         isVisible: (context) =>
-            context.read<NavigationAvailabilityCubit>().state.navigationAvailable,
+            context.read<NavigationAvailabilityCubit>().state.routingAvailable,
         children: [
           MenuNode.action(
             id: 'nav_enter_code',

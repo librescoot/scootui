@@ -27,6 +27,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuNavigationHeader => 'NAVIGATION';
 
   @override
+  String get menuNavigationSetup => 'Navigation Setup';
+
+  @override
+  String get navSetupTitle => 'Routing Not Available';
+
+  @override
+  String get navSetupLocalDisplayMaps => 'Offline display maps';
+
+  @override
+  String get navSetupRoutingEngine => 'Routing engine';
+
+  @override
+  String get navSetupNoRoutingBody =>
+      'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.';
+
+  @override
+  String get navSetupScanForInstructions => 'Scan for setup instructions';
+
+  @override
+  String get navSetupTapToDismiss => 'Tap anywhere to dismiss';
+
+  @override
   String get menuEnterDestinationCode => 'Enter Destination Code';
 
   @override

@@ -20,6 +20,7 @@ import '../widgets/shutdown/shutdown_overlay.dart';
 import '../widgets/ums/ums_overlay.dart';
 import '../widgets/version_overlay.dart';
 import 'about_screen.dart';
+import 'navigation_setup_screen.dart';
 import 'address_selection_screen.dart';
 import 'carplay_screen.dart';
 import 'cluster_screen.dart';
@@ -169,6 +170,7 @@ class _MainScreenState extends State<MainScreen> {
               ScreenOta() => const OtaScreen(),
               ScreenDebug() => const DebugScreen(),
               ScreenAbout() => const AboutScreen(),
+              ScreenNavigationSetup() => const NavigationSetupScreen(),
               ScreenShuttingDown() => menuTrigger(const ClusterScreen()), // Fallback (shouldn't happen)
             },
 

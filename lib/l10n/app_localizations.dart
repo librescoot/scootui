@@ -128,6 +128,48 @@ abstract class AppLocalizations {
   /// **'NAVIGATION'**
   String get menuNavigationHeader;
 
+  /// No description provided for @menuNavigationSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation Setup'**
+  String get menuNavigationSetup;
+
+  /// No description provided for @navSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Routing Not Available'**
+  String get navSetupTitle;
+
+  /// No description provided for @navSetupLocalDisplayMaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline display maps'**
+  String get navSetupLocalDisplayMaps;
+
+  /// No description provided for @navSetupRoutingEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Routing engine'**
+  String get navSetupRoutingEngine;
+
+  /// No description provided for @navSetupNoRoutingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.'**
+  String get navSetupNoRoutingBody;
+
+  /// No description provided for @navSetupScanForInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan for setup instructions'**
+  String get navSetupScanForInstructions;
+
+  /// No description provided for @navSetupTapToDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap anywhere to dismiss'**
+  String get navSetupTapToDismiss;
+
   /// No description provided for @menuEnterDestinationCode.
   ///
   /// In en, this message translates to:

@@ -27,6 +27,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuNavigationHeader => 'NAVIGATION';
 
   @override
+  String get menuNavigationSetup => 'Navigation einrichten';
+
+  @override
+  String get navSetupTitle => 'Routing nicht verfügbar';
+
+  @override
+  String get navSetupLocalDisplayMaps => 'Offline-Kartenkacheln';
+
+  @override
+  String get navSetupRoutingEngine => 'Routing-Engine';
+
+  @override
+  String get navSetupNoRoutingBody =>
+      'Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Für Routing wird eine Valhalla-Engine benötigt — lokal (Routing-Karten erforderlich) oder ein Remote-Server.';
+
+  @override
+  String get navSetupScanForInstructions => 'Für Anleitung scannen';
+
+  @override
+  String get navSetupTapToDismiss => 'Tippen zum Schließen';
+
+  @override
   String get menuEnterDestinationCode => 'Zielcode eingeben';
 
   @override
