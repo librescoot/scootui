@@ -7,6 +7,13 @@
   "menuSwitchToMap": "Switch to Map View",
   "menuNavigation": "Navigation",
   "menuNavigationHeader": "NAVIGATION",
+  "menuNavigationSetup": "Navigation Setup",
+
+  "navSetupTitle": "Routing Not Available",
+  "navSetupLocalDisplayMaps": "Offline display maps",
+  "navSetupRoutingEngine": "Routing engine",
+  "navSetupNoRoutingBody": "Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.",
+  "navSetupScanForInstructions": "Scan for setup instructions",
   "menuEnterDestinationCode": "Enter Destination Code",
   "menuSavedLocations": "Saved Locations",
   "menuSavedLocationsHeader": "SAVED LOCATIONS",
