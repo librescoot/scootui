@@ -7,8 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'cubits/all.dart';
+import 'cubits/locale_cubit.dart';
 import 'cubits/theme_cubit.dart';
 import 'env_config.dart';
+import 'l10n/app_localizations.dart';
+import 'services/l10n_service.dart';
 import 'repositories/address_repository.dart' as addr;
 import 'repositories/all.dart';
 import 'repositories/tiles_repository.dart' as tiles;
@@ -138,18 +141,29 @@ class ScooterClusterApp extends StatelessWidget {
       child: MultiBlocProvider(
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(
-          builder: (context, state) {
-            return ToastListenerWrapper(
-              child: MaterialApp(
-                title: 'Scooter Cluster',
-                theme: state.lightTheme,
-                darkTheme: state.darkTheme,
-                themeMode: state.effectiveThemeMode,
-                debugShowCheckedModeBanner: false,
-                home: Scaffold(
-                  body: MainScreen(),
-                ),
-              ),
+          builder: (context, themeState) {
+            return BlocBuilder<LocaleCubit, Locale>(
+              builder: (context, locale) {
+                return ToastListenerWrapper(
+                  child: MaterialApp(
+                    title: 'ScootUI',
+                    theme: themeState.lightTheme,
+                    darkTheme: themeState.darkTheme,
+                    themeMode: themeState.effectiveThemeMode,
+                    locale: locale,
+                    localizationsDelegates: AppLocalizations.localizationsDelegates,
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    debugShowCheckedModeBanner: false,
+                    builder: (context, child) {
+                      L10nService.update(AppLocalizations.of(context));
+                      return child!;
+                    },
+                    home: Scaffold(
+                      body: MainScreen(),
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),

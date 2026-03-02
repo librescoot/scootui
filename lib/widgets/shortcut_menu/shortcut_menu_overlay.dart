@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../l10n/l10n.dart';
 import '../../cubits/shortcut_menu_cubit.dart';
 import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
@@ -110,7 +111,7 @@ class ShortcutMenuOverlay extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Press to confirm',
+                      context.l10n.shortcutPressToConfirm,
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black,
                         fontWeight: FontWeight.bold,

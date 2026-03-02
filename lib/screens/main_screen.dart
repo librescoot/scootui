@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
 
 import '../cubits/debug_overlay_cubit.dart';
+import '../l10n/l10n.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
@@ -147,9 +148,9 @@ class _MainScreenState extends State<MainScreen> {
         if (isError) {
           final errorMessage = bluetooth.serviceError.isNotEmpty
               ? bluetooth.serviceError
-              : 'Bluetooth service communication error';
+              : context.l10n.bluetoothCommError;
           debugPrint('BLE: Showing error toast: $errorMessage');
-          ToastService.showError('Bluetooth: $errorMessage');
+          ToastService.showError(context.l10n.bluetoothError(errorMessage));
         }
       },
       child: SizedBox(

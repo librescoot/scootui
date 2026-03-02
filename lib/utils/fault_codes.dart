@@ -1,3 +1,5 @@
+import '../services/l10n_service.dart';
+
 enum FaultSeverity { critical, warning }
 
 class FaultCode {
@@ -78,6 +80,32 @@ class BatteryFaultCodes {
 
   static FaultCode? getFault(int code) => _faultMap[code];
 
+  static String getLocalizedDescription(int code) {
+    final l10n = L10nService.current;
+    return switch (code) {
+      1 => l10n.faultOverTempCharging,
+      2 => l10n.faultUnderTempCharging,
+      3 => l10n.faultOverTempDischarging,
+      4 => l10n.faultUnderTempDischarging,
+      5 => l10n.faultSignalWireBroken,
+      6 => l10n.faultCriticalOverTemp,
+      7 => l10n.faultPackOverVoltage,
+      8 => l10n.faultMosfetOverTemp,
+      9 => l10n.faultCellOverVoltage,
+      10 => l10n.faultPackUnderVoltage,
+      11 => l10n.faultCellUnderVoltage,
+      12 => l10n.faultOverCurrentCharging,
+      13 => l10n.faultOverCurrentDischarging,
+      14 => l10n.faultShortCircuit,
+      15 || 16 => l10n.faultReserved,
+      32 => l10n.faultBmsNotFollowing,
+      33 => l10n.faultBmsZeroData,
+      34 => l10n.faultBmsCommError,
+      35 => l10n.faultNfcReaderError,
+      _ => l10n.faultUnknown,
+    };
+  }
+
   static bool isCritical(int code) {
     final fault = getFault(code);
     return fault?.severity == FaultSeverity.critical;
@@ -99,9 +127,9 @@ class FaultFormatter {
   static String formatSingleFault(int code, {String prefix = 'B'}) {
     final fault = BatteryFaultCodes.getFault(code);
     if (fault != null) {
-      return '${fault.code} - ${fault.description}';
+      return '${fault.code} - ${BatteryFaultCodes.getLocalizedDescription(code)}';
     }
-    return '$prefix$code - Unknown fault';
+    return '$prefix$code - ${L10nService.current.faultUnknown}';
   }
 
   static String formatMultipleFaults(Set<int> codes, {String prefix = 'B'}) {
@@ -130,8 +158,8 @@ class FaultFormatter {
 
   static String getMultipleFaultsTitle(Set<int> codes) {
     if (hasAnyCritical(codes)) {
-      return 'Multiple Critical Issues';
+      return L10nService.current.faultMultipleCritical;
     }
-    return 'Multiple Battery Issues';
+    return L10nService.current.faultMultipleBattery;
   }
 }

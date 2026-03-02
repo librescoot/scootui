@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/mdb_cubits.dart';
+import '../l10n/l10n.dart';
 import '../state/bluetooth.dart';
 
 class BluetoothPinCodeOverlay extends StatefulWidget {
@@ -59,9 +60,9 @@ class _BluetoothPinCodeOverlayState extends State<BluetoothPinCodeOverlay> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 8), // Add some spacing
-                    const Text(
-                      'Use this code to pair your device',
-                      style: TextStyle(
+                    Text(
+                      context.l10n.bluetoothPinInstruction,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                       ),

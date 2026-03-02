@@ -3,6 +3,7 @@ import 'package:nested/nested.dart';
 
 import 'address_cubit.dart';
 import 'carplay_cubit.dart';
+import 'locale_cubit.dart';
 import 'debug_overlay_cubit.dart';
 import 'low_temperature_warning_cubit.dart';
 import 'map_cubit.dart';
@@ -60,4 +61,5 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ShortcutMenuCubit.create),
   BlocProvider(create: VersionOverlayCubit.create),
   BlocProvider(create: DashboardSyncCubit.create),
+  BlocProvider(create: LocaleCubit.create),
 ];

@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../models/saved_location.dart';
 import '../repositories/mdb_repository.dart';
+import '../services/l10n_service.dart';
 import '../services/saved_locations_service.dart';
 import '../services/reverse_geocoding_service.dart';
 import '../state/enums.dart';
@@ -46,7 +47,7 @@ class SavedLocationsCubit extends Cubit<SavedLocationsState> {
       emit(SavedLocationsState.loaded(locations));
     } catch (e) {
       debugPrint('SavedLocationsCubit: Error loading locations: $e');
-      emit(SavedLocationsState.error('Failed to load saved locations'));
+      emit(SavedLocationsState.error(L10nService.current.savedLocationsFailed));
     }
   }
 

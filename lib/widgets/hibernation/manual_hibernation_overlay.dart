@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../l10n/l10n.dart';
 import '../../state/enums.dart';
 import '../../state/vehicle.dart';
 
@@ -73,11 +74,13 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
       return const SizedBox.shrink();
     }
 
+    final l10n = context.l10n;
+
     return Positioned.fill(
       child: Container(
         color: Colors.black.withOpacity(0.9),
         child: Center(
-          child: _buildContent(vehicleState),
+          child: _buildContent(l10n, vehicleState),
         ),
       ),
     );
@@ -90,21 +93,21 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
         state == ScooterState.waitingHibernationConfirm;
   }
 
-  Widget _buildContent(ScooterState state) {
+  Widget _buildContent(AppLocalizations l10n, ScooterState state) {
     switch (state) {
       case ScooterState.waitingHibernation:
       case ScooterState.waitingHibernationAdvanced:
-        return _buildHibernationScreen(_remainingSeconds);
+        return _buildHibernationScreen(l10n, _remainingSeconds);
       case ScooterState.waitingHibernationSeatbox:
-        return _buildSeatboxNotification();
+        return _buildSeatboxNotification(l10n);
       case ScooterState.waitingHibernationConfirm:
-        return _buildConfirmationScreen();
+        return _buildConfirmationScreen(l10n);
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildHibernationScreen(int remainingSeconds) {
+  Widget _buildHibernationScreen(AppLocalizations l10n, int remainingSeconds) {
     return Container(
       margin: const EdgeInsets.all(32),
       padding: const EdgeInsets.all(24),
@@ -122,9 +125,9 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
             size: 64,
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Manual Hibernation',
-            style: TextStyle(
+          Text(
+            l10n.hibernationTitle,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -132,9 +135,9 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Tap keycard to confirm',
-            style: TextStyle(
+          Text(
+            l10n.hibernationTapKeycardToConfirm,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
             ),
@@ -143,10 +146,10 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
           const SizedBox(height: 8),
           Text(
             remainingSeconds == 0
-                ? 'Keep holding brakes to force'
+                ? l10n.hibernationKeepHoldingBrakes
                 : remainingSeconds < 15
-                    ? 'Hold both brakes for ${remainingSeconds}s to force'
-                    : 'Or hold both brakes for 15s to force',
+                    ? l10n.hibernationHoldBrakesForSeconds(remainingSeconds)
+                    : l10n.hibernationOrHoldBrakes,
             style: TextStyle(
               color: remainingSeconds < 15 ? Colors.orange : Colors.white70,
               fontSize: 14,
@@ -158,7 +161,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Cancel - Left brake or kickstand
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(16),
@@ -168,22 +170,22 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.red.withOpacity(0.5)),
                   ),
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Icon(Icons.close, color: Colors.red, size: 32),
-                      SizedBox(height: 8),
+                      const Icon(Icons.close, color: Colors.red, size: 32),
+                      const SizedBox(height: 8),
                       Text(
-                        'CANCEL',
-                        style: TextStyle(
+                        l10n.hibernationCancel,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Kickstand',
-                        style: TextStyle(
+                        l10n.hibernationKickstand,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
@@ -192,7 +194,6 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
                   ),
                 ),
               ),
-              // Confirm - Hold brakes
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(16),
@@ -202,22 +203,22 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.green.withOpacity(0.5)),
                   ),
-                  child: const Column(
+                  child: Column(
                     children: [
-                      Icon(Icons.check, color: Colors.green, size: 32),
-                      SizedBox(height: 8),
+                      const Icon(Icons.check, color: Colors.green, size: 32),
+                      const SizedBox(height: 8),
                       Text(
-                        'CONFIRM',
-                        style: TextStyle(
+                        l10n.hibernationConfirm,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Tap Keycard',
-                        style: TextStyle(
+                        l10n.hibernationTapKeycard,
+                        style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
@@ -233,7 +234,7 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
     );
   }
 
-  Widget _buildSeatboxNotification() {
+  Widget _buildSeatboxNotification(AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.all(32),
       padding: const EdgeInsets.all(24),
@@ -251,9 +252,9 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
             size: 64,
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Seatbox Open',
-            style: TextStyle(
+          Text(
+            l10n.hibernationSeatboxOpen,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -261,9 +262,9 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Close seatbox to hibernate',
-            style: TextStyle(
+          Text(
+            l10n.hibernationCloseSeatbox,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
             ),
@@ -274,7 +275,7 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
     );
   }
 
-  Widget _buildConfirmationScreen() {
+  Widget _buildConfirmationScreen(AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.all(32),
       padding: const EdgeInsets.all(24),
@@ -292,9 +293,9 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
             size: 64,
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Hibernating...',
-            style: TextStyle(
+          Text(
+            l10n.hibernationHibernating,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 28,
               fontWeight: FontWeight.bold,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../l10n/l10n.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/menu_cubit.dart';
 import '../../cubits/saved_locations_cubit.dart';
@@ -395,13 +396,13 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                   children: [
                     _buildControlHint(
                       context,
-                      'Left Brake',
-                      'Next Item',
+                      context.l10n.controlLeftBrake,
+                      context.l10n.controlNextItem,
                     ),
                     _buildControlHint(
                       context,
-                      'Right Brake',
-                      _menuNav.isInSubmenu(_navigationPath) ? 'Select' : 'Select',
+                      context.l10n.controlRightBrake,
+                      context.l10n.controlSelect,
                     ),
                   ],
                 ),

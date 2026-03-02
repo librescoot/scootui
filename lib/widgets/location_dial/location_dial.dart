@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import '../../l10n/l10n.dart';
+
 class LocationDialController {
   final _scrollController = StreamController<ScrollAction>.broadcast();
   final _nextController = StreamController<void>.broadcast();
@@ -251,7 +253,7 @@ class LocationDialConfirmation extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           Text(
-            'Press Right Brake to Confirm',
+            context.l10n.controlPressRightBrakeConfirm,
             style: TextStyle(
               fontSize: 16,
               color: isDark ? Colors.white70 : Colors.black87,
@@ -259,7 +261,7 @@ class LocationDialConfirmation extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Press Left Brake to Edit',
+            context.l10n.controlPressLeftBrakeEdit,
             style: TextStyle(
               fontSize: 16,
               color: isDark ? Colors.white70 : Colors.black87,

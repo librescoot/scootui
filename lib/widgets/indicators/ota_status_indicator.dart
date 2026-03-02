@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../l10n/l10n.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../state/vehicle.dart';
@@ -40,6 +41,7 @@ class OtaStatusIndicator extends StatelessWidget {
     final color = isDark ? Colors.white : Colors.black;
     final updateVersion = otaData.dbcUpdateVersion;
     final errorMessage = otaData.dbcErrorMessage;
+    final l10n = context.l10n;
 
     final String actionText;
     final String iconAsset;
@@ -47,25 +49,25 @@ class OtaStatusIndicator extends StatelessWidget {
 
     if (isRebootFailed) {
       // Treat reboot-failed as rebooting status (backward compatibility)
-      actionText = 'Waiting for reboot';
+      actionText = l10n.otaStatusWaitingForReboot;
       iconAsset = _Icons.rebooting;
     } else {
       switch (dbcStatus) {
         case 'downloading':
-          actionText = 'Downloading';
+          actionText = l10n.otaStatusDownloading;
           iconAsset = _Icons.downloading;
           break;
         case 'installing':
-          actionText = 'Installing';
+          actionText = l10n.otaStatusInstalling;
           iconAsset = _Icons.installing;
           break;
         case 'rebooting':
-          actionText = 'Waiting for reboot';
+          actionText = l10n.otaStatusWaitingForReboot;
           iconAsset = _Icons.rebooting;
           break;
         case 'error':
           // Use appropriate icon based on error type
-          actionText = _getErrorText(errorType);
+          actionText = _getErrorText(errorType, l10n);
           iconAsset = _getErrorIcon(errorType);
           break;
         default:
@@ -74,7 +76,7 @@ class OtaStatusIndicator extends StatelessWidget {
       }
     }
 
-    final versionText = updateVersion.isNotEmpty ? ' Librescoot $updateVersion' : ' update';
+    final versionText = updateVersion.isNotEmpty ? l10n.otaLibrescootVersion(updateVersion) : l10n.otaUpdate;
 
     // Build tooltip message - use detailed error message if available
     final String tooltipMessage;
@@ -180,20 +182,18 @@ class OtaStatusIndicator extends StatelessWidget {
     );
   }
 
-  static String _getErrorText(String errorType) {
-    // Convert error type to user-friendly text
-    // Maintains backwards compatibility if errorType is empty
+  static String _getErrorText(String errorType, AppLocalizations l10n) {
     switch (errorType) {
       case 'invalid-release-tag':
-        return 'Invalid release';
+        return l10n.otaInvalidRelease;
       case 'download-failed':
-        return 'Download failed';
+        return l10n.otaDownloadFailedShort;
       case 'install-failed':
-        return 'Install failed';
+        return l10n.otaInstallFailedShort;
       case 'reboot-failed':
-        return 'Reboot failed';
+        return l10n.otaRebootFailed;
       default:
-        return 'Update error';
+        return l10n.otaUpdateError;
     }
   }
 

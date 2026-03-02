@@ -39,6 +39,9 @@ class AppConfig {
   /// Redis saved locations key prefix
   static const String savedLocationsPrefix = 'dashboard.saved-locations';
 
+  /// Redis language setting key
+  static const String languageSettingKey = 'dashboard.language';
+
   /// Auto theme light threshold (lux) - switch to light theme above this value
   static const double autoThemeLightThreshold = 25.0;
 

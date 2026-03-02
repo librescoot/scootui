@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
+import '../../l10n/l10n.dart';
 import '../../state/engine.dart';
 import '../../state/settings.dart';
 import '../indicators/speed_limit_indicator.dart';
@@ -35,7 +36,7 @@ class SpeedCenterWidget extends StatelessWidget {
               ),
             ),
             Text(
-              'km/h',
+              context.l10n.speedKmh,
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white70 : Colors.black54,

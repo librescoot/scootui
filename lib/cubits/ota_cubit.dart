@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../cubits/mdb_cubits.dart';
+import '../services/l10n_service.dart';
 import '../services/toast_service.dart';
 import '../state/vehicle.dart';
 
@@ -64,27 +65,27 @@ OtaStatus mapOtaStatus(String? status) {
 String getOtaStatusText(OtaStatus status) {
   switch (status) {
     case OtaStatus.initializing:
-      return 'Initializing update...';
+      return L10nService.current.otaInitializing;
     case OtaStatus.checkingUpdates:
-      return 'Checking for updates...';
+      return L10nService.current.otaCheckingUpdates;
     case OtaStatus.checkingUpdateError:
-      return 'Update check failed.';
+      return L10nService.current.otaCheckFailed;
     case OtaStatus.deviceUpdated:
-      return 'Device updated.';
+      return L10nService.current.otaDeviceUpdated;
     case OtaStatus.waitingDashboard:
-      return 'Waiting for dashboard...';
+      return L10nService.current.otaWaitingDashboard;
     case OtaStatus.downloadingUpdates:
-      return 'Downloading updates...';
+      return L10nService.current.otaDownloadingUpdates;
     case OtaStatus.downloadingUpdateError:
-      return 'Download failed.';
+      return L10nService.current.otaDownloadFailed;
     case OtaStatus.installingUpdates:
-      return 'Installing updates...';
+      return L10nService.current.otaInstallingUpdates;
     case OtaStatus.installingUpdateError:
-      return 'Installation failed.';
+      return L10nService.current.otaInstallFailed;
     case OtaStatus.installationCompleteWaitingDashboardReboot:
-      return 'Installation complete, waiting for dashboard reboot...';
+      return L10nService.current.otaCompleteWaitingDashboardReboot;
     case OtaStatus.installationCompleteWaitingReboot:
-      return 'Installation complete, waiting for reboot...';
+      return L10nService.current.otaCompleteWaitingReboot;
     case OtaStatus.unknown:
     case OtaStatus.none:
       return ''; // Should not be displayed
@@ -142,7 +143,7 @@ class OtaCubit extends Cubit<OtaState> {
     if (dbcUpdating && isUnlocked) {
       emit(OtaState.statusBar(
         status: dbcDownloading ? OtaStatus.downloadingUpdates : OtaStatus.installingUpdates,
-        statusText: dbcDownloading ? 'Downloading updates...' : 'Installing updates...',
+        statusText: dbcDownloading ? L10nService.current.otaDownloadingUpdates : L10nService.current.otaInstallingUpdates,
       ));
       return;
     }
@@ -155,17 +156,17 @@ class OtaCubit extends Cubit<OtaState> {
     if (_lastDbcStatus == status || status.isEmpty) return;
 
     _lastDbcStatus = status;
-    final versionText = version.isNotEmpty ? ' Librescoot $version' : '';
+    final versionText = version.isNotEmpty ? L10nService.current.otaLibrescootVersion(version) : '';
 
     switch (status) {
       case 'downloading':
-        ToastService.showInfo('Downloading$versionText update');
+        ToastService.showInfo(L10nService.current.otaDownloadingVersionUpdate(versionText));
         break;
       case 'installing':
-        ToastService.showInfo('Installing$versionText update');
+        ToastService.showInfo(L10nService.current.otaInstallingVersionUpdate(versionText));
         break;
       case 'rebooting':
-        ToastService.showWarning('Update installed. Waiting for reboot');
+        ToastService.showWarning(L10nService.current.otaWaitingForReboot);
         break;
     }
   }
@@ -174,10 +175,10 @@ class OtaCubit extends Cubit<OtaState> {
     if (_lastDbcError == error || error.isEmpty) return;
 
     _lastDbcError = error;
-    final versionText = version.isNotEmpty ? ' Librescoot $version' : '';
+    final versionText = version.isNotEmpty ? L10nService.current.otaLibrescootVersion(version) : '';
     final message = errorMessage.isNotEmpty
-        ? 'Update failed: $errorMessage'
-        : 'Update$versionText failed';
+        ? L10nService.current.otaUpdateFailedWithMessage(errorMessage)
+        : L10nService.current.otaUpdateVersionFailed(versionText);
 
     ToastService.showError(message);
   }

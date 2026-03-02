@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../l10n/l10n.dart';
 import '../../repositories/mdb_repository.dart';
 import '../../repositories/redis_mdb_repository.dart';
 
@@ -19,10 +20,12 @@ class UmsOverlay extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final l10n = context.l10n;
+
     return Container(
       color: Colors.black,
       child: Center(
-        child: _buildContent(status),
+        child: _buildContent(l10n, status),
       ),
     );
   }
@@ -34,16 +37,16 @@ class UmsOverlay extends StatelessWidget {
     }
   }
 
-  Widget _buildContent(String status) {
+  Widget _buildContent(AppLocalizations l10n, String status) {
     switch (status) {
       case "preparing":
-        return _buildWithSpinner("Preparing USB storage...");
+        return _buildWithSpinner(l10n.umsPreparingStorage);
       case "active":
-        return _buildActive();
+        return _buildActive(l10n);
       case "processing":
-        return _buildWithSpinner("Processing files...");
+        return _buildWithSpinner(l10n.umsProcessingFiles);
       default:
-        return _buildWithSpinner("USB Mass Storage: $status");
+        return _buildWithSpinner(l10n.umsStatus(status));
     }
   }
 
@@ -74,7 +77,7 @@ class UmsOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildActive() {
+  Widget _buildActive(AppLocalizations l10n) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -84,9 +87,9 @@ class UmsOverlay extends StatelessWidget {
           size: 64,
         ),
         const SizedBox(height: 24),
-        const Text(
-          "USB Mass Storage Mode",
-          style: TextStyle(
+        Text(
+          l10n.umsTitle,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -96,7 +99,7 @@ class UmsOverlay extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          "Connect to a computer to transfer files.",
+          l10n.umsConnectToComputer,
           style: TextStyle(
             color: Colors.white.withOpacity(0.7),
             fontSize: 16,

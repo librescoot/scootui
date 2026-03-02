@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../cubits/theme_cubit.dart';
+import '../../l10n/l10n.dart';
 
 class ControlHints extends StatelessWidget {
   final String? leftAction;
@@ -22,12 +23,12 @@ class ControlHints extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _ControlHint(
-            control: 'Left Brake',
+            control: context.l10n.controlLeftBrake,
             action: leftAction,
             isDark: isDark,
           ),
           _ControlHint(
-            control: 'Right Brake',
+            control: context.l10n.controlRightBrake,
             action: rightAction,
             isDark: isDark,
           ),

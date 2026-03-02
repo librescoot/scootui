@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/navigation_cubit.dart';
 import '../../cubits/navigation_state.dart';
+import '../../l10n/l10n.dart';
 
 class NavigationStatusOverlay extends StatelessWidget {
   const NavigationStatusOverlay({super.key});
@@ -62,7 +63,7 @@ class NavigationStatusOverlay extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Recalculating route...',
+                  context.l10n.navRecalculating,
                   style: TextStyle(
                     color: Colors.orange,
                     fontSize: 14,
@@ -89,7 +90,7 @@ class NavigationStatusOverlay extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'You have arrived!',
+                  context.l10n.navYouHaveArrived,
                   style: TextStyle(
                     color: isDark ? Colors.white : Colors.black87,
                     fontSize: 16,
