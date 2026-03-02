@@ -9,6 +9,7 @@ import 'low_temperature_warning_cubit.dart';
 import 'map_cubit.dart';
 import 'mdb_cubits.dart';
 import 'menu_cubit.dart';
+import 'navigation_availability_cubit.dart';
 import 'navigation_cubit.dart';
 import 'ota_cubit.dart';
 import 'saved_locations_cubit.dart';
@@ -35,6 +36,7 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: GpsSync.create),
   BlocProvider(create: InternetSync.create),
   BlocProvider(create: NavigationSync.create),
+  BlocProvider(create: NavigationAvailabilityCubit.create),
   BlocProvider(
       create: (context) => NavigationCubit(
             gpsStream: context.read<GpsSync>().stream,

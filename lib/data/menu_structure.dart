@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../cubits/locale_cubit.dart';
 import '../cubits/mdb_cubits.dart';
+import '../cubits/navigation_availability_cubit.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/saved_locations_cubit.dart';
 import '../cubits/screen_cubit.dart';
@@ -84,11 +85,13 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Navigation submenu
+      // Navigation submenu (only shown when maps + routing engine are available)
       MenuNode.submenu(
         id: 'navigation',
         title: l10n.menuNavigation,
         headerTitle: l10n.menuNavigationHeader,
+        isVisible: (context) =>
+            context.read<NavigationAvailabilityCubit>().state.navigationAvailable,
         children: [
           MenuNode.action(
             id: 'nav_enter_code',
