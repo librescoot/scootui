@@ -9,6 +9,8 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
 import '../env_config.dart';
+import '../repositories/mdb_repository.dart';
+import '../repositories/redis_mdb_repository.dart';
 import '../services/toast_service.dart';
 import '../state/bluetooth.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
@@ -41,6 +43,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   ScooterState? _lastVehicleState;
   bool _poweroffScheduled = false;
+  Stream<bool>? _prolongedDisconnectStream;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_prolongedDisconnectStream == null) {
+      final repo = context.read<MDBRepository>();
+      if (repo is RedisMDBRepository) {
+        _prolongedDisconnectStream = repo.prolongedDisconnectStream;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +126,35 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
+    // Show connection info if Redis has been disconnected for >5s
+    final repo = context.read<MDBRepository>();
+    if (_prolongedDisconnectStream != null && repo is RedisMDBRepository) {
+      return StreamBuilder<bool>(
+        stream: _prolongedDisconnectStream,
+        initialData: repo.prolongedDisconnect,
+        builder: (context, snapshot) {
+          if (snapshot.data == true) {
+            return SizedBox(
+              width: EnvConfig.resolution.width,
+              height: EnvConfig.resolution.height,
+              child: const MaintenanceScreen(showConnectionInfo: true),
+            );
+          }
+          return _buildMainUI(context, state, menu, debugMode, vehicleState);
+        },
+      );
+    }
+
+    return _buildMainUI(context, state, menu, debugMode, vehicleState);
+  }
+
+  Widget _buildMainUI(
+    BuildContext context,
+    ScreenState state,
+    MenuCubit menu,
+    DebugMode debugMode,
+    ScooterState vehicleState,
+  ) {
     Widget menuTrigger(Widget child) => ControlGestureDetector(
           stream: context.read<VehicleSync>().stream,
           onLeftDoubleTap: () => menu.showMenu(),

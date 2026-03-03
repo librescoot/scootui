@@ -127,6 +127,14 @@ class RedisMDBRepository implements MDBRepository {
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
 
+  // Track prolonged disconnection (>5s) for UI fallback
+  static const Duration _prolongedDisconnectThreshold = Duration(seconds: 5);
+  Timer? _prolongedDisconnectTimer;
+  bool _prolongedDisconnect = false;
+  final _prolongedDisconnectController = StreamController<bool>.broadcast();
+  Stream<bool> get prolongedDisconnectStream => _prolongedDisconnectController.stream;
+  bool get prolongedDisconnect => _prolongedDisconnect;
+
   static String getRedisHost() {
     // Use an environment variable to determine the Redis host, defaulting to the target system address
     const redisHost = String.fromEnvironment('SCOOTUI_REDIS_HOST',
@@ -150,6 +158,23 @@ class RedisMDBRepository implements MDBRepository {
     final oldState = _connectionState;
     _connectionState = newState;
     _connectionStateController.add(newState);
+
+    if (newState == RedisConnectionState.connected) {
+      _prolongedDisconnectTimer?.cancel();
+      _prolongedDisconnectTimer = null;
+      if (_prolongedDisconnect) {
+        _prolongedDisconnect = false;
+        _prolongedDisconnectController.add(false);
+      }
+    } else if (oldState == RedisConnectionState.connected) {
+      _prolongedDisconnectTimer?.cancel();
+      _prolongedDisconnectTimer = Timer(_prolongedDisconnectThreshold, () {
+        if (_connectionState != RedisConnectionState.connected) {
+          _prolongedDisconnect = true;
+          _prolongedDisconnectController.add(true);
+        }
+      });
+    }
 
     if (suppressConnectionToasts) return;
 
@@ -373,6 +398,8 @@ class RedisMDBRepository implements MDBRepository {
 
   Future<void> dispose() async {
     _reconnectTimer?.cancel();
+    _prolongedDisconnectTimer?.cancel();
+    await _prolongedDisconnectController.close();
     await _connectionStateController.close();
     await _pool.dispose();
   }
