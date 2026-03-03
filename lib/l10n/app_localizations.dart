@@ -1583,7 +1583,7 @@ abstract class AppLocalizations {
   /// No description provided for @connectingExplanation.
   ///
   /// In en, this message translates to:
-  /// **'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the main board (MDB). Check the USB cable if this persists.'**
+  /// **'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.'**
   String get connectingExplanation;
 
   /// No description provided for @connectingBypassHint.

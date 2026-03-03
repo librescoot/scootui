@@ -811,7 +811,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get connectingExplanation =>
-      'Dies deutet in der Regel auf eine fehlende oder instabile Verbindung zwischen dem Dashboard-Computer (DBC) und dem Hauptboard (MDB) hin. Überprüfe das USB-Kabel, falls das Problem anhält.';
+      'Dies deutet in der Regel auf eine fehlende oder instabile Verbindung zwischen dem Dashboard-Computer (DBC) und dem Middle Driver Board (MDB) hin. Überprüfe das USB-Kabel, falls das Problem anhält.';
 
   @override
   String get connectingBypassHint =>

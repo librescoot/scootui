@@ -811,7 +811,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectingExplanation =>
-      'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the main board (MDB). Check the USB cable if this persists.';
+      'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.';
 
   @override
   String get connectingBypassHint =>

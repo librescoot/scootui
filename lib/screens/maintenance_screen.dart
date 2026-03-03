@@ -56,57 +56,57 @@ class MaintenanceScreen extends StatelessWidget {
 
   Widget _buildConnectionInfo(AppLocalizations l10n) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             child: CircularProgressIndicator(
-              strokeWidth: 2.5,
+              strokeWidth: 3,
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Text(
             l10n.connectingTitle,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            height: 1,
+            color: Colors.white24,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.connectingExplanation,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           Container(
             height: 1,
-            color: Colors.white12,
+            color: Colors.white24,
           ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.connectingExplanation,
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 11,
-              fontWeight: FontWeight.w300,
-              height: 1.4,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 1,
-            color: Colors.white12,
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(
             l10n.connectingBypassHint,
             style: const TextStyle(
-              color: Colors.white38,
-              fontSize: 11,
-              fontWeight: FontWeight.w300,
-              height: 1.4,
+              color: Colors.white60,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
