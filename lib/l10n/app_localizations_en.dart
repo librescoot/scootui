@@ -805,4 +805,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get carplayWaitingForVideo => 'Waiting for video...';
+
+  @override
+  String get connectingTitle => 'Trying to connect to vehicle system...';
+
+  @override
+  String get connectingExplanation =>
+      'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.';
+
+  @override
+  String get connectingBypassHint =>
+      'To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.';
 }

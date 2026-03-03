@@ -461,6 +461,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
       ScooterState.readyToDrive => Colors.green,
       ScooterState.standBy => Colors.blue,
       ScooterState.parked => Colors.orange,
+      ScooterState.unknown => Colors.grey,
       ScooterState.off => Colors.grey,
       ScooterState.booting => Colors.purple,
       ScooterState.shuttingDown => Colors.red,
