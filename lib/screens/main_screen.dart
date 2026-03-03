@@ -101,10 +101,14 @@ class _MainScreenState extends State<MainScreen> {
     };
 
     if (!allowedStates.contains(vehicleState)) {
+      final stateRaw = context.read<VehicleSync>().state.stateRaw;
       return SizedBox(
         width: EnvConfig.resolution.width,
         height: EnvConfig.resolution.height,
-        child: MaintenanceScreen(stateRaw: context.read<VehicleSync>().state.stateRaw),
+        child: MaintenanceScreen(
+          stateRaw: stateRaw,
+          showConnectionInfo: vehicleState == ScooterState.unknown,
+        ),
       );
     }
 
