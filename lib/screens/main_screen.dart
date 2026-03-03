@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -44,6 +45,16 @@ class _MainScreenState extends State<MainScreen> {
   ScooterState? _lastVehicleState;
   bool _poweroffScheduled = false;
   Stream<bool>? _prolongedDisconnectStream;
+  bool _startupGraceElapsed = false;
+  Timer? _startupTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startupTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _startupGraceElapsed = true);
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -54,6 +65,12 @@ class _MainScreenState extends State<MainScreen> {
         _prolongedDisconnectStream = repo.prolongedDisconnectStream;
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _startupTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -103,8 +120,15 @@ class _MainScreenState extends State<MainScreen> {
     // Update last known state
     _lastVehicleState = vehicleState;
 
+    // Cancel startup timer once we've received real state from Redis
+    if (vehicleState != ScooterState.unknown && _startupTimer != null) {
+      _startupTimer?.cancel();
+      _startupTimer = null;
+    }
+
     // Show maintenance screen if vehicle is not in normal operating states
     const allowedStates = {
+      ScooterState.unknown,
       ScooterState.parked,
       ScooterState.readyToDrive,
       ScooterState.shuttingDown,
@@ -119,10 +143,16 @@ class _MainScreenState extends State<MainScreen> {
       return SizedBox(
         width: EnvConfig.resolution.width,
         height: EnvConfig.resolution.height,
-        child: MaintenanceScreen(
-          stateRaw: stateRaw,
-          showConnectionInfo: vehicleState == ScooterState.unknown,
-        ),
+        child: MaintenanceScreen(stateRaw: stateRaw),
+      );
+    }
+
+    // After startup grace period, show connection info if still no Redis data
+    if (vehicleState == ScooterState.unknown && _startupGraceElapsed) {
+      return SizedBox(
+        width: EnvConfig.resolution.width,
+        height: EnvConfig.resolution.height,
+        child: const MaintenanceScreen(showConnectionInfo: true),
       );
     }
 
