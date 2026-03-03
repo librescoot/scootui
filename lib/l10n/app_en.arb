@@ -415,5 +415,7 @@
   "carplayInitializingStream": "Initializing MJPEG stream",
   "carplayConnectionError": "CarPlay Connection Error",
   "carplayRetryConnection": "Retry Connection",
-  "carplayWaitingForVideo": "Waiting for video..."
+  "carplayWaitingForVideo": "Waiting for video...",
+
+  "connecting": "Connecting..."
 }

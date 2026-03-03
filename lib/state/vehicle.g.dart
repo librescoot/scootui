@@ -120,7 +120,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
             variable: "state",
             type: SyncFieldType.enum_,
             typeName: "ScooterState",
-            defaultValue: "off",
+            defaultValue: "unknown",
             interval: null),
         SyncFieldSettings(
             name: "stateRaw",
@@ -193,7 +193,7 @@ abstract mixin class $VehicleData implements Syncable<VehicleData> {
           : $_KickstandMap[value] ?? Kickstand.down,
       state: "state" != name
           ? state
-          : $_ScooterStateMap[value] ?? ScooterState.off,
+          : $_ScooterStateMap[value] ?? ScooterState.unknown,
       stateRaw: "state" != name ? stateRaw : value,
       handleBarLockSensor: "handlebar:lock-sensor" != name
           ? handleBarLockSensor

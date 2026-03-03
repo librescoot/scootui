@@ -1573,6 +1573,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for video...'**
   String get carplayWaitingForVideo;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get connecting;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

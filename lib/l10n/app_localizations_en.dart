@@ -805,4 +805,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get carplayWaitingForVideo => 'Waiting for video...';
+
+  @override
+  String get connecting => 'Connecting...';
 }

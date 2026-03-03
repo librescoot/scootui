@@ -13,6 +13,7 @@ enum HandleBarLockSensor { locked, unlocked }
 enum SeatboxLock { open, closed }
 
 enum ScooterState {
+  unknown,
   standBy,
   readyToDrive,
   off,
@@ -70,7 +71,7 @@ class VehicleData with $VehicleData {
   Kickstand kickstand;
 
   @override
-  @StateField(defaultValue: "off")
+  @StateField(defaultValue: "unknown")
   ScooterState state;
 
   @override
@@ -108,7 +109,7 @@ class VehicleData with $VehicleData {
   VehicleData({
     this.blinkerSwitch = BlinkerSwitch.off,
     this.blinkerState = BlinkerState.off,
-    this.state = ScooterState.off,
+    this.state = ScooterState.unknown,
     this.stateRaw = "",
     this.kickstand = Kickstand.down,
     this.handleBarLockSensor = HandleBarLockSensor.locked,

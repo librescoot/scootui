@@ -269,5 +269,7 @@
   "carplayInitializingStream": "MJPEG-Stream wird initialisiert",
   "carplayConnectionError": "CarPlay-Verbindungsfehler",
   "carplayRetryConnection": "Erneut verbinden",
-  "carplayWaitingForVideo": "Warte auf Video..."
+  "carplayWaitingForVideo": "Warte auf Video...",
+
+  "connecting": "Verbinde..."
 }
