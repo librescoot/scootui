@@ -1573,6 +1573,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for video...'**
   String get carplayWaitingForVideo;
+
+  /// No description provided for @connectingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trying to connect to vehicle system...'**
+  String get connectingTitle;
+
+  /// No description provided for @connectingExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.'**
+  String get connectingExplanation;
+
+  /// No description provided for @connectingBypassHint.
+  ///
+  /// In en, this message translates to:
+  /// **'To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.'**
+  String get connectingBypassHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

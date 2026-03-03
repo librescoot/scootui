@@ -126,7 +126,6 @@ class RedisMDBRepository implements MDBRepository {
 
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 10;
 
   static String getRedisHost() {
     // Use an environment variable to determine the Redis host, defaulting to the target system address
@@ -343,11 +342,6 @@ class RedisMDBRepository implements MDBRepository {
   }
 
   Future<void> _attemptReconnect() async {
-    if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('RedisMDBRepository: Max reconnection attempts reached');
-      return;
-    }
-
     _reconnectAttempts++;
     _updateConnectionState(RedisConnectionState.reconnecting);
 
