@@ -107,9 +107,7 @@ class _MainScreenState extends State<MainScreen> {
         height: EnvConfig.resolution.height,
         child: MaintenanceScreen(
           stateRaw: stateRaw,
-          statusMessage: vehicleState == ScooterState.unknown
-              ? context.l10n.connecting
-              : null,
+          showConnectionInfo: vehicleState == ScooterState.unknown,
         ),
       );
     }

@@ -807,5 +807,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get carplayWaitingForVideo => 'Warte auf Video...';
 
   @override
-  String get connecting => 'Verbinde...';
+  String get connectingTitle => 'Verbindung zum Fahrzeugsystem wird hergestellt...';
+
+  @override
+  String get connectingExplanation =>
+      'Dies deutet in der Regel auf eine fehlende oder instabile Verbindung zwischen dem Dashboard-Computer (DBC) und dem Hauptboard (MDB) hin. Überprüfe das USB-Kabel, falls das Problem anhält.';
+
+  @override
+  String get connectingBypassHint =>
+      'Um den Fahrmodus trotzdem zu aktivieren, klappe den Seitenständer hoch, halte beide Bremsen und drücke den Sitzbankknopf.';
 }
