@@ -30,6 +30,7 @@ final $_KickstandMap = {
 };
 
 final $_ScooterStateMap = {
+  "unknown": ScooterState.unknown,
   "stand-by": ScooterState.standBy,
   "ready-to-drive": ScooterState.readyToDrive,
   "off": ScooterState.off,

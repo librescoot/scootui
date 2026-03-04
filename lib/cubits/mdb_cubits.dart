@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/mdb_repository.dart';
+import '../services/settings_service.dart';
 import '../state/auto_standby.dart';
 import '../state/aux_battery.dart';
 import '../state/battery.dart';
@@ -186,8 +187,11 @@ class SpeedLimitSync extends SyncableCubit<SpeedLimitData> {
 class SettingsSync extends SyncableCubit<SettingsData> {
   static SettingsData watch(BuildContext context) => context.watch<SettingsSync>().state;
 
-  static SettingsSync create(BuildContext context) =>
-      SettingsSync(RepositoryProvider.of<MDBRepository>(context))..start();
+  static SettingsSync create(BuildContext context) {
+    final sync = SettingsSync(RepositoryProvider.of<MDBRepository>(context))..start();
+    context.read<SettingsService>().connectSettingsStream(sync.stream);
+    return sync;
+  }
 
   static T select<T>(BuildContext context, T Function(SettingsData) selector) =>
       selector(context.select((SettingsSync e) => e.state));

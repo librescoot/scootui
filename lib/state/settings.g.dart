@@ -32,6 +32,10 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   MapType get mapType;
   MapRenderMode get mapRenderMode;
   PowerDisplayMode get powerDisplayMode;
+  String? get theme;
+  String? get mode;
+  String? get language;
+  String? get valhallaUrl;
   get syncSettings => SyncSettings(
       "settings",
       Duration(microseconds: 5000000),
@@ -106,6 +110,34 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             typeName: "PowerDisplayMode",
             defaultValue: "kw",
             interval: null),
+        SyncFieldSettings(
+            name: "theme",
+            variable: "dashboard.theme",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "dark",
+            interval: null),
+        SyncFieldSettings(
+            name: "mode",
+            variable: "dashboard.mode",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "speedometer",
+            interval: null),
+        SyncFieldSettings(
+            name: "language",
+            variable: "dashboard.language",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "en",
+            interval: null),
+        SyncFieldSettings(
+            name: "valhallaUrl",
+            variable: "dashboard.valhalla-url",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: null,
+            interval: null),
       ],
       "null",
       []);
@@ -130,6 +162,10 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       powerDisplayMode: "dashboard.power-display-mode" != name
           ? powerDisplayMode
           : $_PowerDisplayModeMap[value] ?? PowerDisplayMode.kw,
+      theme: "dashboard.theme" != name ? theme : value,
+      mode: "dashboard.mode" != name ? mode : value,
+      language: "dashboard.language" != name ? language : value,
+      valhallaUrl: "dashboard.valhalla-url" != name ? valhallaUrl : value,
     );
   }
 
@@ -146,6 +182,10 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       mapType: mapType,
       mapRenderMode: mapRenderMode,
       powerDisplayMode: powerDisplayMode,
+      theme: theme,
+      mode: mode,
+      language: language,
+      valhallaUrl: valhallaUrl,
     );
   }
 
@@ -159,7 +199,11 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
         showClock,
         mapType,
         mapRenderMode,
-        powerDisplayMode
+        powerDisplayMode,
+        theme,
+        mode,
+        language,
+        valhallaUrl
       ];
   @override
   String toString() {
@@ -176,6 +220,10 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
     buf.writeln("	mapType = $mapType");
     buf.writeln("	mapRenderMode = $mapRenderMode");
     buf.writeln("	powerDisplayMode = $powerDisplayMode");
+    buf.writeln("	theme = $theme");
+    buf.writeln("	mode = $mode");
+    buf.writeln("	language = $language");
+    buf.writeln("	valhallaUrl = $valhallaUrl");
     buf.writeln(")");
 
     return buf.toString();

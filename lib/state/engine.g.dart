@@ -76,14 +76,14 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
             type: SyncFieldType.num,
             typeName: "num",
             defaultValue: null,
-            interval: Duration(microseconds: 100000)),
+            interval: Duration(microseconds: 250000)),
         SyncFieldSettings(
             name: "rawSpeed",
             variable: "raw-speed",
             type: SyncFieldType.num,
             typeName: "num?",
             defaultValue: null,
-            interval: Duration(microseconds: 100000)),
+            interval: Duration(microseconds: 250000)),
         SyncFieldSettings(
             name: "throttle",
             variable: "throttle",

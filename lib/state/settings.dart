@@ -46,6 +46,22 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   @StateField(name: 'dashboard.power-display-mode', defaultValue: 'kw')
   PowerDisplayMode powerDisplayMode;
 
+  @override
+  @StateField(name: 'dashboard.theme', defaultValue: 'dark')
+  String? theme;
+
+  @override
+  @StateField(name: 'dashboard.mode', defaultValue: 'speedometer')
+  String? mode;
+
+  @override
+  @StateField(name: 'dashboard.language', defaultValue: 'en')
+  String? language;
+
+  @override
+  @StateField(name: 'dashboard.valhalla-url')
+  String? valhallaUrl;
+
   // Constructor for initial values
   SettingsData({
     this.showRawSpeed,
@@ -58,9 +74,12 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
     this.mapType = MapType.offline,
     this.mapRenderMode = MapRenderMode.raster,
     this.powerDisplayMode = PowerDisplayMode.kw,
+    this.theme,
+    this.mode,
+    this.language,
+    this.valhallaUrl,
   });
 
-  // Factory for a completely initial state
   factory SettingsData.initial() => SettingsData();
 
   bool get showRawSpeedBool => showRawSpeed == 'true';
