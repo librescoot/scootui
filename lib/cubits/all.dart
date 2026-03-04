@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
 
-import 'address_cubit.dart';
-import 'carplay_cubit.dart';
 import 'locale_cubit.dart';
 import 'debug_overlay_cubit.dart';
 import 'low_temperature_warning_cubit.dart';
@@ -51,13 +49,11 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: TripCubit.create),
   BlocProvider(create: ShutdownCubit.create),
   BlocProvider(create: MapCubit.create),
-  BlocProvider(create: (context) => CarPlayCubit()),
   BlocProvider(create: OtaSync.create),
   BlocProvider(create: UsbSync.create),
   BlocProvider(create: OtaCubit.create),
   BlocProvider(create: ScreenCubit.create),
   BlocProvider(create: MenuCubit.create),
-  BlocProvider(create: AddressCubit.create),
   BlocProvider(create: SavedLocationsCubit.create),
   BlocProvider(create: DebugOverlayCubit.create),
   BlocProvider(create: ShortcutMenuCubit.create),

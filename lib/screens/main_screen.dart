@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
 
+import '../cubits/address_cubit.dart';
+import '../cubits/carplay_cubit.dart';
 import '../cubits/debug_overlay_cubit.dart';
 import '../l10n/l10n.dart';
 import '../cubits/mdb_cubits.dart';
@@ -245,8 +247,14 @@ class _MainScreenState extends State<MainScreen> {
               // Map, cluster, and CarPlay screens allow menu access
               ScreenMap() => menuTrigger(const MapScreen()),
               ScreenCluster() => menuTrigger(const ClusterScreen()),
-              ScreenCarPlay() => menuTrigger(const CarPlayScreen()),
-              ScreenAddressSelection() => const AddressSelectionScreen(),
+              ScreenCarPlay() => menuTrigger(BlocProvider(
+                    create: (context) => CarPlayCubit(),
+                    child: const CarPlayScreen(),
+                  )),
+              ScreenAddressSelection() => BlocProvider(
+                    create: AddressCubit.create,
+                    child: const AddressSelectionScreen(),
+                  ),
               ScreenOtaBackground() => const OtaBackgroundScreen(),
               ScreenOta() => const OtaScreen(),
               ScreenDebug() => const DebugScreen(),
