@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../state/engine.dart';
 import '../state/vehicle.dart';
 import 'mdb_cubits.dart';
 
@@ -31,14 +30,12 @@ class ShutdownState {
 }
 
 class ShutdownCubit extends Cubit<ShutdownState> {
-  late final StreamSubscription<EngineData> _engineSub;
   late final StreamSubscription<VehicleData> _vehicleSub;
 
   ScooterState? _previousState;
   bool _wasUserInitiatedShutdown = false;
 
   ShutdownCubit({
-    required Stream<EngineData> engineStream,
     required Stream<VehicleData> vehicleStream,
   }) : super(const ShutdownState(status: ShutdownStatus.hidden)) {
     _vehicleSub = vehicleStream.listen(_onVehicleData);
@@ -101,7 +98,6 @@ class ShutdownCubit extends Cubit<ShutdownState> {
 
   @override
   Future<void> close() async {
-    await _engineSub.cancel();
     await _vehicleSub.cancel();
     return super.close();
   }
@@ -110,7 +106,6 @@ class ShutdownCubit extends Cubit<ShutdownState> {
       context.watch<ShutdownCubit>().state;
 
   static ShutdownCubit create(BuildContext context) => ShutdownCubit(
-        engineStream: context.read<EngineSync>().stream,
         vehicleStream: context.read<VehicleSync>().stream,
       );
 }

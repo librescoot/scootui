@@ -13,6 +13,7 @@ class VersionOverlayCubit extends Cubit<bool> {
   DateTime? _brakeHoldStartTime;
   final MDBRepository _mdbRepository;
   StreamSubscription<(String, String)>? _buttonEventsSubscription;
+  StreamSubscription<VehicleData>? _vehicleSubscription;
 
   static const _brakeHoldDuration = Duration(seconds: 3);
 
@@ -45,8 +46,7 @@ class VersionOverlayCubit extends Cubit<bool> {
     cubit._rightBrakePressed = currentState.brakeRight == Toggle.on;
 
 
-    // Update brake state whenever vehicle data changes
-    vehicleSync.stream.listen((vehicleData) {
+    cubit._vehicleSubscription = vehicleSync.stream.listen((vehicleData) {
       cubit.updateBrakeState(
         vehicleData.brakeLeft,
         vehicleData.brakeRight,
@@ -161,9 +161,10 @@ class VersionOverlayCubit extends Cubit<bool> {
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
     _brakeHoldTimer?.cancel();
-    _buttonEventsSubscription?.cancel();
+    await _buttonEventsSubscription?.cancel();
+    await _vehicleSubscription?.cancel();
     return super.close();
   }
 }

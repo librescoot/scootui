@@ -359,10 +359,11 @@ class BatteryWarningIndicators extends StatefulWidget {
 }
 
 class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
-  bool _cbWarningShown = false;
-  bool _auxLowChargeWarningShown = false;
-  bool _auxLowVoltageWarningShown = false;
-  bool _auxCriticalVoltageWarningShown = false;
+  // Track previous debounced warning states to detect false→true transitions
+  bool _prevCbWarning = false;
+  bool _prevAuxLowChargeWarning = false;
+  bool _prevAuxLowVoltageWarning = false;
+  bool _prevAuxCriticalVoltageWarning = false;
 
   // Debouncers for each warning condition - require 3 seconds of consistent condition
   late final ConditionDebouncer _cbWarningDebouncer;
@@ -434,13 +435,6 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     return criticalVoltage && mainPresent && seatboxClosed;
   }
 
-  void _showToastIfNeeded(String message, bool wasShown, Function(bool) setShown) {
-    if (!wasShown) {
-      ToastService.showWarning(message);
-      setShown(true);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final ThemeState(:isDark) = ThemeCubit.watch(context);
@@ -470,39 +464,29 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
         showAuxLowVoltageWarning ||
         showAuxCriticalVoltageWarning;
 
-    // Show toast notifications
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (showCbWarning) {
-        _showToastIfNeeded(L10nService.current.batteryCbNotCharging, _cbWarningShown,
-            (shown) => _cbWarningShown = shown);
-      } else {
-        _cbWarningShown = false;
-      }
+    // Show toast only on false→true transitions to avoid duplicate toasts across rebuilds
+    if (showCbWarning && !_prevCbWarning) {
+      ToastService.showWarning(L10nService.current.batteryCbNotCharging);
+    }
+    _prevCbWarning = showCbWarning;
 
-      if (showAuxLowChargeWarning) {
-        _showToastIfNeeded(L10nService.current.batteryAuxLowNotCharging, _auxLowChargeWarningShown,
-            (shown) => _auxLowChargeWarningShown = shown);
-      } else {
-        _auxLowChargeWarningShown = false;
-      }
+    if (showAuxLowChargeWarning && !_prevAuxLowChargeWarning) {
+      ToastService.showWarning(L10nService.current.batteryAuxLowNotCharging);
+    }
+    _prevAuxLowChargeWarning = showAuxLowChargeWarning;
 
-      if (showAuxLowVoltageWarning) {
-        _showToastIfNeeded(L10nService.current.batteryAuxVoltageLow, _auxLowVoltageWarningShown,
-            (shown) => _auxLowVoltageWarningShown = shown);
-      } else {
-        _auxLowVoltageWarningShown = false;
-      }
+    if (showAuxLowVoltageWarning && !_prevAuxLowVoltageWarning) {
+      ToastService.showWarning(L10nService.current.batteryAuxVoltageLow);
+    }
+    _prevAuxLowVoltageWarning = showAuxLowVoltageWarning;
 
-      if (showAuxCriticalVoltageWarning) {
-        final message = mainBattery.present
-            ? L10nService.current.batteryAuxVoltageVeryLowReplace
-            : L10nService.current.batteryAuxVoltageVeryLowCharge;
-        _showToastIfNeeded(message, _auxCriticalVoltageWarningShown,
-            (shown) => _auxCriticalVoltageWarningShown = shown);
-      } else {
-        _auxCriticalVoltageWarningShown = false;
-      }
-    });
+    if (showAuxCriticalVoltageWarning && !_prevAuxCriticalVoltageWarning) {
+      final message = mainBattery.present
+          ? L10nService.current.batteryAuxVoltageVeryLowReplace
+          : L10nService.current.batteryAuxVoltageVeryLowCharge;
+      ToastService.showWarning(message);
+    }
+    _prevAuxCriticalVoltageWarning = showAuxCriticalVoltageWarning;
 
     final List<Widget> warningIcons = [];
 
