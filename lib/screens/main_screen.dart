@@ -42,7 +42,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  ScooterState? _lastVehicleState;
   bool _poweroffScheduled = false;
   Stream<bool>? _prolongedDisconnectStream;
   bool _startupGraceElapsed = false;
@@ -73,109 +72,115 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  static const _allowedStates = {
+    ScooterState.unknown,
+    ScooterState.parked,
+    ScooterState.readyToDrive,
+    ScooterState.shuttingDown,
+    ScooterState.waitingHibernation,
+    ScooterState.waitingHibernationAdvanced,
+    ScooterState.waitingHibernationSeatbox,
+    ScooterState.waitingHibernationConfirm,
+  };
+
   @override
   Widget build(BuildContext context) {
-    // Get the current screen state
     final state = context.watch<ScreenCubit>().state;
     final menu = context.watch<MenuCubit>();
     final debugMode = context.watch<DebugOverlayCubit>().state;
-    final vehicleState = context.watch<VehicleSync>().state.state;
-    final otaData = context.watch<OtaSync>().state;
 
-    // Check if we should initiate poweroff
-    if (vehicleState == ScooterState.shuttingDown &&
-        _lastVehicleState != ScooterState.shuttingDown &&
-        !_poweroffScheduled) {
-      // State just changed to shutting down
-      final dbcUpdating = otaData.dbcStatus == "downloading" ||
-          otaData.dbcStatus == "installing" ||
-          otaData.dbcStatus == "rebooting";
+    return BlocListener<VehicleSync, VehicleData>(
+      listenWhen: (prev, curr) => prev.state != curr.state,
+      listener: (context, vehicleData) {
+        final vehicleState = vehicleData.state;
 
-      debugPrint('Poweroff check: state=shuttingDown, dbcUpdating=$dbcUpdating, platform=${Platform.operatingSystem}');
+        if (vehicleState == ScooterState.shuttingDown && !_poweroffScheduled) {
+          final otaData = context.read<OtaSync>().state;
+          final dbcUpdating = otaData.dbcStatus == "downloading" ||
+              otaData.dbcStatus == "installing" ||
+              otaData.dbcStatus == "rebooting";
 
-      if (!dbcUpdating) {
-        // Check if running as root (UID 0)
-        Process.run('id', ['-u']).then((result) {
-          final uid = result.stdout.toString().trim();
-          debugPrint('Poweroff check: UID=$uid');
+          debugPrint('Poweroff check: state=shuttingDown, dbcUpdating=$dbcUpdating, platform=${Platform.operatingSystem}');
 
-          if (uid == '0') {
-            debugPrint('Poweroff: Scheduling poweroff in 1.5 seconds...');
-            _poweroffScheduled = true;
-            Future.delayed(const Duration(milliseconds: 1500), () {
-              if (Platform.isLinux) {
-                debugPrint('Poweroff: Executing poweroff command');
-                Process.run('poweroff', []);
+          if (!dbcUpdating) {
+            Process.run('id', ['-u']).then((result) {
+              final uid = result.stdout.toString().trim();
+              debugPrint('Poweroff check: UID=$uid');
+
+              if (uid == '0') {
+                debugPrint('Poweroff: Scheduling poweroff in 1.5 seconds...');
+                _poweroffScheduled = true;
+                Future.delayed(const Duration(milliseconds: 1500), () {
+                  if (Platform.isLinux) {
+                    debugPrint('Poweroff: Executing poweroff command');
+                    Process.run('poweroff', []);
+                  } else {
+                    debugPrint('Poweroff: Would execute poweroff (skipped on ${Platform.operatingSystem})');
+                  }
+                });
               } else {
-                debugPrint('Poweroff: Would execute poweroff (skipped on ${Platform.operatingSystem})');
+                debugPrint('Poweroff: Not running as root, skipping poweroff');
               }
             });
-          } else {
-            debugPrint('Poweroff: Not running as root, skipping poweroff');
           }
-        });
-      }
-    }
+        }
 
-    // Update last known state
-    _lastVehicleState = vehicleState;
+        if (vehicleState != ScooterState.unknown && _startupTimer != null) {
+          _startupTimer?.cancel();
+          _startupTimer = null;
+        }
+      },
+      child: BlocBuilder<VehicleSync, VehicleData>(
+        buildWhen: (prev, curr) {
+          final prevAllowed = _allowedStates.contains(prev.state);
+          final currAllowed = _allowedStates.contains(curr.state);
+          if (prevAllowed != currAllowed) return true;
+          if (!currAllowed && prev.stateRaw != curr.stateRaw) return true;
+          final prevUnknown = prev.state == ScooterState.unknown;
+          final currUnknown = curr.state == ScooterState.unknown;
+          return prevUnknown != currUnknown;
+        },
+        builder: (context, vehicleData) {
+          final vehicleState = vehicleData.state;
 
-    // Cancel startup timer once we've received real state from Redis
-    if (vehicleState != ScooterState.unknown && _startupTimer != null) {
-      _startupTimer?.cancel();
-      _startupTimer = null;
-    }
+          if (!_allowedStates.contains(vehicleState)) {
+            return SizedBox(
+              width: EnvConfig.resolution.width,
+              height: EnvConfig.resolution.height,
+              child: MaintenanceScreen(stateRaw: vehicleData.stateRaw),
+            );
+          }
 
-    // Show maintenance screen if vehicle is not in normal operating states
-    const allowedStates = {
-      ScooterState.unknown,
-      ScooterState.parked,
-      ScooterState.readyToDrive,
-      ScooterState.shuttingDown,
-      ScooterState.waitingHibernation,
-      ScooterState.waitingHibernationAdvanced,
-      ScooterState.waitingHibernationSeatbox,
-      ScooterState.waitingHibernationConfirm,
-    };
-
-    if (!allowedStates.contains(vehicleState)) {
-      final stateRaw = context.read<VehicleSync>().state.stateRaw;
-      return SizedBox(
-        width: EnvConfig.resolution.width,
-        height: EnvConfig.resolution.height,
-        child: MaintenanceScreen(stateRaw: stateRaw),
-      );
-    }
-
-    // After startup grace period, show connection info if still no Redis data
-    if (vehicleState == ScooterState.unknown && _startupGraceElapsed) {
-      return SizedBox(
-        width: EnvConfig.resolution.width,
-        height: EnvConfig.resolution.height,
-        child: const MaintenanceScreen(showConnectionInfo: true),
-      );
-    }
-
-    // Show connection info if Redis has been disconnected for >5s
-    final repo = context.read<MDBRepository>();
-    if (_prolongedDisconnectStream != null && repo is RedisMDBRepository) {
-      return StreamBuilder<bool>(
-        stream: _prolongedDisconnectStream,
-        initialData: repo.prolongedDisconnect,
-        builder: (context, snapshot) {
-          if (snapshot.data == true) {
+          if (vehicleState == ScooterState.unknown && _startupGraceElapsed) {
             return SizedBox(
               width: EnvConfig.resolution.width,
               height: EnvConfig.resolution.height,
               child: const MaintenanceScreen(showConnectionInfo: true),
             );
           }
-          return _buildMainUI(context, state, menu, debugMode, vehicleState);
-        },
-      );
-    }
 
-    return _buildMainUI(context, state, menu, debugMode, vehicleState);
+          final repo = context.read<MDBRepository>();
+          if (_prolongedDisconnectStream != null && repo is RedisMDBRepository) {
+            return StreamBuilder<bool>(
+              stream: _prolongedDisconnectStream,
+              initialData: repo.prolongedDisconnect,
+              builder: (context, snapshot) {
+                if (snapshot.data == true) {
+                  return SizedBox(
+                    width: EnvConfig.resolution.width,
+                    height: EnvConfig.resolution.height,
+                    child: const MaintenanceScreen(showConnectionInfo: true),
+                  );
+                }
+                return _buildMainUI(context, state, menu, debugMode);
+              },
+            );
+          }
+
+          return _buildMainUI(context, state, menu, debugMode);
+        },
+      ),
+    );
   }
 
   Widget _buildMainUI(
@@ -183,7 +188,6 @@ class _MainScreenState extends State<MainScreen> {
     ScreenState state,
     MenuCubit menu,
     DebugMode debugMode,
-    ScooterState vehicleState,
   ) {
     Widget menuTrigger(Widget child) => ControlGestureDetector(
           stream: context.read<VehicleSync>().stream,
