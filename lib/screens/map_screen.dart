@@ -14,6 +14,7 @@ import '../widgets/status_bars/top_status_bar.dart';
 import '../widgets/indicators/indicator_lights.dart';
 import '../widgets/indicators/speed_limit_indicator.dart';
 import '../cubits/mdb_cubits.dart';
+import '../l10n/l10n.dart';
 import '../state/enums.dart';
 import '../state/vehicle.dart';
 
@@ -114,6 +115,7 @@ class MapScreen extends StatelessWidget {
   Widget _buildMap(BuildContext context, MapState mapState, ThemeData theme) {
     // Listen to NavigationState to get the route for drawing
     final navState = context.watch<NavigationCubit>().state;
+    final positionNotifier = context.read<MapCubit>().positionNotifier;
 
     return switch (mapState) {
       MapLoading() => const Center(child: CircularProgressIndicator()),
@@ -136,7 +138,7 @@ class MapScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Please install the map data to use this feature',
+                  context.l10n.destinationInstallMapData,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.grey,
                   ),
@@ -147,22 +149,20 @@ class MapScreen extends StatelessWidget {
           ),
         ),
       MapOnline(
-        :final position,
         :final controller,
         :final onReady,
         :final orientation,
       ) =>
         OnlineMapView(
           mapController: controller,
-          position: position,
+          positionListenable: positionNotifier,
           mapReady: onReady,
           orientation: orientation,
-          route: navState.route, // Pass route from NavigationCubit
-          destination: navState.destination, // Pass destination from NavigationCubit
+          route: navState.route,
+          destination: navState.destination,
         ),
       MapOffline(
         :final tiles,
-        :final position,
         :final controller,
         :final theme,
         :final themeMode,
@@ -176,11 +176,11 @@ class MapScreen extends StatelessWidget {
           theme: theme,
           themeMode: themeMode,
           renderMode: renderMode,
-          position: position,
+          positionListenable: positionNotifier,
           mapReady: onReady,
           orientation: orientation,
-          route: navState.route, // Pass route from NavigationCubit
-          destination: navState.destination, // Pass destination from NavigationCubit
+          route: navState.route,
+          destination: navState.destination,
         ),
     };
   }
