@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart'
-    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -249,16 +249,10 @@ class NorthIndicator extends StatelessWidget {
     final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
     final southColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
+    return AnimatedRotation(
+      turns: -_normalizeAngle(orientation) / 360,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      builder: (context, angle, child) {
-        return Transform.rotate(
-          angle: -angle * (math.pi / 180), // Rotate to show where north is
-          child: child,
-        );
-      },
       child: Container(
         width: 24,
         height: 24,

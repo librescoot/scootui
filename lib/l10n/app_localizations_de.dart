@@ -816,4 +816,10 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get connectingBypassHint =>
       'Um den Fahrmodus trotzdem zu aktivieren, klappe den Seitenständer hoch, halte beide Bremsen und drücke den Sitzbankknopf.';
+
+  @override
+  String get destinationOfflineOnly => 'Die Zielauswahl funktioniert nur mit Offline-Karten';
+
+  @override
+  String get destinationInstallMapData => 'Bitte installiere die Kartendaten, um diese Funktion zu nutzen';
 }

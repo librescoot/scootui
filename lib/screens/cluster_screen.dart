@@ -51,11 +51,11 @@ class _ClusterScreenState extends State<ClusterScreen> {
   Future<void> _printDocumentsDirectory() async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      print('ClusterScreen - Application Documents Directory: ${appDir.path}');
+      debugPrint('ClusterScreen - Application Documents Directory: ${appDir.path}');
       final mapPath = '${appDir.path}/maps/map.mbtiles';
-      print('ClusterScreen - MBTiles path: $mapPath');
+      debugPrint('ClusterScreen - MBTiles path: $mapPath');
     } catch (e) {
-      print('ClusterScreen - Error getting documents directory: $e');
+      debugPrint('ClusterScreen - Error getting documents directory: $e');
     }
   }
 

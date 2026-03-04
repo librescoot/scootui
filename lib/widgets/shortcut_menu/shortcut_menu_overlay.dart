@@ -25,9 +25,6 @@ class ShortcutMenuOverlay extends StatelessWidget {
         return ValueListenableBuilder<int>(
           valueListenable: cubit.selectedIndexNotifier,
           builder: (context, selectedIndex, _) {
-            print(
-                'ShortcutMenuOverlay rebuilding with selectedIndex: $selectedIndex');
-
             return _buildMenuOverlay(
               context: context,
               menuItems: menuItems,
@@ -152,9 +149,6 @@ class ShortcutMenuOverlay extends StatelessWidget {
     required bool isSelected,
     required bool isDark,
   }) {
-    // Add a print statement to debug when this is called
-    print('Building menu item: $item, isSelected: $isSelected');
-
     final size = isSelected ? 80.0 : 60.0;
     final color = isSelected
         ? Colors.orange // Use orange for selected items for better contrast

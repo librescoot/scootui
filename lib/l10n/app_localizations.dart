@@ -1591,6 +1591,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.'**
   String get connectingBypassHint;
+
+  /// No description provided for @destinationOfflineOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'The destination selector only works with offline maps'**
+  String get destinationOfflineOnly;
+
+  /// No description provided for @destinationInstallMapData.
+  ///
+  /// In en, this message translates to:
+  /// **'Please install the map data to use this feature'**
+  String get destinationInstallMapData;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

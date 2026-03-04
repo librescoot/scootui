@@ -273,5 +273,8 @@
 
   "connectingTitle": "Verbindung zum Fahrzeugsystem wird hergestellt...",
   "connectingExplanation": "Dies deutet in der Regel auf eine fehlende oder instabile Verbindung zwischen dem Dashboard-Computer (DBC) und dem Middle Driver Board (MDB) hin. Überprüfe das USB-Kabel, falls das Problem anhält.",
-  "connectingBypassHint": "Um den Fahrmodus trotzdem zu aktivieren, klappe den Seitenständer hoch, halte beide Bremsen und drücke den Sitzbankknopf."
+  "connectingBypassHint": "Um den Fahrmodus trotzdem zu aktivieren, klappe den Seitenständer hoch, halte beide Bremsen und drücke den Sitzbankknopf.",
+
+  "destinationOfflineOnly": "Die Zielauswahl funktioniert nur mit Offline-Karten",
+  "destinationInstallMapData": "Bitte installiere die Kartendaten, um diese Funktion zu nutzen"
 }

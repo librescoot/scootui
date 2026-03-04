@@ -419,5 +419,8 @@
 
   "connectingTitle": "Trying to connect to vehicle system...",
   "connectingExplanation": "This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.",
-  "connectingBypassHint": "To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button."
+  "connectingBypassHint": "To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.",
+
+  "destinationOfflineOnly": "The destination selector only works with offline maps",
+  "destinationInstallMapData": "Please install the map data to use this feature"
 }

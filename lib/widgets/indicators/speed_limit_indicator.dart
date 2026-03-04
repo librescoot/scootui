@@ -15,6 +15,11 @@ class SpeedLimitIndicator extends StatelessWidget {
     this.iconColor,
   });
 
+  static final _baseTextStyle = GoogleFonts.robotoCondensed(
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+  );
+
   @override
   Widget build(BuildContext context) {
     final speedLimit = context.select((NavigationCubit c) => c.state.currentSpeedLimit);
@@ -40,10 +45,8 @@ class SpeedLimitIndicator extends StatelessWidget {
         // Scale font size proportionally to the icon size (62pt at 144px)
         Text(
           speedLimit,
-          style: GoogleFonts.robotoCondensed(
-            fontWeight: FontWeight.bold,
+          style: _baseTextStyle.copyWith(
             fontSize: iconSize * (72 / 144), // Scale proportionally
-            color: Colors.black,
           ),
           textAlign: TextAlign.center,
         ),

@@ -8,6 +8,7 @@ import 'package:vector_map_tiles/vector_map_tiles.dart' show TileProviders, Vect
 import '../cubits/address_cubit.dart';
 import '../cubits/map_cubit.dart';
 import '../cubits/theme_cubit.dart';
+import '../l10n/l10n.dart';
 
 import '../utils/theme_aware_cache.dart';
 
@@ -49,13 +50,13 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
               ),
               const SizedBox(height: 16),
               Text(
-                "The destination selector only works with offline maps",
+                context.l10n.destinationOfflineOnly,
                 style: themeData.textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Please install the map data to use this feature',
+                context.l10n.destinationInstallMapData,
                 style: themeData.textTheme.bodyMedium?.copyWith(
                   color: Colors.grey,
                 ),
@@ -87,9 +88,7 @@ class _DestinationScreenState extends State<DestinationScreen> with SingleTicker
         onMapReady: () {
           onReady?.call(this);
         },
-        onSecondaryTap: (tapPosition, point) {
-          print(point);
-        },
+        onSecondaryTap: (tapPosition, point) {},
         minZoom: 8,
         maxZoom: 20,
         initialCenter: position,

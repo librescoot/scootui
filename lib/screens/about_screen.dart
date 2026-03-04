@@ -14,7 +14,6 @@ import '../widgets/general/control_hints.dart';
 
 const _websiteUrl = 'https://librescoot.org';
 const _licenseId = 'CC BY-NC-SA 4.0';
-const _licenseUrl = 'https://creativecommons.org/licenses/by-nc-sa/4.0/';
 const _copyrightStart = 2025;
 
 const _fossComponents = [
