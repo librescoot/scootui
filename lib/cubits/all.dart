@@ -55,9 +55,9 @@ final List<SingleChildWidget> allCubits = [
   BlocProvider(create: ScreenCubit.create),
   BlocProvider(create: MenuCubit.create),
   BlocProvider(create: SavedLocationsCubit.create),
+  BlocProvider(create: DashboardSyncCubit.create),
   BlocProvider(create: DebugOverlayCubit.create),
   BlocProvider(create: ShortcutMenuCubit.create),
   BlocProvider(create: VersionOverlayCubit.create),
-  BlocProvider(create: DashboardSyncCubit.create),
   BlocProvider(create: LocaleCubit.create),
 ];
