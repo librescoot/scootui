@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/system_cubit.dart';
@@ -14,7 +15,6 @@ class StatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
-    final system = SystemCubit.watch(context);
     final settings = SettingsSync.watch(context);
 
     final textColor = isDark ? Colors.white : Colors.black;
@@ -40,17 +40,20 @@ class StatusBar extends StatelessWidget {
             child: CombinedBatteryDisplay(),
           ),
 
-          // Center - Time
+          // Center - Time (isolated so only Text rebuilds on clock ticks)
           if (showClock)
             Expanded(
               flex: 1,
               child: Center(
-                child: Text(
-                  system.formattedTime,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                    color: textColor,
+                child: BlocBuilder<SystemCubit, SystemState>(
+                  buildWhen: (prev, curr) => prev.formattedTime != curr.formattedTime,
+                  builder: (context, system) => Text(
+                    system.formattedTime,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: textColor,
+                    ),
                   ),
                 ),
               ),

@@ -33,11 +33,11 @@ class EngineData extends Equatable with $EngineData {
   final num rpm;
 
   @override
-  @StateField(interval: Duration(milliseconds: 100))
+  @StateField(interval: Duration(milliseconds: 250))
   final num speed;
 
   @override
-  @StateField(name: "raw-speed", interval: Duration(milliseconds: 100))
+  @StateField(name: "raw-speed", interval: Duration(milliseconds: 250))
   final num? rawSpeed;
 
   @override
