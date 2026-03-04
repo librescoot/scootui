@@ -23,6 +23,12 @@ class TurnByTurnWidget extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return BlocBuilder<NavigationCubit, NavigationState>(
+      buildWhen: (prev, curr) {
+        if (prev.status != curr.status) return true;
+        if (prev.hasInstructions != curr.hasInstructions) return true;
+        if (!curr.hasInstructions || curr.status != NavigationStatus.navigating) return false;
+        return prev.upcomingInstructions != curr.upcomingInstructions;
+      },
       builder: (context, state) {
         // Only show if we have instructions and navigation is active
         if (!state.hasInstructions || state.status != NavigationStatus.navigating) {

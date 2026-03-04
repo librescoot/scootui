@@ -14,6 +14,10 @@ class NavigationStatusOverlay extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return BlocBuilder<NavigationCubit, NavigationState>(
+      buildWhen: (prev, curr) =>
+          prev.status != curr.status ||
+          prev.hasDestination != curr.hasDestination ||
+          prev.hasPendingConditions != curr.hasPendingConditions,
       builder: (context, state) {
         // Show pending conditions (GPS waiting, etc.)
         if (state.status == NavigationStatus.idle && state.hasDestination && state.hasPendingConditions) {

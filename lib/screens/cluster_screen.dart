@@ -92,6 +92,13 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
                     // Conditional spacing (only if turn-by-turn is active)
                     BlocBuilder<NavigationCubit, NavigationState>(
+                      buildWhen: (prev, curr) {
+                        bool hasNav(NavigationState s) =>
+                            (s.status == NavigationStatus.idle && s.hasDestination && s.hasPendingConditions) ||
+                            (s.hasInstructions && s.status != NavigationStatus.idle) ||
+                            s.status == NavigationStatus.arrived;
+                        return hasNav(prev) != hasNav(curr);
+                      },
                       builder: (context, navState) {
                         final hasNavContent = (navState.status == NavigationStatus.idle &&
                                 navState.hasDestination &&
@@ -146,6 +153,12 @@ class _ClusterScreenState extends State<ClusterScreen> {
 
                 // Auto-standby warning overlay
                 BlocBuilder<AutoStandbySync, AutoStandbyData>(
+                  buildWhen: (prev, curr) {
+                    final prevActive = prev.autoStandbyRemaining > 0 && prev.autoStandbyRemaining <= 30;
+                    final currActive = curr.autoStandbyRemaining > 0 && curr.autoStandbyRemaining <= 30;
+                    if (prevActive != currActive) return true;
+                    return currActive && prev.autoStandbyRemaining != curr.autoStandbyRemaining;
+                  },
                   builder: (context, autoStandby) {
                     final remaining = autoStandby.autoStandbyRemaining;
                     if (remaining > 0 && remaining <= 30) {
