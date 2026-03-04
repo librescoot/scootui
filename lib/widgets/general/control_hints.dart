@@ -62,8 +62,10 @@ class _ControlHint extends StatelessWidget {
         Text(
           control,
           style: TextStyle(
-            fontSize: 12,
-            color: isDark ? Colors.white70 : Colors.black54,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: isDark ? Colors.white60 : Colors.black54,
+            letterSpacing: 0.5,
           ),
         ),
         const SizedBox(height: 2),

@@ -8,6 +8,7 @@ import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../l10n/l10n.dart';
 import '../widgets/general/control_gestures_detector.dart';
+import '../widgets/general/control_hints.dart';
 
 const _docsUrl = 'https://librescoot.org/docs/navigation.html';
 
@@ -93,11 +94,9 @@ class NavigationSetupScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: divider)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildControlHint(l10n.controlRightBrake, l10n.aboutBackAction, fg, fgDim),
-                ],
+              child: ControlHints(
+                leftAction: null,
+                rightAction: l10n.aboutBackAction,
               ),
             ),
           ],
@@ -106,22 +105,6 @@ class NavigationSetupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildControlHint(String control, String action, Color fg, Color subtle) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          control,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: subtle, letterSpacing: 0.5),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          action,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: fg),
-        ),
-      ],
-    );
-  }
 }
 
 class _StatusRow extends StatelessWidget {

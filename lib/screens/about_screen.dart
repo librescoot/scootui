@@ -10,6 +10,7 @@ import '../l10n/l10n.dart';
 import '../services/l10n_service.dart';
 import '../services/toast_service.dart';
 import '../widgets/general/control_gestures_detector.dart';
+import '../widgets/general/control_hints.dart';
 
 const _websiteUrl = 'https://librescoot.org';
 const _licenseId = 'CC BY-NC-SA 4.0';
@@ -378,12 +379,9 @@ class _AboutScreenState extends State<AboutScreen> {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: divider)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildControlHint(context.l10n.controlLeftBrake, context.l10n.aboutScrollAction, fg, subtle),
-                  _buildControlHint(context.l10n.controlRightBrake, context.l10n.aboutBackAction, fg, subtle),
-                ],
+              child: ControlHints(
+                leftAction: context.l10n.aboutScrollAction,
+                rightAction: context.l10n.aboutBackAction,
               ),
             ),
           ],
@@ -392,30 +390,4 @@ class _AboutScreenState extends State<AboutScreen> {
     );
   }
 
-  Widget _buildControlHint(
-      String control, String action, Color fg, Color subtle) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          control,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: subtle,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          action,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: fg,
-          ),
-        ),
-      ],
-    );
-  }
 }

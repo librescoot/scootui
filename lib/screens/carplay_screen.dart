@@ -6,13 +6,10 @@ import '../cubits/theme_cubit.dart';
 import '../l10n/l10n.dart';
 import '../env_config.dart';
 import '../widgets/carplay/carplay_video_widget.dart';
+import '../widgets/cluster/blinker_row.dart';
+import '../widgets/cluster/cluster_bottom_bar.dart';
 import '../widgets/status_bars/top_status_bar.dart';
 import '../widgets/status_bars/unified_bottom_status_bar.dart';
-import '../widgets/indicators/indicator_lights.dart';
-import '../widgets/power/power_display.dart';
-import '../state/enums.dart';
-import '../state/vehicle.dart';
-import '../cubits/mdb_cubits.dart';
 
 class CarPlayScreen extends StatefulWidget {
   const CarPlayScreen({super.key});
@@ -22,139 +19,11 @@ class CarPlayScreen extends StatefulWidget {
 }
 
 class _CarPlayScreenState extends State<CarPlayScreen> {
-  // Track blinker state to force animation restart on changes
-  BlinkerState? _previousBlinkerState;
-  Key _leftBlinkerKey = UniqueKey();
-  Key _rightBlinkerKey = UniqueKey();
-
   @override
   void initState() {
     super.initState();
     // Auto-connect to CarPlay backend on screen init
     context.read<CarPlayCubit>().connect();
-  }
-
-  Widget _buildLeftBlinker(BuildContext context) {
-    final vehicleState = VehicleSync.watch(context);
-
-    // Check if blinker state has changed and restart animations if needed
-    if (_previousBlinkerState != vehicleState.blinkerState) {
-      _previousBlinkerState = vehicleState.blinkerState;
-      _leftBlinkerKey = UniqueKey();
-      _rightBlinkerKey = UniqueKey();
-    }
-
-    return (vehicleState.blinkerState == BlinkerState.left ||
-            vehicleState.blinkerState == BlinkerState.both)
-        ? SizedBox(
-            key: _leftBlinkerKey,
-            width: 56,
-            height: 56,
-            child: Center(
-              child: Transform.scale(
-                scale: 0.8,
-                child: IndicatorLights.leftBlinker(vehicleState),
-              ),
-            ),
-          )
-        : const SizedBox(width: 56);
-  }
-
-  Widget _buildRightBlinker(BuildContext context) {
-    final vehicleState = VehicleSync.watch(context);
-
-    return (vehicleState.blinkerState == BlinkerState.right ||
-            vehicleState.blinkerState == BlinkerState.both)
-        ? SizedBox(
-            key: _rightBlinkerKey,
-            width: 56,
-            height: 56,
-            child: Center(
-              child: Transform.scale(
-                scale: 0.8,
-                child: IndicatorLights.rightBlinker(vehicleState),
-              ),
-            ),
-          )
-        : const SizedBox(width: 56);
-  }
-
-  Widget _buildWarningIndicators(BuildContext context, dynamic vehicleState,
-      ThemeData theme, bool isDark) {
-    final battery0 = Battery0Sync.watch(context);
-    final battery1 = Battery1Sync.watch(context);
-
-    final showEngineWarning = vehicleState.isUnableToDrive == Toggle.on;
-    final showHazards = vehicleState.blinkerState == BlinkerState.both;
-    final showParking = vehicleState.state == ScooterState.parked;
-    final showBatteryFault = (battery0.present && battery0.fault.isNotEmpty) ||
-        (battery1.present && battery1.fault.isNotEmpty);
-
-    if (!showEngineWarning &&
-        !showHazards &&
-        !showParking &&
-        !showBatteryFault) {
-      return const SizedBox.shrink();
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showEngineWarning) ...[
-          IndicatorLights.engineWarning(vehicleState),
-          if (showHazards || showParking || showBatteryFault)
-            const SizedBox(width: 8),
-        ],
-        if (showHazards) ...[
-          IndicatorLights.hazards(vehicleState),
-          if (showParking || showBatteryFault) const SizedBox(width: 8),
-        ],
-        if (showParking) ...[
-          IndicatorLights.parkingBrake(vehicleState),
-          if (showBatteryFault) const SizedBox(width: 8),
-        ],
-        if (showBatteryFault) IndicatorLights.batteryFault(battery0, battery1),
-      ],
-    );
-  }
-
-  bool _hasTelltales(BuildContext context, dynamic vehicleState) {
-    final battery0 = Battery0Sync.watch(context);
-    final battery1 = Battery1Sync.watch(context);
-    final showBatteryFault = (battery0.present && battery0.fault.isNotEmpty) ||
-        (battery1.present && battery1.fault.isNotEmpty);
-
-    return vehicleState.isUnableToDrive == Toggle.on ||
-        vehicleState.blinkerState == BlinkerState.both ||
-        vehicleState.state == ScooterState.parked ||
-        showBatteryFault;
-  }
-
-  Widget _buildBottomRow(BuildContext context, dynamic vehicleState,
-      ThemeData theme, bool isDark, double powerOutput, num motorCurrent, dynamic settings) {
-    final hasTelltales = _hasTelltales(context, vehicleState);
-
-    return SizedBox(
-      height: 60,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: hasTelltales
-            ? Center(
-                key: const ValueKey('telltales'),
-                child: _buildWarningIndicators(
-                    context, vehicleState, theme, isDark),
-              )
-            : SizedBox(
-                key: const ValueKey('power'),
-                width: 200,
-                child: PowerDisplay(
-                  powerOutput: powerOutput,
-                  motorCurrent: motorCurrent.toDouble(),
-                  displayMode: settings.powerDisplayMode,
-                ),
-              ),
-      ),
-    );
   }
 
   Widget _buildCarPlayContent(BuildContext context, CarPlayState state) {
@@ -254,10 +123,7 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
-    final vehicleState = VehicleSync.watch(context);
-    final (powerOutput, motorCurrent) = EngineSync.select(context, (data) => (data.powerOutput, data.motorCurrent));
-    final settings = SettingsSync.watch(context);
+    final ThemeState(:theme) = ThemeCubit.watch(context);
 
     return Container(
       width: EnvConfig.resolution.width,
@@ -285,24 +151,13 @@ class _CarPlayScreenState extends State<CarPlayScreen> {
                   child: Column(
                     children: [
                       // Blinker row
-                      Row(
-                        children: [
-                          // Left blinker
-                          _buildLeftBlinker(context),
-
-                          // Spacer
-                          const Expanded(child: SizedBox()),
-
-                          // Right blinker
-                          _buildRightBlinker(context),
-                        ],
-                      ),
+                      const BlinkerRow(),
 
                       // Free space
                       const Expanded(child: SizedBox()),
 
                       // Bottom row with telltales or power display
-                      _buildBottomRow(context, vehicleState, theme, isDark, powerOutput, motorCurrent, settings),
+                      const ClusterBottomBar(),
                     ],
                   ),
                 ),

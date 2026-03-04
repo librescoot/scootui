@@ -10,6 +10,7 @@ import '../../data/menu_structure.dart';
 import '../../models/menu_node.dart';
 import '../../utils/menu_navigator.dart';
 import '../general/control_gestures_detector.dart';
+import '../general/control_hints.dart';
 import 'menu_item.dart';
 
 class MenuOverlay extends StatefulWidget {
@@ -391,20 +392,9 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
                     ),
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildControlHint(
-                      context,
-                      context.l10n.controlLeftBrake,
-                      context.l10n.controlNextItem,
-                    ),
-                    _buildControlHint(
-                      context,
-                      context.l10n.controlRightBrake,
-                      context.l10n.controlSelect,
-                    ),
-                  ],
+                child: ControlHints(
+                  leftAction: context.l10n.controlNextItem,
+                  rightAction: context.l10n.controlSelect,
                 ),
               ),
             ],
@@ -414,31 +404,4 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildControlHint(BuildContext context, String control, String action) {
-    final theme = ThemeCubit.watch(context);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          control,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: theme.isDark ? Colors.white60 : Colors.black54,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          action,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: theme.isDark ? Colors.white : Colors.black,
-          ),
-        ),
-      ],
-    );
-  }
 }
