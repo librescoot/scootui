@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/widgets.dart';
 import 'package:redis/redis.dart';
@@ -136,10 +137,11 @@ class RedisMDBRepository implements MDBRepository {
   bool get prolongedDisconnect => _prolongedDisconnect;
 
   static String getRedisHost() {
-    // Use an environment variable to determine the Redis host, defaulting to the target system address
-    const redisHost = String.fromEnvironment('SCOOTUI_REDIS_HOST',
+    final runtime = Platform.environment['SCOOTUI_REDIS_HOST'];
+    if (runtime != null && runtime.isNotEmpty) return runtime;
+    const compiled = String.fromEnvironment('SCOOTUI_REDIS_HOST',
         defaultValue: '192.168.7.1');
-    return redisHost;
+    return compiled;
   }
 
   static MDBRepository create(BuildContext context) {
