@@ -1603,6 +1603,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please install the map data to use this feature'**
   String get destinationInstallMapData;
+
+  /// No description provided for @mapWaitingForGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for GPS fix'**
+  String get mapWaitingForGps;
+
+  /// No description provided for @mapOutOfCoverage.
+  ///
+  /// In en, this message translates to:
+  /// **'No map data for current location'**
+  String get mapOutOfCoverage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

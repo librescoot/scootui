@@ -71,7 +71,7 @@ class AsyncMbTilesProvider implements VectorTileProvider {
           _pendingRequests[requestId]?.complete(tile);
           _pendingRequests.remove(requestId);
         case _ErrorResponse(:final requestId, :final message):
-          _pendingRequests[requestId]?.completeError(message);
+          _pendingRequests[requestId]?.completeError(Exception(message));
           _pendingRequests.remove(requestId);
       }
     } else if (message is SendPort) {

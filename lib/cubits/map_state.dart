@@ -26,6 +26,7 @@ sealed class MapState with _$MapState {
     required String renderMode,
     void Function(TickerProvider)? onReady,
     @Default(false) bool isReady,
+    @Default(false) bool isOutOfCoverage,
   }) = MapOffline;
 
   const factory MapState.online({

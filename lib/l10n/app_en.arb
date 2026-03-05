@@ -422,5 +422,8 @@
   "connectingBypassHint": "To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.",
 
   "destinationOfflineOnly": "The destination selector only works with offline maps",
-  "destinationInstallMapData": "Please install the map data to use this feature"
+  "destinationInstallMapData": "Please install the map data to use this feature",
+
+  "mapWaitingForGps": "Waiting for GPS fix",
+  "mapOutOfCoverage": "No map data for current location"
 }

@@ -276,5 +276,8 @@
   "connectingBypassHint": "Um den Fahrmodus trotzdem zu aktivieren, klappe den Seitenständer hoch, halte beide Bremsen und drücke den Sitzbankknopf.",
 
   "destinationOfflineOnly": "Die Zielauswahl funktioniert nur mit Offline-Karten",
-  "destinationInstallMapData": "Bitte installiere die Kartendaten, um diese Funktion zu nutzen"
+  "destinationInstallMapData": "Bitte installiere die Kartendaten, um diese Funktion zu nutzen",
+
+  "mapWaitingForGps": "Warte auf GPS-Signal",
+  "mapOutOfCoverage": "Keine Kartendaten für den aktuellen Standort"
 }

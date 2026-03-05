@@ -52,6 +52,7 @@ class MapCubit extends Cubit<MapState> {
 
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
+  MbTilesMetadata? _tilesMetadata;
 
   /// High-frequency position updates (15Hz) via ValueNotifier to avoid cubit state churn
   final positionNotifier = ValueNotifier<LatLng>(defaultCoordinates);
@@ -383,14 +384,19 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onGpsData(GpsData data) {
+    // Only use position data when GPS has a real fix (not the default 0,0)
+    final hasValidPosition = data.state == GpsState.fixEstablished &&
+        (data.latitude != 0.0 || data.longitude != 0.0);
+
     final lastGps = _lastGpsData;
-    final positionChanged = lastGps == null ||
-        (data.latitude - lastGps.latitude).abs() > 0.000001 ||
-        (data.longitude - lastGps.longitude).abs() > 0.000001;
+    final positionChanged = hasValidPosition &&
+        (lastGps == null ||
+            (data.latitude - lastGps.latitude).abs() > 0.000001 ||
+            (data.longitude - lastGps.longitude).abs() > 0.000001);
 
     _lastGpsData = data;
 
-    if (positionChanged) {
+    if (hasValidPosition && positionChanged) {
       // Calculate GPS correction target: project GPS forward to account for latency
       // GPS tells us where we WERE ~300ms ago, so project forward to where we ARE now
       final ecuSpeedKmh = _engineSync.state.speed.toDouble();
@@ -403,18 +409,32 @@ class MapCubit extends Cubit<MapState> {
 
       _gpsCorrectionTarget = LatLng(data.latitude + dLat, data.longitude + dLng);
 
-      // Initialize estimated position if this is first GPS
+      // Initialize estimated position if this is first GPS fix
       _estimatedPosition ??= _gpsCorrectionTarget;
-    }
 
-    // Update position notifier with latest GPS fix (for initial positioning)
-    if (positionChanged) {
+      // Update position notifier with latest GPS fix
       positionNotifier.value = LatLng(data.latitude, data.longitude);
+
+      // Check if position is within mbtiles coverage
+      _updateCoverageState(LatLng(data.latitude, data.longitude));
     }
 
     // Update orientation in state (marker rotation)
     final current = state;
     emit(current.copyWith(orientation: data.course));
+  }
+
+  void _updateCoverageState(LatLng pos) {
+    final bounds = _tilesMetadata?.bounds;
+    if (bounds == null) return;
+    final outOfCoverage = bounds.left > pos.longitude ||
+        bounds.right < pos.longitude ||
+        bounds.top < pos.latitude ||
+        bounds.bottom > pos.latitude;
+    final current = state;
+    if (current is MapOffline && current.isOutOfCoverage != outOfCoverage) {
+      emit(current.copyWith(isOutOfCoverage: outOfCoverage));
+    }
   }
 
   void _onThemeUpdate(ThemeState event) {
@@ -511,6 +531,7 @@ class MapCubit extends Cubit<MapState> {
 
       switch (tilesInit) {
         case InitSuccess(:final metadata):
+          _tilesMetadata = metadata;
           emit(MapState.offline(
             tiles: provider,
             position: _getInitialCoordinates(metadata),
@@ -522,6 +543,7 @@ class MapCubit extends Cubit<MapState> {
             onReady: _onMapReady,
           ));
         case InitError(:final message):
+          _tilesMetadata = null;
           emit(MapState.unavailable(message, controller: ctrl, position: state.position));
       }
     }

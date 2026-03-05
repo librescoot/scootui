@@ -822,4 +822,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get destinationInstallMapData => 'Bitte installiere die Kartendaten, um diese Funktion zu nutzen';
+
+  @override
+  String get mapWaitingForGps => 'Warte auf GPS-Signal';
+
+  @override
+  String get mapOutOfCoverage => 'Keine Kartendaten für den aktuellen Standort';
 }
