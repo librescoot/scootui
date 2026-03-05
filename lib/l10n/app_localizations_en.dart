@@ -154,6 +154,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuOffline => 'Offline';
 
   @override
+  String get menuNavigationRouting => 'Navigation Routing';
+
+  @override
+  String get menuOnlineOpenStreetMap => 'Online (OpenStreetMap)';
+
+  @override
   String get menuSystem => 'System';
 
   @override
