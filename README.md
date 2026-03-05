@@ -64,6 +64,27 @@ FLUTTER_LINUX_RENDERER=software flutter run -d linux
 
 ## ⚙️ Configuration
 
+### Redis Connection
+
+ScootUI connects to Redis on the MDB (default host: `192.168.7.1`, port `6379`).
+
+The Redis host can be overridden with the `SCOOTUI_REDIS_HOST` environment variable:
+
+```bash
+export SCOOTUI_REDIS_HOST=127.0.0.1
+flutter run -d linux
+```
+
+A runtime environment variable takes priority over a compile-time `--dart-define` value. If neither is set, the default `192.168.7.1` is used.
+
+For reference, the compile-time approach still works but is no longer necessary for development:
+
+```bash
+flutter run -d linux --dart-define=SCOOTUI_REDIS_HOST=127.0.0.1
+```
+
+### Runtime Settings
+
 ScootUI uses Redis for dynamic configuration. Settings are stored in the `settings` hash and can be modified at runtime.
 
 ### Dashboard Display Settings
