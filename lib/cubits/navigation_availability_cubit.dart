@@ -90,6 +90,8 @@ class NavigationAvailabilityCubit extends Cubit<NavigationAvailabilityState> {
   static NavigationAvailabilityState watch(BuildContext context) =>
       context.watch<NavigationAvailabilityCubit>().state;
 
+  Future<void> recheck() => _checkAndPublish();
+
   Future<void> _checkAndPublish() async {
     if (_checking) return;
     _checking = true;
