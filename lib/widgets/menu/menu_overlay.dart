@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../l10n/l10n.dart';
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/menu_cubit.dart';
+import '../../cubits/navigation_availability_cubit.dart';
 import '../../cubits/saved_locations_cubit.dart';
+import '../../cubits/screen_cubit.dart';
 import '../../cubits/theme_cubit.dart';
 import '../../data/menu_structure.dart';
 import '../../models/menu_node.dart';
@@ -227,8 +229,13 @@ class _MenuOverlayState extends State<MenuOverlay> with SingleTickerProviderStat
     final menu = context.watch<MenuCubit>();
     final theme = context.watch<ThemeCubit>(); // Watch theme for menu item updates
 
-    // Watch for saved locations changes - menu will rebuild automatically
+    // Watch cubits that isVisible callbacks depend on so menu rebuilds reactively
     context.watch<SavedLocationsCubit>();
+    context.watch<NavigationAvailabilityCubit>();
+    context.watch<InternetSync>();
+    context.watch<SettingsSync>();
+    context.watch<CarPlayAvailabilitySync>();
+    context.watch<ScreenCubit>();
 
     switch (menu.state) {
       case MenuHidden():

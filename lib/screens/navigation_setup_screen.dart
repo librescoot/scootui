@@ -27,6 +27,17 @@ class NavigationSetupScreen extends StatelessWidget {
     final fgDim = isDark ? Colors.white60 : Colors.black54;
     final divider = isDark ? Colors.white12 : Colors.black12;
 
+    final String title;
+    if (!navState.routingAvailable && !navState.localDisplayMapsAvailable) {
+      title = l10n.navSetupTitleBothUnavailable;
+    } else if (!navState.routingAvailable) {
+      title = l10n.navSetupTitleRoutingUnavailable;
+    } else if (!navState.localDisplayMapsAvailable) {
+      title = l10n.navSetupTitleMapsUnavailable;
+    } else {
+      title = l10n.navSetupTitle;
+    }
+
     return ControlGestureDetector(
       stream: vehicleSync.stream,
       initialData: vehicleSync.state,
@@ -42,7 +53,7 @@ class NavigationSetupScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      l10n.navSetupTitle,
+                      title,
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: fg),
                     ),
                     const SizedBox(height: 16),

@@ -30,7 +30,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuNavigationSetup => 'Navigation Setup';
 
   @override
-  String get navSetupTitle => 'Routing Not Available';
+  String get navSetupTitle => 'Navigation Setup';
+
+  @override
+  String get navSetupTitleRoutingUnavailable => 'Routing Not Available';
+
+  @override
+  String get navSetupTitleMapsUnavailable => 'Map Tiles Not Available';
+
+  @override
+  String get navSetupTitleBothUnavailable => 'Navigation Not Available';
 
   @override
   String get navSetupLocalDisplayMaps => 'Offline display maps';

@@ -30,7 +30,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuNavigationSetup => 'Navigation einrichten';
 
   @override
-  String get navSetupTitle => 'Routing nicht verfügbar';
+  String get navSetupTitle => 'Navigation einrichten';
+
+  @override
+  String get navSetupTitleRoutingUnavailable => 'Routing nicht verfügbar';
+
+  @override
+  String get navSetupTitleMapsUnavailable => 'Kartenkacheln nicht verfügbar';
+
+  @override
+  String get navSetupTitleBothUnavailable => 'Navigation nicht verfügbar';
 
   @override
   String get navSetupLocalDisplayMaps => 'Offline-Kartenkacheln';

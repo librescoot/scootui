@@ -137,8 +137,26 @@ abstract class AppLocalizations {
   /// No description provided for @navSetupTitle.
   ///
   /// In en, this message translates to:
-  /// **'Routing Not Available'**
+  /// **'Navigation Setup'**
   String get navSetupTitle;
+
+  /// No description provided for @navSetupTitleRoutingUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Routing Not Available'**
+  String get navSetupTitleRoutingUnavailable;
+
+  /// No description provided for @navSetupTitleMapsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Tiles Not Available'**
+  String get navSetupTitleMapsUnavailable;
+
+  /// No description provided for @navSetupTitleBothUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation Not Available'**
+  String get navSetupTitleBothUnavailable;
 
   /// No description provided for @navSetupLocalDisplayMaps.
   ///
