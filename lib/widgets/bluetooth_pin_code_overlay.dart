@@ -84,7 +84,7 @@ class _BluetoothPinCodeOverlayState extends State<BluetoothPinCodeOverlay> {
                 ),
               ),
             )
-          : Container(), // Return an empty container when pin code is null
+          : const SizedBox.shrink(),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../l10n/l10n.dart';
@@ -62,26 +63,36 @@ class _ManualHibernationOverlayState extends State<ManualHibernationOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final vehicleData = VehicleSync.watch(context);
-    final vehicleState = vehicleData.state;
-    final bothBrakesHeld = vehicleData.brakeLeft == Toggle.on &&
-                           vehicleData.brakeRight == Toggle.on;
+    return BlocListener<VehicleSync, VehicleData>(
+      listenWhen: (previous, current) =>
+          previous.brakeLeft != current.brakeLeft ||
+          previous.brakeRight != current.brakeRight ||
+          previous.state != current.state,
+      listener: (context, vehicleData) {
+        final bothBrakesHeld = vehicleData.brakeLeft == Toggle.on &&
+            vehicleData.brakeRight == Toggle.on;
+        _updateBrakeTimer(bothBrakesHeld, vehicleData.state);
+      },
+      child: BlocBuilder<VehicleSync, VehicleData>(
+        buildWhen: (previous, current) => previous.state != current.state,
+        builder: (context, vehicleData) {
+          final vehicleState = vehicleData.state;
 
-    _updateBrakeTimer(bothBrakesHeld, vehicleState);
+          if (!_isHibernationState(vehicleState)) {
+            return const SizedBox.shrink();
+          }
 
-    // Only show overlay for hibernation states
-    if (!_isHibernationState(vehicleState)) {
-      return const SizedBox.shrink();
-    }
+          final l10n = context.l10n;
 
-    final l10n = context.l10n;
-
-    return Positioned.fill(
-      child: Container(
-        color: Colors.black.withOpacity(0.9),
-        child: Center(
-          child: _buildContent(l10n, vehicleState),
-        ),
+          return Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.9),
+              child: Center(
+                child: _buildContent(l10n, vehicleState),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

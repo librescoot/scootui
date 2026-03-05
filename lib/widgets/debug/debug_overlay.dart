@@ -44,7 +44,7 @@ class _DebugOverlayState extends State<DebugOverlay> {
       final data = await repository.getAll(key);
       return Map.fromEntries(data.map((entry) => MapEntry(entry.$1, entry.$2)));
     } catch (e) {
-      print('Error loading $key data: $e');
+      debugPrint('Error loading $key data: $e');
       return {};
     }
   }

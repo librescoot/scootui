@@ -5,36 +5,41 @@ import '../../cubits/mdb_cubits.dart';
 import '../../l10n/l10n.dart';
 import '../../repositories/mdb_repository.dart';
 import '../../repositories/redis_mdb_repository.dart';
+import '../../state/usb.dart';
 
 class UmsOverlay extends StatelessWidget {
   const UmsOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final usbData = UsbSync.watch(context);
-    final status = usbData.status;
+    return BlocListener<UsbSync, UsbData>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: (context, usbData) {
+        final repo = RepositoryProvider.of<MDBRepository>(context);
+        if (repo is RedisMDBRepository) {
+          repo.suppressConnectionToasts = usbData.status != "idle";
+        }
+      },
+      child: BlocBuilder<UsbSync, UsbData>(
+        buildWhen: (previous, current) => previous.status != current.status,
+        builder: (context, usbData) {
+          final status = usbData.status;
 
-    _updateToastSuppression(context, status);
+          if (status == "idle") {
+            return const SizedBox.shrink();
+          }
 
-    if (status == "idle") {
-      return const SizedBox.shrink();
-    }
+          final l10n = context.l10n;
 
-    final l10n = context.l10n;
-
-    return Container(
-      color: Colors.black,
-      child: Center(
-        child: _buildContent(l10n, status),
+          return Container(
+            color: Colors.black,
+            child: Center(
+              child: _buildContent(l10n, status),
+            ),
+          );
+        },
       ),
     );
-  }
-
-  void _updateToastSuppression(BuildContext context, String status) {
-    final repo = RepositoryProvider.of<MDBRepository>(context);
-    if (repo is RedisMDBRepository) {
-      repo.suppressConnectionToasts = status != "idle";
-    }
   }
 
   Widget _buildContent(AppLocalizations l10n, String status) {

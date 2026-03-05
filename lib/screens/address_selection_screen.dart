@@ -90,7 +90,6 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
         });
       },
       onRightPress: () {
-        _buildDialInput(screenCubit, addresses).toString();
         final index = _fromBase32(code);
         if (index >= 0 && index < addresses.length) {
           final address = addresses[index];

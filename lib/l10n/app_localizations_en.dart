@@ -816,4 +816,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get connectingBypassHint =>
       'To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.';
+
+  @override
+  String get destinationOfflineOnly => 'The destination selector only works with offline maps';
+
+  @override
+  String get destinationInstallMapData => 'Please install the map data to use this feature';
+
+  @override
+  String get mapWaitingForGps => 'Waiting for GPS fix';
+
+  @override
+  String get mapOutOfCoverage => 'No map data for current location';
 }

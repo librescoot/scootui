@@ -308,7 +308,8 @@ class MapOffline implements MapState {
       required this.themeMode,
       required this.renderMode,
       this.onReady,
-      this.isReady = false});
+      this.isReady = false,
+      this.isOutOfCoverage = false});
 
   @override
   final MapController controller;
@@ -323,6 +324,8 @@ class MapOffline implements MapState {
   final void Function(TickerProvider)? onReady;
   @JsonKey()
   final bool isReady;
+  @JsonKey()
+  final bool isOutOfCoverage;
 
   /// Create a copy of MapState
   /// with the given fields replaced by the non-null parameter values.
@@ -350,16 +353,28 @@ class MapOffline implements MapState {
             (identical(other.renderMode, renderMode) ||
                 other.renderMode == renderMode) &&
             (identical(other.onReady, onReady) || other.onReady == onReady) &&
-            (identical(other.isReady, isReady) || other.isReady == isReady));
+            (identical(other.isReady, isReady) || other.isReady == isReady) &&
+            (identical(other.isOutOfCoverage, isOutOfCoverage) ||
+                other.isOutOfCoverage == isOutOfCoverage));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, controller, position,
-      orientation, tiles, theme, themeMode, renderMode, onReady, isReady);
+  int get hashCode => Object.hash(
+      runtimeType,
+      controller,
+      position,
+      orientation,
+      tiles,
+      theme,
+      themeMode,
+      renderMode,
+      onReady,
+      isReady,
+      isOutOfCoverage);
 
   @override
   String toString() {
-    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, tiles: $tiles, theme: $theme, themeMode: $themeMode, renderMode: $renderMode, onReady: $onReady, isReady: $isReady)';
+    return 'MapState.offline(controller: $controller, position: $position, orientation: $orientation, tiles: $tiles, theme: $theme, themeMode: $themeMode, renderMode: $renderMode, onReady: $onReady, isReady: $isReady, isOutOfCoverage: $isOutOfCoverage)';
   }
 }
 
@@ -380,7 +395,8 @@ abstract mixin class $MapOfflineCopyWith<$Res>
       String themeMode,
       String renderMode,
       void Function(TickerProvider)? onReady,
-      bool isReady});
+      bool isReady,
+      bool isOutOfCoverage});
 }
 
 /// @nodoc
@@ -404,6 +420,7 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
     Object? renderMode = null,
     Object? onReady = freezed,
     Object? isReady = null,
+    Object? isOutOfCoverage = null,
   }) {
     return _then(MapOffline(
       controller: null == controller
@@ -441,6 +458,10 @@ class _$MapOfflineCopyWithImpl<$Res> implements $MapOfflineCopyWith<$Res> {
       isReady: null == isReady
           ? _self.isReady
           : isReady // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isOutOfCoverage: null == isOutOfCoverage
+          ? _self.isOutOfCoverage
+          : isOutOfCoverage // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
   }

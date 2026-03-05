@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart'
-    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, TweenAnimationBuilder, Widget, TickerProviderStateMixin;
+    show Border, BoxDecoration, BoxShape, Brightness, BuildContext, Canvas, Colors, Column, Container, CrossAxisAlignment, CustomPaint, CustomPainter, Curves, FontWeight, Icon, Icons, Paint, PaintingStyle, Positioned, SizedBox, Size, State, StatefulWidget, Stack, Text, TextStyle, Theme, ValueListenableBuilder, Widget, TickerProviderStateMixin;
 import 'package:flutter/scheduler.dart' show Ticker, TickerCallback;
 import 'package:flutter/widgets.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -249,16 +250,10 @@ class NorthIndicator extends StatelessWidget {
     final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
     final southColor = isDark ? Colors.grey.shade400 : Colors.grey.shade600;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: _normalizeAngle(orientation), end: _normalizeAngle(orientation)),
+    return AnimatedRotation(
+      turns: -_normalizeAngle(orientation) / 360,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      builder: (context, angle, child) {
-        return Transform.rotate(
-          angle: -angle * (math.pi / 180), // Rotate to show where north is
-          child: child,
-        );
-      },
       child: Container(
         width: 24,
         height: 24,
@@ -423,20 +418,20 @@ class ScaleBar extends StatelessWidget {
 
 class OnlineMapView extends StatefulWidget {
   final MapController mapController;
-  final LatLng position;
+  final ValueListenable<LatLng> positionListenable;
   final double orientation;
   final void Function(TickerProvider)? mapReady;
-  final Route? route; // Added
-  final LatLng? destination; // Added
+  final Route? route;
+  final LatLng? destination;
 
   const OnlineMapView({
     super.key,
     required this.mapController,
-    required this.position,
+    required this.positionListenable,
     required this.orientation,
     this.mapReady,
-    this.route, // Added
-    this.destination, // Added
+    this.route,
+    this.destination,
   });
 
   @override
@@ -500,7 +495,7 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
             onMapReady: () => widget.mapReady?.call(this),
             minZoom: 8,
             maxZoom: 18,
-            initialCenter: widget.position,
+            initialCenter: widget.positionListenable.value,
             initialZoom: 17,
             backgroundColor: theme.scaffoldBackgroundColor,
           ),
@@ -513,13 +508,11 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
             if (widget.route != null && widget.route!.waypoints.isNotEmpty)
               PolylineLayer(
                 polylines: [
-                  // Border/outline
                   Polyline(
                     points: widget.route!.waypoints,
                     strokeWidth: 6.0,
                     color: isDark ? Colors.grey.shade800 : Colors.white,
                   ),
-                  // Main route line
                   Polyline(
                     points: widget.route!.waypoints,
                     strokeWidth: 4.0,
@@ -527,9 +520,12 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
                   ),
                 ],
               ),
-            AnimatedMarkerLayer(
-              targetPosition: widget.position,
-              destination: widget.destination,
+            ValueListenableBuilder<LatLng>(
+              valueListenable: widget.positionListenable,
+              builder: (context, position, _) => AnimatedMarkerLayer(
+                targetPosition: position,
+                destination: widget.destination,
+              ),
             ),
           ],
         ),
@@ -542,9 +538,12 @@ class _OnlineMapViewState extends State<OnlineMapView> with TickerProviderStateM
             children: [
               NorthIndicator(orientation: widget.orientation),
               const SizedBox(height: 4),
-              ScaleBar(
-                zoom: _getZoomIfReady(),
-                latitude: widget.position.latitude,
+              ValueListenableBuilder<LatLng>(
+                valueListenable: widget.positionListenable,
+                builder: (context, position, _) => ScaleBar(
+                  zoom: _getZoomIfReady(),
+                  latitude: position.latitude,
+                ),
               ),
             ],
           ),
@@ -558,7 +557,7 @@ class OfflineMapView extends StatefulWidget {
   final MapController mapController;
   final vtr.Theme theme;
   final VectorTileProvider tiles;
-  final LatLng position;
+  final ValueListenable<LatLng> positionListenable;
   final double orientation;
   final String themeMode;
   final String renderMode;
@@ -571,7 +570,7 @@ class OfflineMapView extends StatefulWidget {
     required this.mapController,
     required this.theme,
     required this.tiles,
-    required this.position,
+    required this.positionListenable,
     required this.orientation,
     required this.themeMode,
     required this.renderMode,
@@ -667,7 +666,7 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
             },
             minZoom: 8,
             maxZoom: 20,
-            initialCenter: widget.position,
+            initialCenter: widget.positionListenable.value,
             initialZoom: 17,
             backgroundColor: theme.scaffoldBackgroundColor,
             onTap: (tapPosition, latLng) {
@@ -693,18 +692,20 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
                   ? VectorTileLayerMode.vector
                   : VectorTileLayerMode.raster,
               maximumZoom: 20,
-              // Optimized cache settings for better performance
               fileCacheTtl: const Duration(days: 7),
-              memoryTileCacheMaxSize: 10 * 1024 * 1024, // 10MB memory cache (bytes)
-              memoryTileDataCacheMaxSize: 99, // 99 parsed tiles in memory (max < 100)
-              fileCacheMaximumSizeInBytes: 500 * 1024 * 1024, // 500MB file cache
+              memoryTileCacheMaxSize: 10 * 1024 * 1024,
+              memoryTileDataCacheMaxSize: 99,
+              fileCacheMaximumSizeInBytes: 500 * 1024 * 1024,
               tileDelay: Duration.zero,
               cacheFolder: ThemeAwareCache.getCacheFolderProvider(widget.themeMode),
             ),
             if (routeLayer != null) routeLayer,
-            AnimatedMarkerLayer(
-              targetPosition: widget.position,
-              destination: widget.destination,
+            ValueListenableBuilder<LatLng>(
+              valueListenable: widget.positionListenable,
+              builder: (context, position, _) => AnimatedMarkerLayer(
+                targetPosition: position,
+                destination: widget.destination,
+              ),
             ),
           ],
         ),
@@ -717,9 +718,12 @@ class _OfflineMapViewState extends State<OfflineMapView> with TickerProviderStat
             children: [
               NorthIndicator(orientation: widget.orientation),
               const SizedBox(height: 4),
-              ScaleBar(
-                zoom: _getZoomIfReady(),
-                latitude: widget.position.latitude,
+              ValueListenableBuilder<LatLng>(
+                valueListenable: widget.positionListenable,
+                builder: (context, position, _) => ScaleBar(
+                  zoom: _getZoomIfReady(),
+                  latitude: position.latitude,
+                ),
               ),
             ],
           ),

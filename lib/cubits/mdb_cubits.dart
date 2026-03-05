@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/mdb_repository.dart';
+import '../services/settings_service.dart';
 import '../state/auto_standby.dart';
 import '../state/aux_battery.dart';
 import '../state/battery.dart';
@@ -184,8 +187,11 @@ class SpeedLimitSync extends SyncableCubit<SpeedLimitData> {
 class SettingsSync extends SyncableCubit<SettingsData> {
   static SettingsData watch(BuildContext context) => context.watch<SettingsSync>().state;
 
-  static SettingsSync create(BuildContext context) =>
-      SettingsSync(RepositoryProvider.of<MDBRepository>(context))..start();
+  static SettingsSync create(BuildContext context) {
+    final sync = SettingsSync(RepositoryProvider.of<MDBRepository>(context))..start();
+    context.read<SettingsService>().connectSettingsStream(sync.stream);
+    return sync;
+  }
 
   static T select<T>(BuildContext context, T Function(SettingsData) selector) =>
       selector(context.select((SettingsSync e) => e.state));
@@ -194,34 +200,48 @@ class SettingsSync extends SyncableCubit<SettingsData> {
 }
 
 class CbBatterySync extends SyncableCubit<CbBatteryData> {
+  late final StreamSubscription<VehicleData> _vehicleSub;
+
   static CbBatteryData watch(BuildContext context) => context.watch<CbBatterySync>().state;
 
   static CbBatterySync create(BuildContext context) =>
       CbBatterySync(RepositoryProvider.of<MDBRepository>(context), context.read<VehicleSync>())..start();
 
   CbBatterySync(MDBRepository repo, VehicleSync vehicleSync) : super(redisRepository: repo, initialState: CbBatteryData()) {
-    vehicleSync.stream.listen((vehicleState) {
-      // Check if seatbox just closed
+    _vehicleSub = vehicleSync.stream.listen((vehicleState) {
       if (vehicleState.seatboxLock == SeatboxLock.closed) {
         refreshAllFields();
       }
     });
   }
+
+  @override
+  Future<void> close() async {
+    await _vehicleSub.cancel();
+    return super.close();
+  }
 }
 
 class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
+  late final StreamSubscription<VehicleData> _vehicleSub;
+
   static AuxBatteryData watch(BuildContext context) => context.watch<AuxBatterySync>().state;
 
   static AuxBatterySync create(BuildContext context) =>
       AuxBatterySync(RepositoryProvider.of<MDBRepository>(context), context.read<VehicleSync>())..start();
 
   AuxBatterySync(MDBRepository repo, VehicleSync vehicleSync) : super(redisRepository: repo, initialState: AuxBatteryData()) {
-    vehicleSync.stream.listen((vehicleState) {
-      // Check if seatbox just closed
+    _vehicleSub = vehicleSync.stream.listen((vehicleState) {
       if (vehicleState.seatboxLock == SeatboxLock.closed) {
         refreshAllFields();
       }
     });
+  }
+
+  @override
+  Future<void> close() async {
+    await _vehicleSub.cancel();
+    return super.close();
   }
 }
 

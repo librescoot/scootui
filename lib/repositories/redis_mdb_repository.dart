@@ -27,7 +27,7 @@ class ConnectionPool {
   ConnectionPool({
     required this.host,
     required this.port,
-    this.maxConnections = 50,
+    this.maxConnections = 10,
   }) {
     _startHealthCheck();
   }

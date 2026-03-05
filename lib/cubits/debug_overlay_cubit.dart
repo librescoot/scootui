@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repositories/mdb_repository.dart';
+import '../state/dashboard.dart';
+import 'dashboard_cubit.dart';
 
 enum DebugMode { off, overlay, full }
 
@@ -22,46 +24,31 @@ extension DebugModeString on String {
 
 class DebugOverlayCubit extends Cubit<DebugMode> {
   final MDBRepository? _mdbRepository;
-  Timer? _refreshTimer;
+  StreamSubscription<DashboardData>? _dashboardSubscription;
 
   static const _redisKey = 'dashboard';
   static const _redisField = 'debug';
 
-  DebugOverlayCubit({MDBRepository? mdbRepository})
-      : _mdbRepository = mdbRepository,
+  DebugOverlayCubit({
+    MDBRepository? mdbRepository,
+    Stream<DashboardData>? dashboardStream,
+  })  : _mdbRepository = mdbRepository,
         super(DebugMode.off) {
-    _initRedisListener();
+    if (dashboardStream != null) {
+      _dashboardSubscription = dashboardStream.listen((data) {
+        final debugMode = (data.debug == null || data.debug!.isEmpty)
+            ? DebugMode.off
+            : data.debug!.toDebugMode();
+        if (debugMode != state) emit(debugMode);
+      });
+    }
   }
 
   static DebugOverlayCubit create(BuildContext context) {
     return DebugOverlayCubit(
       mdbRepository: context.read<MDBRepository>(),
+      dashboardStream: context.read<DashboardSyncCubit>().stream,
     );
-  }
-
-  void _initRedisListener() {
-    _checkRedisValue();
-
-    _refreshTimer =
-        Timer.periodic(const Duration(seconds: 1), (_) => _checkRedisValue());
-  }
-
-  Future<void> _checkRedisValue() async {
-    if (_mdbRepository == null) return;
-
-    try {
-      final value = await _mdbRepository!.get(_redisKey, _redisField);
-
-      final debugMode = (value == null || value.isEmpty)
-          ? DebugMode.off
-          : value.toDebugMode();
-
-      if (debugMode != state) {
-        emit(debugMode);
-      }
-    } catch (e) {
-      print('Error checking debug mode state: $e');
-    }
   }
 
   void toggleMode() async {
@@ -107,13 +94,13 @@ class DebugOverlayCubit extends Cubit<DebugMode> {
     try {
       await _mdbRepository!.set(_redisKey, _redisField, value);
     } catch (e) {
-      print('Error updating debug mode in Redis: $e');
+      debugPrint('Error updating debug mode in Redis: $e');
     }
   }
 
   @override
   Future<void> close() {
-    _refreshTimer?.cancel();
+    _dashboardSubscription?.cancel();
     return super.close();
   }
 }

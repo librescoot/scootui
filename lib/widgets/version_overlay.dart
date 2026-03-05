@@ -78,7 +78,7 @@ class _VersionOverlayContentState extends State<_VersionOverlayContent> {
       final data = await repository.getAll(key);
       return data.isNotEmpty;
     } catch (e) {
-      print('Error checking if $key exists: $e');
+      debugPrint('Error checking if $key exists: $e');
       return false;
     }
   }
@@ -88,7 +88,7 @@ class _VersionOverlayContentState extends State<_VersionOverlayContent> {
       final data = await repository.getAll(key);
       return Map.fromEntries(data.map((entry) => MapEntry(entry.$1, entry.$2)));
     } catch (e) {
-      print('Error loading $key data: $e');
+      debugPrint('Error loading $key data: $e');
       return {};
     }
   }

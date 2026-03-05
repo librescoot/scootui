@@ -52,6 +52,10 @@ class MapCubit extends Cubit<MapState> {
 
   MapTransformAnimator? _transformAnimator;
   final bool _mapLocked = false;
+  MbTilesMetadata? _tilesMetadata;
+
+  /// High-frequency position updates (15Hz) via ValueNotifier to avoid cubit state churn
+  final positionNotifier = ValueNotifier<LatLng>(defaultCoordinates);
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
   SettingsData? _currentSettings; // Store current settings for map type and render mode
   ThemeState? _currentTheme; // Store current theme state
@@ -180,6 +184,8 @@ class MapCubit extends Cubit<MapState> {
     _shutdownSub.cancel();
     _navigationStateSub.cancel();
     _settingsSub.cancel();
+
+    positionNotifier.dispose();
 
     return super.close();
   }
@@ -378,14 +384,19 @@ class MapCubit extends Cubit<MapState> {
   }
 
   void _onGpsData(GpsData data) {
+    // Only use position data when GPS has a real fix (not the default 0,0)
+    final hasValidPosition = data.state == GpsState.fixEstablished &&
+        (data.latitude != 0.0 || data.longitude != 0.0);
+
     final lastGps = _lastGpsData;
-    final positionChanged = lastGps == null ||
-        (data.latitude - lastGps.latitude).abs() > 0.000001 ||
-        (data.longitude - lastGps.longitude).abs() > 0.000001;
+    final positionChanged = hasValidPosition &&
+        (lastGps == null ||
+            (data.latitude - lastGps.latitude).abs() > 0.000001 ||
+            (data.longitude - lastGps.longitude).abs() > 0.000001);
 
     _lastGpsData = data;
 
-    if (positionChanged) {
+    if (hasValidPosition && positionChanged) {
       // Calculate GPS correction target: project GPS forward to account for latency
       // GPS tells us where we WERE ~300ms ago, so project forward to where we ARE now
       final ecuSpeedKmh = _engineSync.state.speed.toDouble();
@@ -398,13 +409,32 @@ class MapCubit extends Cubit<MapState> {
 
       _gpsCorrectionTarget = LatLng(data.latitude + dLat, data.longitude + dLng);
 
-      // Initialize estimated position if this is first GPS
+      // Initialize estimated position if this is first GPS fix
       _estimatedPosition ??= _gpsCorrectionTarget;
+
+      // Update position notifier with latest GPS fix
+      positionNotifier.value = LatLng(data.latitude, data.longitude);
+
+      // Check if position is within mbtiles coverage
+      _updateCoverageState(LatLng(data.latitude, data.longitude));
     }
 
     // Update orientation in state (marker rotation)
     final current = state;
     emit(current.copyWith(orientation: data.course));
+  }
+
+  void _updateCoverageState(LatLng pos) {
+    final bounds = _tilesMetadata?.bounds;
+    if (bounds == null) return;
+    final outOfCoverage = bounds.left > pos.longitude ||
+        bounds.right < pos.longitude ||
+        bounds.top < pos.latitude ||
+        bounds.bottom > pos.latitude;
+    final current = state;
+    if (current is MapOffline && current.isOutOfCoverage != outOfCoverage) {
+      emit(current.copyWith(isOutOfCoverage: outOfCoverage));
+    }
   }
 
   void _onThemeUpdate(ThemeState event) {
@@ -449,7 +479,7 @@ class MapCubit extends Cubit<MapState> {
 
     final mapIsReady = state is MapOffline || state is MapOnline;
     if (mapIsReady) {
-      _moveAndRotate(state.position, state.orientation);
+      _moveAndRotate(positionNotifier.value, state.orientation);
     }
   }
 
@@ -461,17 +491,18 @@ class MapCubit extends Cubit<MapState> {
 
   LatLng _getInitialCoordinates(MbTilesMetadata meta) {
     final bounds = meta.bounds;
+    final currentPos = positionNotifier.value;
     if (bounds != null &&
-        (bounds.left > state.position.longitude ||
-            bounds.right < state.position.longitude ||
-            bounds.top < state.position.latitude ||
-            bounds.bottom > state.position.latitude)) {
+        (bounds.left > currentPos.longitude ||
+            bounds.right < currentPos.longitude ||
+            bounds.top < currentPos.latitude ||
+            bounds.bottom > currentPos.latitude)) {
       return LatLng(
         (bounds.top + bounds.bottom) / 2,
         (bounds.right + bounds.left) / 2,
       );
     }
-    return state.position;
+    return currentPos;
   }
 
   Future<void> _loadMap(ThemeState themeState, SettingsData settings) async {
@@ -500,6 +531,7 @@ class MapCubit extends Cubit<MapState> {
 
       switch (tilesInit) {
         case InitSuccess(:final metadata):
+          _tilesMetadata = metadata;
           emit(MapState.offline(
             tiles: provider,
             position: _getInitialCoordinates(metadata),
@@ -511,6 +543,7 @@ class MapCubit extends Cubit<MapState> {
             onReady: _onMapReady,
           ));
         case InitError(:final message):
+          _tilesMetadata = null;
           emit(MapState.unavailable(message, controller: ctrl, position: state.position));
       }
     }
@@ -792,8 +825,8 @@ class MapCubit extends Cubit<MapState> {
     };
     if (!isReady || isClosed) return;
 
-    // Update state with position (for vehicle marker)
-    emit(current.copyWith(position: prediction.position));
+    // Update position notifier (avoids 15Hz cubit state emission)
+    positionNotifier.value = prediction.position;
 
     final controller = current.controller;
     final camera = controller.camera;
@@ -896,14 +929,5 @@ class MapCubit extends Cubit<MapState> {
       // Silently ignore - widget likely disposed during animation
     }
 
-    // Debug: log rotation values
-    _debugFrameCount++;
-    if (_debugFrameCount % 30 == 0) {
-      final gpsHeading = _lastGpsData?.course ?? 0;
-      final ecuSpeedKmh = _engineSync.state.speed.toDouble();
-      print("MapCubit ROT: speed=${ecuSpeedKmh.toStringAsFixed(1)}km/h, gps=${gpsHeading.toStringAsFixed(1)}°, pred=${prediction.heading.toStringAsFixed(1)}°, lastValid=${_lastValidHeading.toStringAsFixed(1)}°, target=${_targetRotation.toStringAsFixed(1)}°, current=${_currentRotation.toStringAsFixed(1)}°, applied=${rotation.toStringAsFixed(1)}°");
-    }
   }
-
-  int _debugFrameCount = 0;
 }
