@@ -50,6 +50,8 @@
   "menuMapType": "Map Type",
   "menuOnline": "Online",
   "menuOffline": "Offline",
+  "menuNavigationRouting": "Navigation Routing",
+  "menuOnlineOpenStreetMap": "Online (OpenStreetMap)",
   "menuSystem": "System",
   "menuEnterUmsMode": "Enter UMS mode",
   "menuResetTripStatistics": "Reset Trip Statistics",

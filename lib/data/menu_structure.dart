@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../config.dart';
 import '../cubits/locale_cubit.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/navigation_availability_cubit.dart';
@@ -485,6 +486,33 @@ MenuNode buildMenuTree(BuildContext context) {
                   ),
                 ],
                ),
+              MenuNode.submenu(
+                id: 'navigation_routing',
+                title: l10n.menuNavigationRouting,
+                children: [
+                  MenuNode.setting(
+                    id: 'routing_online',
+                    title: l10n.menuOnlineOpenStreetMap,
+                    currentValue: settings.valhallaUrl == AppConfig.valhallaOnlineEndpoint ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>()
+                          .updateValhallaEndpointSetting(AppConfig.valhallaOnlineEndpoint);
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'routing_offline',
+                    title: l10n.menuOffline,
+                    currentValue: (settings.valhallaUrl == null ||
+                            settings.valhallaUrl!.isEmpty ||
+                            settings.valhallaUrl == AppConfig.valhallaOnDeviceEndpoint)
+                        ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>()
+                          .updateValhallaEndpointSetting(AppConfig.valhallaOnDeviceEndpoint);
+                    },
+                  ),
+                ],
+              ),
              ],
            ),
 

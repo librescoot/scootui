@@ -380,6 +380,18 @@ abstract class AppLocalizations {
   /// **'Offline'**
   String get menuOffline;
 
+  /// No description provided for @menuNavigationRouting.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation Routing'**
+  String get menuNavigationRouting;
+
+  /// No description provided for @menuOnlineOpenStreetMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Online (OpenStreetMap)'**
+  String get menuOnlineOpenStreetMap;
+
   /// No description provided for @menuSystem.
   ///
   /// In en, this message translates to:
