@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../config.dart';
 import '../cubits/locale_cubit.dart';
+import '../state/internet.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/navigation_availability_cubit.dart';
 import '../cubits/menu_cubit.dart';
@@ -86,25 +87,45 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Navigation unavailable info (shown when routing engine is not available)
+      // Navigation unavailable info (shown when offline nav is not ready)
       MenuNode.action(
         id: 'navigation_setup',
         title: l10n.menuNavigationSetup,
-        isVisible: (context) =>
-            !context.read<NavigationAvailabilityCubit>().state.routingAvailable,
+        isVisible: (context) {
+          final navState = context.read<NavigationAvailabilityCubit>().state;
+          final internet = context.read<InternetSync>().state;
+          final s = context.read<SettingsSync>().state;
+          final isOnline = internet.modemState == ModemState.connected;
+          final routingIsOnline = s.valhallaUrl == AppConfig.valhallaOnlineEndpoint;
+          final mapIsOnline = s.mapType == MapType.online;
+          if (isOnline) {
+            return (!routingIsOnline && !navState.routingAvailable) ||
+                (!mapIsOnline && !navState.localDisplayMapsAvailable);
+          } else {
+            // Offline: only show setup if routing is configured offline and not ready.
+            // If routing is set to online, getting internet is the fix — not nav setup.
+            return !routingIsOnline && !navState.routingAvailable;
+          }
+        },
         onAction: (context) {
           context.read<MenuCubit>().hideMenu();
           context.read<ScreenCubit>().showNavigationSetup();
         },
       ),
 
-      // Navigation submenu (only shown when routing engine is available)
+      // Navigation submenu (shown when routing is ready or online routing is reachable)
       MenuNode.submenu(
         id: 'navigation',
         title: l10n.menuNavigation,
         headerTitle: l10n.menuNavigationHeader,
-        isVisible: (context) =>
-            context.read<NavigationAvailabilityCubit>().state.routingAvailable,
+        isVisible: (context) {
+          final navState = context.read<NavigationAvailabilityCubit>().state;
+          final internet = context.read<InternetSync>().state;
+          final s = context.read<SettingsSync>().state;
+          final isOnline = internet.modemState == ModemState.connected;
+          final routingIsOnline = s.valhallaUrl == AppConfig.valhallaOnlineEndpoint;
+          return navState.routingAvailable || (isOnline && routingIsOnline);
+        },
         children: [
           MenuNode.action(
             id: 'nav_enter_code',
