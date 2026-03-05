@@ -46,6 +46,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSetupScanForInstructions => 'Scan for setup instructions';
 
   @override
+  String get navSetupDownloadButton => 'Download maps';
+
+  @override
+  String get navSetupDownloadLocating => 'Detecting your region...';
+
+  @override
+  String navSetupDownloadProgress(int percent) {
+    return 'Downloading... $percent%';
+  }
+
+  @override
+  String get navSetupDownloadInstalling => 'Installing maps...';
+
+  @override
+  String get navSetupDownloadDone => 'Maps installed. Restarting navigation services...';
+
+  @override
+  String get navSetupDownloadError => 'Download failed';
+
+  @override
+  String get navSetupDownloadWaitingGps => 'Waiting for GPS fix...';
+
+  @override
+  String get navSetupDownloadNoInternet => 'No internet connection';
+
+  @override
+  String get navSetupDownloadUnsupported => 'No maps available for your location';
+
+  @override
   String get menuEnterDestinationCode => 'Enter Destination Code';
 
   @override

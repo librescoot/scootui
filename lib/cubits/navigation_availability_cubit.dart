@@ -52,6 +52,8 @@ class NavigationAvailabilityCubit extends Cubit<NavigationAvailabilityState> {
   static NavigationAvailabilityState watch(BuildContext context) =>
       context.watch<NavigationAvailabilityCubit>().state;
 
+  Future<void> recheck() => _checkAndPublish();
+
   Future<void> _checkAndPublish() async {
     final localDisplayMapsAvailable = await _checkLocalDisplayMapsAvailable();
     final routingAvailable = await _checkValhallaAvailable();
