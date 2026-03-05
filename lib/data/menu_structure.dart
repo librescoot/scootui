@@ -185,6 +185,14 @@ MenuNode buildMenuTree(BuildContext context) {
               context.read<MenuCubit>().hideMenu();
             },
           ),
+          MenuNode.action(
+            id: 'nav_setup_info',
+            title: l10n.menuNavigationSetup,
+            onAction: (context) {
+              context.read<MenuCubit>().hideMenu();
+              context.read<ScreenCubit>().showNavigationSetup();
+            },
+          ),
         ],
       ),
 
