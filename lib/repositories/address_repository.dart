@@ -193,7 +193,8 @@ class AddressRepository {
   Future<void> _saveDatabase(AddressDatabase database) async {
     final file = await _getFile();
     if (file == null) {
-      // TODO: actually handle this
+      developer.log('Failed to get database file path, address data will not be saved',
+          name: 'AddressRepository');
       return;
     }
 
