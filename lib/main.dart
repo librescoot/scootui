@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform, Process;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +57,7 @@ void main() async {
   // Trigger background address database build if needed (don't await)
   _buildAddressDatabaseIfNeeded();
 
+  WidgetsBinding.instance.addPostFrameCallback((_) => _fadeInOverlay());
   runApp(const ScooterClusterApp());
 }
 
@@ -93,6 +94,15 @@ void _buildAddressDatabaseIfNeeded() async {
   } catch (e) {
     print('[Startup] Failed to build address database: $e');
   }
+}
+
+void _fadeInOverlay() {
+  if (kIsWeb) return;
+  const alphaPath = '/sys/class/graphics/fb1/overlay_alpha';
+  if (!File(alphaPath).existsSync()) return;
+  Process.run('/usr/bin/imx-overlay-alpha', ['fade', '0', '255', '1000'])
+      .then((_) => Process.run('systemctl', ['stop', 'boot-animation.service']))
+      .catchError((_) {});
 }
 
 Future<void> _setupPlatformConfigurations() async {
