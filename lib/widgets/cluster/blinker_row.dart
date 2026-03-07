@@ -30,48 +30,52 @@ class _BlinkerRowState extends State<BlinkerRow> {
       },
       buildWhen: (prev, curr) => prev.blinkerState != curr.blinkerState,
       builder: (context, vehicleState) {
+        final overlayActive = context.read<SettingsSync>().state.blinkerOverlayEnabled;
         return Row(
           children: [
-            _buildLeft(vehicleState),
+            _buildLeft(vehicleState, overlayActive),
             const Expanded(child: SizedBox()),
-            _buildRight(vehicleState),
+            _buildRight(vehicleState, overlayActive),
           ],
         );
       },
     );
   }
 
-  Widget _buildLeft(VehicleData vehicleState) {
-    return (vehicleState.blinkerState == BlinkerState.left ||
-            vehicleState.blinkerState == BlinkerState.both)
-        ? SizedBox(
-            key: _leftKey,
-            width: 56,
-            height: 56,
-            child: Center(
-              child: Transform.scale(
-                scale: 0.8,
-                child: IndicatorLights.leftBlinker(vehicleState),
-              ),
-            ),
-          )
-        : const SizedBox(width: 56);
+  Widget _buildLeft(VehicleData vehicleState, bool overlayActive) {
+    final showIcon = vehicleState.blinkerState == BlinkerState.left ||
+        vehicleState.blinkerState == BlinkerState.both;
+    // Hide single-side icon when overlay is handling it
+    final useOverlay = overlayActive && vehicleState.blinkerState == BlinkerState.left;
+    if (!showIcon || useOverlay) return const SizedBox(width: 56);
+    return SizedBox(
+      key: _leftKey,
+      width: 56,
+      height: 56,
+      child: Center(
+        child: Transform.scale(
+          scale: 0.8,
+          child: IndicatorLights.leftBlinker(vehicleState),
+        ),
+      ),
+    );
   }
 
-  Widget _buildRight(VehicleData vehicleState) {
-    return (vehicleState.blinkerState == BlinkerState.right ||
-            vehicleState.blinkerState == BlinkerState.both)
-        ? SizedBox(
-            key: _rightKey,
-            width: 56,
-            height: 56,
-            child: Center(
-              child: Transform.scale(
-                scale: 0.8,
-                child: IndicatorLights.rightBlinker(vehicleState),
-              ),
-            ),
-          )
-        : const SizedBox(width: 56);
+  Widget _buildRight(VehicleData vehicleState, bool overlayActive) {
+    final showIcon = vehicleState.blinkerState == BlinkerState.right ||
+        vehicleState.blinkerState == BlinkerState.both;
+    final useOverlay = overlayActive && vehicleState.blinkerState == BlinkerState.right;
+    if (!showIcon || useOverlay) return const SizedBox(width: 56);
+    return SizedBox(
+      key: _rightKey,
+      width: 56,
+      height: 56,
+      child: Center(
+        child: Transform.scale(
+          scale: 0.8,
+          child: IndicatorLights.rightBlinker(vehicleState),
+        ),
+      ),
+    );
   }
 }

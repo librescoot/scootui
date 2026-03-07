@@ -410,6 +410,24 @@ abstract class AppLocalizations {
   /// **'Online (OpenStreetMap)'**
   String get menuOnlineOpenStreetMap;
 
+  /// No description provided for @menuBlinkerStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Blinker Style'**
+  String get menuBlinkerStyle;
+
+  /// No description provided for @menuBlinkerStyleIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Icon (default)'**
+  String get menuBlinkerStyleIcon;
+
+  /// No description provided for @menuBlinkerStyleOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Fullscreen Arrow'**
+  String get menuBlinkerStyleOverlay;
+
   /// No description provided for @menuSystem.
   ///
   /// In en, this message translates to:

@@ -545,6 +545,30 @@ MenuNode buildMenuTree(BuildContext context) {
              ],
            ),
 
+          // Blinker Style submenu
+          MenuNode.submenu(
+            id: 'settings_blinker_style',
+            title: l10n.menuBlinkerStyle,
+            children: [
+              MenuNode.setting(
+                id: 'blinker_small',
+                title: l10n.menuBlinkerStyleIcon,
+                currentValue: (settings.blinkerStyle ?? 'small') == 'icon' ? 1 : 0,
+                onAction: (context) async {
+                  await context.read<SettingsService>().updateBlinkerStyleSetting('icon');
+                },
+              ),
+              MenuNode.setting(
+                id: 'blinker_overlay',
+                title: l10n.menuBlinkerStyleOverlay,
+                currentValue: (settings.blinkerStyle ?? 'small') == 'overlay' ? 1 : 0,
+                onAction: (context) async {
+                  await context.read<SettingsService>().updateBlinkerStyleSetting('overlay');
+                },
+              ),
+            ],
+          ),
+
            // System submenu
            MenuNode.submenu(
              id: 'settings_system',

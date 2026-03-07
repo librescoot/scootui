@@ -66,6 +66,7 @@ class SettingsService {
     set(AppConfig.languageSettingKey, data.language, 'en');
     set(AppConfig.showRawSpeedKey, data.showRawSpeed, 'false');
     set(AppConfig.batteryDisplayModeKey, data.batteryDisplayMode, 'percentage');
+    set(AppConfig.blinkerStyleKey, data.blinkerStyle, 'icon');
 
     if (data.valhallaUrl != null && data.valhallaUrl!.isNotEmpty) {
       if (_settings[AppConfig.valhallaEndpointKey] != data.valhallaUrl) {
@@ -243,6 +244,16 @@ class SettingsService {
   Future<void> updateMapRenderModeSetting(String value) async {
     _settings[AppConfig.mapRenderModeKey] = value;
     await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.mapRenderModeKey, value);
+    _settingsController.add(_settings);
+  }
+
+  String getBlinkerStyleSetting() {
+    return (_settings[AppConfig.blinkerStyleKey] as String?) ?? 'icon';
+  }
+
+  Future<void> updateBlinkerStyleSetting(String value) async {
+    _settings[AppConfig.blinkerStyleKey] = value;
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.blinkerStyleKey, value);
     _settingsController.add(_settings);
   }
 

@@ -169,6 +169,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuOnlineOpenStreetMap => 'Online (OpenStreetMap)';
 
   @override
+  String get menuBlinkerStyle => 'Blinker-Stil';
+
+  @override
+  String get menuBlinkerStyleIcon => 'Icon (Standard)';
+
+  @override
+  String get menuBlinkerStyleOverlay => 'Vollbild-Pfeil';
+
+  @override
   String get menuSystem => 'System';
 
   @override
