@@ -32,6 +32,10 @@ class ShutdownOverlay extends StatelessWidget {
     // 4. If background processing only (no OTA, no full shutdown) -> show small background indicator
     // 5. Otherwise -> show nothing
 
+    if (shutdownState.isBlackout) {
+      return Container(color: Colors.black);
+    }
+
     if (isOtaOngoing && isFullShutdownOverlay) {
       return _buildCombinedOtaShutdownOverlay(
           context, vehicleState, otaData, shutdownState.status);

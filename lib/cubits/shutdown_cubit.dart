@@ -13,7 +13,8 @@ enum ShutdownStatus {
   backgroundProcessing,
   suspending,
   hibernatingImminent,
-  suspendingImminent
+  suspendingImminent,
+  blackout,
 }
 
 class ShutdownState {
@@ -24,13 +25,18 @@ class ShutdownState {
   bool get isVisible => status != ShutdownStatus.hidden;
   bool get isFullOverlay =>
       status == ShutdownStatus.shuttingDown ||
-      status == ShutdownStatus.shutdownComplete;
+      status == ShutdownStatus.shutdownComplete ||
+      status == ShutdownStatus.blackout;
   bool get isBackgroundIndicator =>
       status == ShutdownStatus.backgroundProcessing;
+  bool get isBlackout => status == ShutdownStatus.blackout;
 }
 
 class ShutdownCubit extends Cubit<ShutdownState> {
+  static ShutdownCubit? _instance;
+
   late final StreamSubscription<VehicleData> _vehicleSub;
+  Timer? _blackoutTimer;
 
   ScooterState? _previousState;
   bool _wasUserInitiatedShutdown = false;
@@ -38,7 +44,16 @@ class ShutdownCubit extends Cubit<ShutdownState> {
   ShutdownCubit({
     required Stream<VehicleData> vehicleStream,
   }) : super(const ShutdownState(status: ShutdownStatus.hidden)) {
+    _instance = this;
     _vehicleSub = vehicleStream.listen(_onVehicleData);
+  }
+
+  static void forceBlackout() => _instance?._doBlackout();
+
+  void _doBlackout() {
+    _blackoutTimer?.cancel();
+    _blackoutTimer = null;
+    if (!isClosed) emit(const ShutdownState(status: ShutdownStatus.blackout));
   }
 
   void _onVehicleData(VehicleData data) {
@@ -52,7 +67,6 @@ class ShutdownCubit extends Cubit<ShutdownState> {
       _wasUserInitiatedShutdown = true;
     }
 
-    // Map scooter state to shutdown status
     ShutdownStatus newStatus;
 
     switch (currentState) {
@@ -69,17 +83,14 @@ class ShutdownCubit extends Cubit<ShutdownState> {
         newStatus = ShutdownStatus.suspendingImminent;
         break;
       case ScooterState.standBy:
-        // If we came from a user-initiated shutdown, keep showing shutdown overlay
         if (_wasUserInitiatedShutdown) {
           newStatus = ShutdownStatus.shutdownComplete;
         } else {
-          // If we're in standBy but didn't come from parked/ready-to-drive, show background processing indicator
           newStatus = ShutdownStatus.backgroundProcessing;
         }
         break;
       case ScooterState.parked:
       case ScooterState.readyToDrive:
-        // Clear user shutdown flag when returning to active states
         _wasUserInitiatedShutdown = false;
         newStatus = ShutdownStatus.hidden;
         break;
@@ -87,17 +98,24 @@ class ShutdownCubit extends Cubit<ShutdownState> {
         newStatus = ShutdownStatus.hidden;
     }
 
-    // Update previous state for next transition
     _previousState = currentState;
 
-    // Only emit if status changed
+    if (state.status == ShutdownStatus.blackout) return;
+
     if (state.status != newStatus) {
       emit(ShutdownState(status: newStatus));
+
+      if (newStatus == ShutdownStatus.shuttingDown) {
+        _blackoutTimer?.cancel();
+        _blackoutTimer = Timer(const Duration(milliseconds: 500), _doBlackout);
+      }
     }
   }
 
   @override
   Future<void> close() async {
+    _blackoutTimer?.cancel();
+    _instance = null;
     await _vehicleSub.cancel();
     return super.close();
   }

@@ -1,4 +1,4 @@
-import 'dart:io' show File, Platform, Process;
+import 'dart:io' show File, Platform, Process, ProcessSignal, exit;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'cubits/all.dart';
 import 'cubits/locale_cubit.dart';
+import 'cubits/shutdown_cubit.dart';
 import 'cubits/theme_cubit.dart';
 import 'env_config.dart';
 import 'l10n/app_localizations.dart';
@@ -56,6 +57,14 @@ void main() async {
 
   // Trigger background address database build if needed (don't await)
   _buildAddressDatabaseIfNeeded();
+
+  if (!kIsWeb && Platform.isLinux) {
+    ProcessSignal.sigterm.watch().listen((_) async {
+      ShutdownCubit.forceBlackout();
+      await Future.delayed(const Duration(milliseconds: 100));
+      exit(0);
+    });
+  }
 
   WidgetsBinding.instance.addPostFrameCallback((_) => _fadeInOverlay());
   runApp(const ScooterClusterApp());

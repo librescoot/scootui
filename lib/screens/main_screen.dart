@@ -104,25 +104,12 @@ class _MainScreenState extends State<MainScreen> {
 
           debugPrint('Poweroff check: state=shuttingDown, dbcUpdating=$dbcUpdating, platform=${Platform.operatingSystem}');
 
-          if (!dbcUpdating) {
-            Process.run('id', ['-u']).then((result) {
-              final uid = result.stdout.toString().trim();
-              debugPrint('Poweroff check: UID=$uid');
-
-              if (uid == '0') {
-                debugPrint('Poweroff: Scheduling poweroff in 1.5 seconds...');
-                _poweroffScheduled = true;
-                Future.delayed(const Duration(milliseconds: 1500), () {
-                  if (Platform.isLinux) {
-                    debugPrint('Poweroff: Executing poweroff command');
-                    Process.run('poweroff', []);
-                  } else {
-                    debugPrint('Poweroff: Would execute poweroff (skipped on ${Platform.operatingSystem})');
-                  }
-                });
-              } else {
-                debugPrint('Poweroff: Not running as root, skipping poweroff');
-              }
+          if (!dbcUpdating && Platform.isLinux && Platform.environment['USER'] == 'root') {
+            debugPrint('Poweroff: Scheduling poweroff in 300ms...');
+            _poweroffScheduled = true;
+            Future.delayed(const Duration(milliseconds: 300), () {
+              debugPrint('Poweroff: Executing poweroff command');
+              Process.run('poweroff', []);
             });
           }
         }
