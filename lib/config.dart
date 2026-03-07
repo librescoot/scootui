@@ -62,4 +62,7 @@ class AppConfig {
 
   /// Maximum battery range in kilometers at 100% SOC and 100% SOH
   static const double maxBatteryRangeKm = 45.0;
+
+  /// Redis blinker style setting key ('small' or 'overlay')
+  static const String blinkerStyleKey = 'dashboard.blinker-style';
 }

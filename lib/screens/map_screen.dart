@@ -241,11 +241,13 @@ class MapScreen extends StatelessWidget {
   Widget _buildBlinkerRow(BuildContext context) {
     final vehicleState = VehicleSync.watch(context);
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
+    final overlayActive = context.read<SettingsSync>().state.blinkerOverlayEnabled;
 
     return Row(
       children: [
         // Left blinker
         (vehicleState.blinkerState == BlinkerState.left || vehicleState.blinkerState == BlinkerState.both)
+          && !(overlayActive && vehicleState.blinkerState == BlinkerState.left)
           ? Container(
               width: 56,
               height: 56,
@@ -271,6 +273,7 @@ class MapScreen extends StatelessWidget {
 
         // Right blinker
         (vehicleState.blinkerState == BlinkerState.right || vehicleState.blinkerState == BlinkerState.both)
+          && !(overlayActive && vehicleState.blinkerState == BlinkerState.right)
           ? Container(
               width: 56,
               height: 56,
