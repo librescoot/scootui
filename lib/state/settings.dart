@@ -62,6 +62,10 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   @StateField(name: 'dashboard.valhalla-url')
   String? valhallaUrl;
 
+  @override
+  @StateField(name: 'dashboard.blinker-style', defaultValue: 'icon')
+  String? blinkerStyle;
+
   // Constructor for initial values
   SettingsData({
     this.showRawSpeed,
@@ -78,10 +82,12 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
     this.mode,
     this.language,
     this.valhallaUrl,
+    this.blinkerStyle,
   });
 
   factory SettingsData.initial() => SettingsData();
 
   bool get showRawSpeedBool => showRawSpeed == 'true';
   bool get showBatteryAsRange => batteryDisplayMode == 'range';
+  bool get blinkerOverlayEnabled => blinkerStyle == 'overlay';
 }
