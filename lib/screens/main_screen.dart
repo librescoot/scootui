@@ -16,6 +16,7 @@ import '../repositories/mdb_repository.dart';
 import '../repositories/redis_mdb_repository.dart';
 import '../services/toast_service.dart';
 import '../state/bluetooth.dart';
+import '../widgets/blinker/blinker_overlay.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
 import '../widgets/general/control_gestures_detector.dart';
 import '../widgets/hibernation/manual_hibernation_overlay.dart';
@@ -262,6 +263,9 @@ class _MainScreenState extends State<MainScreen> {
               ScreenNavigationSetup() => const NavigationSetupScreen(),
               ScreenShuttingDown() => menuTrigger(const ClusterScreen()), // Fallback (shouldn't happen)
             },
+
+            // Blinker overlay (fullscreen arrow when turn signal active, style='overlay')
+            const BlinkerOverlay(),
 
             // Menu overlay
             MenuOverlay(),
