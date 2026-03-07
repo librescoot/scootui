@@ -11,6 +11,7 @@ import '../l10n/l10n.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
+import '../cubits/shutdown_cubit.dart';
 import '../env_config.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/redis_mdb_repository.dart';
@@ -91,28 +92,21 @@ class _MainScreenState extends State<MainScreen> {
     final menu = context.watch<MenuCubit>();
     final debugMode = context.watch<DebugOverlayCubit>().state;
 
-    return BlocListener<VehicleSync, VehicleData>(
+    return BlocListener<ShutdownCubit, ShutdownState>(
+      listenWhen: (prev, curr) => prev.status != curr.status,
+      listener: (context, shutdownState) {
+        if (shutdownState.status == ShutdownStatus.exiting && !_poweroffScheduled) {
+          debugPrint('Poweroff: shutdown animation complete, executing poweroff');
+          if (Platform.isLinux && Platform.environment['USER'] == 'root') {
+            _poweroffScheduled = true;
+            Process.run('poweroff', []);
+          }
+        }
+      },
+      child: BlocListener<VehicleSync, VehicleData>(
       listenWhen: (prev, curr) => prev.state != curr.state,
       listener: (context, vehicleData) {
         final vehicleState = vehicleData.state;
-
-        if (vehicleState == ScooterState.shuttingDown && !_poweroffScheduled) {
-          final otaData = context.read<OtaSync>().state;
-          final dbcUpdating = otaData.dbcStatus == "downloading" ||
-              otaData.dbcStatus == "installing" ||
-              otaData.dbcStatus == "rebooting";
-
-          debugPrint('Poweroff check: state=shuttingDown, dbcUpdating=$dbcUpdating, platform=${Platform.operatingSystem}');
-
-          if (!dbcUpdating && Platform.isLinux && Platform.environment['USER'] == 'root') {
-            debugPrint('Poweroff: Scheduling poweroff in 300ms...');
-            _poweroffScheduled = true;
-            Future.delayed(const Duration(milliseconds: 300), () {
-              debugPrint('Poweroff: Executing poweroff command');
-              Process.run('poweroff', []);
-            });
-          }
-        }
 
         if (vehicleState != ScooterState.unknown && _startupTimer != null) {
           _startupTimer?.cancel();
@@ -168,6 +162,7 @@ class _MainScreenState extends State<MainScreen> {
 
           return _buildMainUI(context, state, menu, debugMode);
         },
+      ),
       ),
     );
   }

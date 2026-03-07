@@ -61,7 +61,7 @@ void main() async {
   if (!kIsWeb && Platform.isLinux) {
     ProcessSignal.sigterm.watch().listen((_) async {
       ShutdownCubit.forceBlackout();
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 200));
       exit(0);
     });
   }
@@ -113,6 +113,7 @@ void _fadeInOverlay() {
       .then((_) => Process.run('systemctl', ['stop', 'boot-animation.service']))
       .catchError((_) {});
 }
+
 
 Future<void> _setupPlatformConfigurations() async {
   if (kIsWeb) {

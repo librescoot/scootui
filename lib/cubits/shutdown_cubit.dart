@@ -9,6 +9,7 @@ import 'mdb_cubits.dart';
 enum ShutdownStatus {
   hidden,
   shuttingDown,
+  exiting,
   shutdownComplete,
   backgroundProcessing,
   suspending,
@@ -25,11 +26,14 @@ class ShutdownState {
   bool get isVisible => status != ShutdownStatus.hidden;
   bool get isFullOverlay =>
       status == ShutdownStatus.shuttingDown ||
+      status == ShutdownStatus.exiting ||
       status == ShutdownStatus.shutdownComplete ||
       status == ShutdownStatus.blackout;
   bool get isBackgroundIndicator =>
       status == ShutdownStatus.backgroundProcessing;
-  bool get isBlackout => status == ShutdownStatus.blackout;
+  bool get isBlackout =>
+      status == ShutdownStatus.blackout ||
+      status == ShutdownStatus.exiting;
 }
 
 class ShutdownCubit extends Cubit<ShutdownState> {
@@ -54,6 +58,15 @@ class ShutdownCubit extends Cubit<ShutdownState> {
     _blackoutTimer?.cancel();
     _blackoutTimer = null;
     if (!isClosed) emit(const ShutdownState(status: ShutdownStatus.blackout));
+  }
+
+  void signalAnimationComplete() {
+    if (state.status == ShutdownStatus.blackout) return;
+    _blackoutTimer?.cancel();
+    _blackoutTimer = null;
+    if (!isClosed) {
+      emit(const ShutdownState(status: ShutdownStatus.exiting));
+    }
   }
 
   void _onVehicleData(VehicleData data) {
@@ -104,11 +117,6 @@ class ShutdownCubit extends Cubit<ShutdownState> {
 
     if (state.status != newStatus) {
       emit(ShutdownState(status: newStatus));
-
-      if (newStatus == ShutdownStatus.shuttingDown) {
-        _blackoutTimer?.cancel();
-        _blackoutTimer = Timer(const Duration(milliseconds: 500), _doBlackout);
-      }
     }
   }
 

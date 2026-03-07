@@ -23,7 +23,9 @@ class ShutdownContent extends StatelessWidget {
         return l10n.shutdownSuspensionImminent;
       case ShutdownStatus.backgroundProcessing:
         return l10n.shutdownProcessing;
-      default:
+      case ShutdownStatus.exiting:
+      case ShutdownStatus.blackout:
+      case ShutdownStatus.hidden:
         return '';
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../l10n/l10n.dart';
 import '../../cubits/shutdown_cubit.dart';
@@ -7,40 +8,123 @@ import '../../state/vehicle.dart';
 import '../../state/ota.dart';
 import 'shutdown_animation.dart';
 
-class ShutdownOverlay extends StatelessWidget {
+class ShutdownOverlay extends StatefulWidget {
   const ShutdownOverlay({super.key});
 
   @override
+  State<ShutdownOverlay> createState() => _ShutdownOverlayState();
+}
+
+class _ShutdownOverlayState extends State<ShutdownOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        context.read<ShutdownCubit>().signalAnimationComplete();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _tryStartAnimation(BuildContext context) {
+    final ota = context.read<OtaSync>().state;
+    final otaOngoing =
+        ota.dbcStatus == 'downloading' || ota.dbcStatus == 'installing';
+    if (!otaOngoing && !_controller.isAnimating && _controller.value == 0.0) {
+      _controller.forward();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ShutdownCubit, ShutdownState>(
+          listenWhen: (prev, curr) => prev.status != curr.status,
+          listener: (context, state) {
+            if (state.status == ShutdownStatus.shuttingDown) {
+              _tryStartAnimation(context);
+            } else {
+              _controller.stop();
+              _controller.reset();
+            }
+          },
+        ),
+        BlocListener<OtaSync, OtaData>(
+          listener: (context, ota) {
+            final shutdownStatus =
+                context.read<ShutdownCubit>().state.status;
+            if (shutdownStatus == ShutdownStatus.shuttingDown) {
+              _tryStartAnimation(context);
+            }
+          },
+        ),
+      ],
+      child: _buildOverlay(context),
+    );
+  }
+
+  Widget _buildOverlay(BuildContext context) {
     final shutdownState = ShutdownCubit.watch(context);
     final vehicleState = VehicleSync.watch(context);
     final otaData = OtaSync.watch(context);
 
-    // Check if OTA update is ongoing (DBC status takes priority)
     final dbcStatus = otaData.dbcStatus;
     final isOtaOngoing =
         dbcStatus == 'downloading' || dbcStatus == 'installing';
 
-    // Check shutdown overlay types
     final isFullShutdownOverlay = shutdownState.isFullOverlay;
     final isBackgroundProcessing = shutdownState.isBackgroundIndicator;
 
-    // Priority logic:
-    // 1. If OTA is ongoing AND we have full shutdown overlay -> show combined OTA shutdown overlay
-    // 2. If OTA is ongoing (and no full shutdown or only background processing) -> show OTA overlay only
-    // 3. If full shutdown overlay but no OTA -> show normal shutdown overlay
-    // 4. If background processing only (no OTA, no full shutdown) -> show small background indicator
-    // 5. Otherwise -> show nothing
-
     if (shutdownState.isBlackout) {
       return Container(color: Colors.black);
+    }
+
+    if (shutdownState.status == ShutdownStatus.shuttingDown) {
+      if (isOtaOngoing) {
+        return _buildOtaOverlay(context, vehicleState, otaData);
+      }
+      // Animate background from 0.8 → 1.0 opacity over 1500ms
+      return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final opacity = 0.8 + 0.2 * _controller.value;
+          return Container(
+            color: Colors.black.withOpacity(opacity),
+            child: _controller.value < 0.95
+                ? Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 50.0),
+                      child: Opacity(
+                        opacity: (1.0 - _controller.value * 2).clamp(0.0, 1.0),
+                        child: ShutdownContent(status: shutdownState.status),
+                      ),
+                    ),
+                  )
+                : null,
+          );
+        },
+      );
     }
 
     if (isOtaOngoing && isFullShutdownOverlay) {
       return _buildCombinedOtaShutdownOverlay(
           context, vehicleState, otaData, shutdownState.status);
     } else if (isOtaOngoing) {
-      // OTA takes priority over background processing indicator
       return _buildOtaOverlay(context, vehicleState, otaData);
     } else if (isFullShutdownOverlay) {
       return AnimatedSwitcher(
