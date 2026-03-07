@@ -74,7 +74,7 @@ class _BlinkerOverlayContent extends StatelessWidget {
 
     return Center(
       child: Transform.translate(
-        offset: const Offset(0, -40),
+        offset: const Offset(0, -20),
         child: Stack(
         children: [
           svg(inactiveColor),
