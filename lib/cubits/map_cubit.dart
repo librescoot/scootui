@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -59,6 +60,7 @@ class MapCubit extends Cubit<MapState> {
   NavigationState? _currentNavigationState; // Store current navigation state for zoom logic
   SettingsData? _currentSettings; // Store current settings for map type and render mode
   ThemeState? _currentTheme; // Store current theme state
+  final Map<bool, Theme> _themeCache = {}; // Preloaded light/dark themes
 
   // ============================================================================
   // Dead Reckoning Configuration
@@ -484,9 +486,23 @@ class MapCubit extends Cubit<MapState> {
   }
 
   Future<Theme> _getTheme(bool isDark) async {
-    final mapTheme = isDark ? 'assets/mapdark.json' : 'assets/maplight.json';
-    final themeStr = await rootBundle.loadString(mapTheme);
-    return ThemeReader().read(jsonDecode(themeStr));
+    if (_themeCache.containsKey(isDark)) return _themeCache[isDark]!;
+    return _loadTheme(isDark);
+  }
+
+  Future<Theme> _loadTheme(bool isDark) async {
+    final filename = isDark ? 'mapdark.json' : 'maplight.json';
+    final override = File('/data/scootui/$filename');
+    final themeStr = await override.exists()
+        ? await override.readAsString()
+        : await rootBundle.loadString('assets/$filename');
+    final theme = ThemeReader().read(jsonDecode(themeStr));
+    _themeCache[isDark] = theme;
+    return theme;
+  }
+
+  Future<void> _preloadThemes() async {
+    await Future.wait([_loadTheme(false), _loadTheme(true)]);
   }
 
   LatLng _getInitialCoordinates(MbTilesMetadata meta) {
@@ -511,6 +527,8 @@ class MapCubit extends Cubit<MapState> {
     _transformAnimator?.dispose();
     _transformAnimator = null;
     _currentSettings = settings;
+    _themeCache.clear();
+    unawaited(_preloadThemes());
     emit(MapState.loading(controller: state.controller, position: state.position));
     final ctrl = MapController();
 
