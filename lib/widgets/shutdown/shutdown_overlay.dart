@@ -89,7 +89,18 @@ class _ShutdownOverlayState extends State<ShutdownOverlay>
     final isFullShutdownOverlay = shutdownState.isFullOverlay;
     final isBackgroundProcessing = shutdownState.isBackgroundIndicator;
 
+    if (shutdownState.status == ShutdownStatus.blackout) {
+      // SIGTERM path: fade to black over 600ms
+      return TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 600),
+        builder: (context, value, _) =>
+            Container(color: Colors.black.withOpacity(value)),
+      );
+    }
+
     if (shutdownState.isBlackout) {
+      // exiting state: already solid black from the 1.5s animation
       return Container(color: Colors.black);
     }
 
