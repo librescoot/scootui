@@ -73,7 +73,9 @@ class _BlinkerOverlayContent extends StatelessWidget {
         );
 
     return Center(
-      child: Stack(
+      child: Transform.translate(
+        offset: const Offset(0, -40),
+        child: Stack(
         children: [
           svg(inactiveColor),
           CustomAnimationBuilder<int>(
@@ -98,6 +100,7 @@ class _BlinkerOverlayContent extends StatelessWidget {
             builder: (context, value, _) => svg(Colors.green.withAlpha(value)),
           ),
         ],
+        ),
       ),
     );
   }
