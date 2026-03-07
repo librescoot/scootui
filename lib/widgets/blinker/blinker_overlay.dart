@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:simple_animations/simple_animations.dart';
 
 import '../../cubits/mdb_cubits.dart';
+import '../../cubits/theme_cubit.dart';
 import '../../state/settings.dart';
 import '../../state/vehicle.dart';
 
@@ -58,42 +59,45 @@ class _BlinkerOverlayContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeCubit.watch(context).isDark;
+    final inactiveColor = isDark ? Colors.white12 : Colors.black12;
     final iconName = isLeft
         ? 'librescoot-turn-left.svg'
         : 'librescoot-turn-right.svg';
 
-    return Container(
-      color: Colors.black.withValues(alpha: 0.25),
-      child: Center(
-        child: CustomAnimationBuilder<int>(
-          control: Control.loop,
-          tween: TweenSequence<int>([
-            TweenSequenceItem(
-              tween: IntTween(begin: 0, end: 255)
-                  .chain(CurveTween(curve: Curves.easeInOutExpo)),
-              weight: 250,
-            ),
-            TweenSequenceItem(
-              tween: IntTween(begin: 255, end: 0)
-                  .chain(CurveTween(curve: Curves.easeInOutExpo)),
-              weight: 250,
-            ),
-            TweenSequenceItem(
-              tween: ConstantTween<int>(0),
-              weight: 228,
-            ),
-          ]),
-          duration: const Duration(milliseconds: 728),
-          builder: (context, value, _) => SvgPicture.asset(
-            'assets/icons/$iconName',
-            colorFilter: ColorFilter.mode(
-              Colors.green.withAlpha(value),
-              BlendMode.srcIn,
-            ),
-            width: 200,
-            height: 200,
+    svg(Color color) => SvgPicture.asset(
+          'assets/icons/$iconName',
+          colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+          width: 300,
+          height: 300,
+        );
+
+    return Center(
+      child: Stack(
+        children: [
+          svg(inactiveColor),
+          CustomAnimationBuilder<int>(
+            control: Control.loop,
+            tween: TweenSequence<int>([
+              TweenSequenceItem(
+                tween: IntTween(begin: 0, end: 255)
+                    .chain(CurveTween(curve: Curves.easeInOutExpo)),
+                weight: 250,
+              ),
+              TweenSequenceItem(
+                tween: IntTween(begin: 255, end: 0)
+                    .chain(CurveTween(curve: Curves.easeInOutExpo)),
+                weight: 250,
+              ),
+              TweenSequenceItem(
+                tween: ConstantTween<int>(0),
+                weight: 228,
+              ),
+            ]),
+            duration: const Duration(milliseconds: 728),
+            builder: (context, value, _) => svg(Colors.green.withAlpha(value)),
           ),
-        ),
+        ],
       ),
     );
   }
