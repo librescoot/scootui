@@ -9,9 +9,11 @@ import 'package:window_manager/window_manager.dart';
 import 'cubits/all.dart';
 import 'cubits/theme_cubit.dart';
 import 'env_config.dart';
+import 'l10n/app_localizations.dart';
 import 'repositories/all.dart';
 import 'repositories/mdb_repository.dart';
 import 'screens/simulator_screen.dart';
+import 'services/l10n_service.dart';
 import 'widgets/toast_listener_wrapper.dart';
 
 void main() async {
@@ -96,6 +98,12 @@ class SimulatorApp extends StatelessWidget {
                 darkTheme: state.darkTheme,
                 themeMode: state.themeMode,
                 debugShowCheckedModeBanner: false,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                builder: (context, child) {
+                  L10nService.update(AppLocalizations.of(context));
+                  return child!;
+                },
                 home: Builder(
                   builder: (context) => SimulatorScreen(
                     repository: context.read<MDBRepository>(),
