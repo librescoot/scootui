@@ -70,6 +70,18 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   @StateField(name: 'scooter.dual-battery', defaultValue: 'false')
   String? dualBattery;
 
+  @override
+  @StateField(name: 'alarm.enabled', defaultValue: 'false')
+  String? alarmEnabled;
+
+  @override
+  @StateField(name: 'alarm.honk', defaultValue: 'false')
+  String? alarmHonk;
+
+  @override
+  @StateField(name: 'alarm.duration', defaultValue: '10')
+  String? alarmDuration;
+
   // Constructor for initial values
   SettingsData({
     this.showRawSpeed,
@@ -88,6 +100,9 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
     this.valhallaUrl,
     this.blinkerStyle,
     this.dualBattery,
+    this.alarmEnabled,
+    this.alarmHonk,
+    this.alarmDuration,
   });
 
   factory SettingsData.initial() => SettingsData();

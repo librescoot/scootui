@@ -446,6 +446,60 @@ abstract class AppLocalizations {
   /// **'Dual Battery'**
   String get menuBatteryModeDual;
 
+  /// No description provided for @menuAlarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm'**
+  String get menuAlarm;
+
+  /// No description provided for @menuAlarmHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'ALARM'**
+  String get menuAlarmHeader;
+
+  /// No description provided for @menuAlarmEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable on Lock'**
+  String get menuAlarmEnabled;
+
+  /// No description provided for @menuAlarmHonk.
+  ///
+  /// In en, this message translates to:
+  /// **'Honk on Trigger'**
+  String get menuAlarmHonk;
+
+  /// No description provided for @menuAlarmDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get menuAlarmDuration;
+
+  /// No description provided for @menuAlarmDurationHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'ALARM DURATION'**
+  String get menuAlarmDurationHeader;
+
+  /// No description provided for @menuAlarmDuration10s.
+  ///
+  /// In en, this message translates to:
+  /// **'Short (10s)'**
+  String get menuAlarmDuration10s;
+
+  /// No description provided for @menuAlarmDuration20s.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium (20s)'**
+  String get menuAlarmDuration20s;
+
+  /// No description provided for @menuAlarmDuration30s.
+  ///
+  /// In en, this message translates to:
+  /// **'Long (30s)'**
+  String get menuAlarmDuration30s;
+
   /// No description provided for @menuSystem.
   ///
   /// In en, this message translates to:

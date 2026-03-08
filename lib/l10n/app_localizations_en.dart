@@ -187,6 +187,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuBatteryModeDual => 'Dual Battery';
 
   @override
+  String get menuAlarm => 'Alarm';
+
+  @override
+  String get menuAlarmHeader => 'ALARM';
+
+  @override
+  String get menuAlarmEnabled => 'Enable on Lock';
+
+  @override
+  String get menuAlarmHonk => 'Honk on Trigger';
+
+  @override
+  String get menuAlarmDuration => 'Duration';
+
+  @override
+  String get menuAlarmDurationHeader => 'ALARM DURATION';
+
+  @override
+  String get menuAlarmDuration10s => 'Short (10s)';
+
+  @override
+  String get menuAlarmDuration20s => 'Medium (20s)';
+
+  @override
+  String get menuAlarmDuration30s => 'Long (30s)';
+
+  @override
   String get menuSystem => 'System';
 
   @override
