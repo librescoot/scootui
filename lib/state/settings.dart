@@ -66,6 +66,10 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   @StateField(name: 'dashboard.blinker-style', defaultValue: 'icon')
   String? blinkerStyle;
 
+  @override
+  @StateField(name: 'scooter.dual-battery', defaultValue: 'false')
+  String? dualBattery;
+
   // Constructor for initial values
   SettingsData({
     this.showRawSpeed,
@@ -83,6 +87,7 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
     this.language,
     this.valhallaUrl,
     this.blinkerStyle,
+    this.dualBattery,
   });
 
   factory SettingsData.initial() => SettingsData();
@@ -90,4 +95,5 @@ class SettingsData with $SettingsData implements Syncable<SettingsData> {
   bool get showRawSpeedBool => showRawSpeed == 'true';
   bool get showBatteryAsRange => batteryDisplayMode == 'range';
   bool get blinkerOverlayEnabled => blinkerStyle == 'overlay';
+  bool get dualBatteryEnabled => dualBattery == 'true';
 }

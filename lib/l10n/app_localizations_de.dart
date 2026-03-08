@@ -178,6 +178,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuBlinkerStyleOverlay => 'Vollbild-Pfeil';
 
   @override
+  String get menuBatteryMode => 'Batteriemodus';
+
+  @override
+  String get menuBatteryModeSingle => 'Einzelbatterie';
+
+  @override
+  String get menuBatteryModeDual => 'Dualbatterie';
+
+  @override
   String get menuSystem => 'System';
 
   @override

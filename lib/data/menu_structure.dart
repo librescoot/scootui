@@ -569,6 +569,30 @@ MenuNode buildMenuTree(BuildContext context) {
             ],
           ),
 
+          // Battery Mode submenu
+          MenuNode.submenu(
+            id: 'settings_battery_mode',
+            title: l10n.menuBatteryMode,
+            children: [
+              MenuNode.setting(
+                id: 'battery_mode_single',
+                title: l10n.menuBatteryModeSingle,
+                currentValue: (settings.dualBattery ?? 'false') != 'true' ? 1 : 0,
+                onAction: (context) async {
+                  await context.read<SettingsService>().updateDualBatterySetting(false);
+                },
+              ),
+              MenuNode.setting(
+                id: 'battery_mode_dual',
+                title: l10n.menuBatteryModeDual,
+                currentValue: (settings.dualBattery ?? 'false') == 'true' ? 1 : 0,
+                onAction: (context) async {
+                  await context.read<SettingsService>().updateDualBatterySetting(true);
+                },
+              ),
+            ],
+          ),
+
            // System submenu
            MenuNode.submenu(
              id: 'settings_system',

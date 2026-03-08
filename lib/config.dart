@@ -65,4 +65,7 @@ class AppConfig {
 
   /// Redis blinker style setting key ('small' or 'overlay')
   static const String blinkerStyleKey = 'dashboard.blinker-style';
+
+  /// Redis dual battery setting key ('true' or 'false')
+  static const String dualBatteryKey = 'scooter.dual-battery';
 }

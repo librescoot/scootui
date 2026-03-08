@@ -428,6 +428,24 @@ abstract class AppLocalizations {
   /// **'Fullscreen Arrow'**
   String get menuBlinkerStyleOverlay;
 
+  /// No description provided for @menuBatteryMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery Mode'**
+  String get menuBatteryMode;
+
+  /// No description provided for @menuBatteryModeSingle.
+  ///
+  /// In en, this message translates to:
+  /// **'Single Battery'**
+  String get menuBatteryModeSingle;
+
+  /// No description provided for @menuBatteryModeDual.
+  ///
+  /// In en, this message translates to:
+  /// **'Dual Battery'**
+  String get menuBatteryModeDual;
+
   /// No description provided for @menuSystem.
   ///
   /// In en, this message translates to:

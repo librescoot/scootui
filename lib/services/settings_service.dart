@@ -67,6 +67,7 @@ class SettingsService {
     set(AppConfig.showRawSpeedKey, data.showRawSpeed, 'false');
     set(AppConfig.batteryDisplayModeKey, data.batteryDisplayMode, 'percentage');
     set(AppConfig.blinkerStyleKey, data.blinkerStyle, 'icon');
+    set(AppConfig.dualBatteryKey, data.dualBattery, 'false');
 
     if (data.valhallaUrl != null && data.valhallaUrl!.isNotEmpty) {
       if (_settings[AppConfig.valhallaEndpointKey] != data.valhallaUrl) {
@@ -254,6 +255,13 @@ class SettingsService {
   Future<void> updateBlinkerStyleSetting(String value) async {
     _settings[AppConfig.blinkerStyleKey] = value;
     await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.blinkerStyleKey, value);
+    _settingsController.add(_settings);
+  }
+
+  Future<void> updateDualBatterySetting(bool enabled) async {
+    final value = enabled ? 'true' : 'false';
+    _settings[AppConfig.dualBatteryKey] = value;
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, AppConfig.dualBatteryKey, value);
     _settingsController.add(_settings);
   }
 

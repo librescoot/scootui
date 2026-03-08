@@ -178,6 +178,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuBlinkerStyleOverlay => 'Fullscreen Arrow';
 
   @override
+  String get menuBatteryMode => 'Battery Mode';
+
+  @override
+  String get menuBatteryModeSingle => 'Single Battery';
+
+  @override
+  String get menuBatteryModeDual => 'Dual Battery';
+
+  @override
   String get menuSystem => 'System';
 
   @override

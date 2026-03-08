@@ -37,6 +37,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   String? get language;
   String? get valhallaUrl;
   String? get blinkerStyle;
+  String? get dualBattery;
   get syncSettings => SyncSettings(
       "settings",
       Duration(microseconds: 5000000),
@@ -146,6 +147,13 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             typeName: "String?",
             defaultValue: "icon",
             interval: null),
+        SyncFieldSettings(
+            name: "dualBattery",
+            variable: "scooter.dual-battery",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "false",
+            interval: null),
       ],
       "null",
       []);
@@ -175,6 +183,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       language: "dashboard.language" != name ? language : value,
       valhallaUrl: "dashboard.valhalla-url" != name ? valhallaUrl : value,
       blinkerStyle: "dashboard.blinker-style" != name ? blinkerStyle : value,
+      dualBattery: "scooter.dual-battery" != name ? dualBattery : value,
     );
   }
 
@@ -196,6 +205,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       language: language,
       valhallaUrl: valhallaUrl,
       blinkerStyle: blinkerStyle,
+      dualBattery: dualBattery,
     );
   }
 
@@ -215,6 +225,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
         language,
         valhallaUrl,
         blinkerStyle,
+        dualBattery,
       ];
   @override
   String toString() {
@@ -236,6 +247,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
     buf.writeln("	language = $language");
     buf.writeln("	valhallaUrl = $valhallaUrl");
     buf.writeln("	blinkerStyle = $blinkerStyle");
+    buf.writeln("	dualBattery = $dualBattery");
     buf.writeln(")");
 
     return buf.toString();
