@@ -569,6 +569,64 @@ MenuNode buildMenuTree(BuildContext context) {
             ],
           ),
 
+          // Alarm submenu
+          MenuNode.submenu(
+            id: 'settings_alarm',
+            title: l10n.menuAlarm,
+            headerTitle: l10n.menuAlarmHeader,
+            children: [
+              MenuNode.setting(
+                id: 'alarm_enabled',
+                title: l10n.menuAlarmEnabled,
+                currentValue: (settings.alarmEnabled ?? 'false') == 'true' ? 1 : 0,
+                onAction: (context) async {
+                  final current = context.read<SettingsSync>().state.alarmEnabled ?? 'false';
+                  await context.read<SettingsService>().updateAlarmEnabledSetting(current != 'true');
+                },
+              ),
+              MenuNode.setting(
+                id: 'alarm_honk',
+                title: l10n.menuAlarmHonk,
+                currentValue: (settings.alarmHonk ?? 'false') == 'true' ? 1 : 0,
+                onAction: (context) async {
+                  final current = context.read<SettingsSync>().state.alarmHonk ?? 'false';
+                  await context.read<SettingsService>().updateAlarmHonkSetting(current != 'true');
+                },
+              ),
+              MenuNode.submenu(
+                id: 'alarm_duration',
+                title: l10n.menuAlarmDuration,
+                headerTitle: l10n.menuAlarmDurationHeader,
+                children: [
+                  MenuNode.setting(
+                    id: 'alarm_duration_10s',
+                    title: l10n.menuAlarmDuration10s,
+                    currentValue: (settings.alarmDuration ?? '10') == '10' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateAlarmDurationSetting(10);
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'alarm_duration_20s',
+                    title: l10n.menuAlarmDuration20s,
+                    currentValue: (settings.alarmDuration ?? '10') == '20' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateAlarmDurationSetting(20);
+                    },
+                  ),
+                  MenuNode.setting(
+                    id: 'alarm_duration_30s',
+                    title: l10n.menuAlarmDuration30s,
+                    currentValue: (settings.alarmDuration ?? '10') == '30' ? 1 : 0,
+                    onAction: (context) async {
+                      await context.read<SettingsService>().updateAlarmDurationSetting(30);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+
            // System submenu
            MenuNode.submenu(
              id: 'settings_system',

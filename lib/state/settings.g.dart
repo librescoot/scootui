@@ -37,6 +37,9 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
   String? get language;
   String? get valhallaUrl;
   String? get blinkerStyle;
+  String? get alarmEnabled;
+  String? get alarmHonk;
+  String? get alarmDuration;
   get syncSettings => SyncSettings(
       "settings",
       Duration(microseconds: 5000000),
@@ -146,6 +149,27 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
             typeName: "String?",
             defaultValue: "icon",
             interval: null),
+        SyncFieldSettings(
+            name: "alarmEnabled",
+            variable: "alarm.enabled",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "false",
+            interval: null),
+        SyncFieldSettings(
+            name: "alarmHonk",
+            variable: "alarm.honk",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "false",
+            interval: null),
+        SyncFieldSettings(
+            name: "alarmDuration",
+            variable: "alarm.duration",
+            type: SyncFieldType.string,
+            typeName: "String?",
+            defaultValue: "10",
+            interval: null),
       ],
       "null",
       []);
@@ -175,6 +199,9 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       language: "dashboard.language" != name ? language : value,
       valhallaUrl: "dashboard.valhalla-url" != name ? valhallaUrl : value,
       blinkerStyle: "dashboard.blinker-style" != name ? blinkerStyle : value,
+      alarmEnabled: "alarm.enabled" != name ? alarmEnabled : value,
+      alarmHonk: "alarm.honk" != name ? alarmHonk : value,
+      alarmDuration: "alarm.duration" != name ? alarmDuration : value,
     );
   }
 
@@ -196,6 +223,9 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
       language: language,
       valhallaUrl: valhallaUrl,
       blinkerStyle: blinkerStyle,
+      alarmEnabled: alarmEnabled,
+      alarmHonk: alarmHonk,
+      alarmDuration: alarmDuration,
     );
   }
 
@@ -215,6 +245,9 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
         language,
         valhallaUrl,
         blinkerStyle,
+        alarmEnabled,
+        alarmHonk,
+        alarmDuration,
       ];
   @override
   String toString() {
@@ -236,6 +269,9 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
     buf.writeln("	language = $language");
     buf.writeln("	valhallaUrl = $valhallaUrl");
     buf.writeln("	blinkerStyle = $blinkerStyle");
+    buf.writeln("	alarmEnabled = $alarmEnabled");
+    buf.writeln("	alarmHonk = $alarmHonk");
+    buf.writeln("	alarmDuration = $alarmDuration");
     buf.writeln(")");
 
     return buf.toString();

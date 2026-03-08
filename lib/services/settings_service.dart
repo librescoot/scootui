@@ -257,6 +257,30 @@ class SettingsService {
     _settingsController.add(_settings);
   }
 
+  Future<void> updateAlarmEnabledSetting(bool enabled) async {
+    const key = 'alarm.enabled';
+    final value = enabled ? 'true' : 'false';
+    _settings[key] = value;
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+    _settingsController.add(_settings);
+  }
+
+  Future<void> updateAlarmHonkSetting(bool enabled) async {
+    const key = 'alarm.honk';
+    final value = enabled ? 'true' : 'false';
+    _settings[key] = value;
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+    _settingsController.add(_settings);
+  }
+
+  Future<void> updateAlarmDurationSetting(int seconds) async {
+    const key = 'alarm.duration';
+    final value = seconds.toString();
+    _settings[key] = value;
+    await _mdbRepository.set(AppConfig.redisSettingsPersistentCluster, key, value);
+    _settingsController.add(_settings);
+  }
+
   void dispose() {
     _settingsSyncSubscription?.cancel();
     _settingsController.close();

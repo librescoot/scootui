@@ -178,6 +178,33 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuBlinkerStyleOverlay => 'Vollbild-Pfeil';
 
   @override
+  String get menuAlarm => 'Alarm';
+
+  @override
+  String get menuAlarmHeader => 'ALARM';
+
+  @override
+  String get menuAlarmEnabled => 'Bei Sperre aktivieren';
+
+  @override
+  String get menuAlarmHonk => 'Hupen bei Auslösung';
+
+  @override
+  String get menuAlarmDuration => 'Dauer';
+
+  @override
+  String get menuAlarmDurationHeader => 'ALARMDAUER';
+
+  @override
+  String get menuAlarmDuration10s => 'Kurz (10s)';
+
+  @override
+  String get menuAlarmDuration20s => 'Mittel (20s)';
+
+  @override
+  String get menuAlarmDuration30s => 'Lang (30s)';
+
+  @override
   String get menuSystem => 'System';
 
   @override
