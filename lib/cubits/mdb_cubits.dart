@@ -201,6 +201,7 @@ class SettingsSync extends SyncableCubit<SettingsData> {
 
 class CbBatterySync extends SyncableCubit<CbBatteryData> {
   late final StreamSubscription<VehicleData> _vehicleSub;
+  SeatboxLock _previousSeatboxLock = SeatboxLock.open;
 
   static CbBatteryData watch(BuildContext context) => context.watch<CbBatterySync>().state;
 
@@ -209,9 +210,11 @@ class CbBatterySync extends SyncableCubit<CbBatteryData> {
 
   CbBatterySync(MDBRepository repo, VehicleSync vehicleSync) : super(redisRepository: repo, initialState: CbBatteryData()) {
     _vehicleSub = vehicleSync.stream.listen((vehicleState) {
-      if (vehicleState.seatboxLock == SeatboxLock.closed) {
+      final seatboxLock = vehicleState.seatboxLock;
+      if (seatboxLock == SeatboxLock.closed && _previousSeatboxLock != SeatboxLock.closed) {
         refreshAllFields();
       }
+      _previousSeatboxLock = seatboxLock;
     });
   }
 
@@ -224,6 +227,7 @@ class CbBatterySync extends SyncableCubit<CbBatteryData> {
 
 class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
   late final StreamSubscription<VehicleData> _vehicleSub;
+  SeatboxLock _previousSeatboxLock = SeatboxLock.open;
 
   static AuxBatteryData watch(BuildContext context) => context.watch<AuxBatterySync>().state;
 
@@ -232,9 +236,11 @@ class AuxBatterySync extends SyncableCubit<AuxBatteryData> {
 
   AuxBatterySync(MDBRepository repo, VehicleSync vehicleSync) : super(redisRepository: repo, initialState: AuxBatteryData()) {
     _vehicleSub = vehicleSync.stream.listen((vehicleState) {
-      if (vehicleState.seatboxLock == SeatboxLock.closed) {
+      final seatboxLock = vehicleState.seatboxLock;
+      if (seatboxLock == SeatboxLock.closed && _previousSeatboxLock != SeatboxLock.closed) {
         refreshAllFields();
       }
+      _previousSeatboxLock = seatboxLock;
     });
   }
 
