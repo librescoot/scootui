@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../config.dart';
@@ -90,7 +91,7 @@ class BatteryStatusDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get theme information
     final ThemeState(:isDark) = ThemeCubit.watch(context);
-    final settings = SettingsSync.watch(context);
+    final showBatteryAsRange = context.select((SettingsSync s) => s.state.showBatteryAsRange);
 
     final normalColor = isDark ? Colors.white : Colors.black;
 
@@ -297,7 +298,7 @@ class BatteryStatusDisplay extends StatelessWidget {
         finalIcon,
         if (labelText != null) ...[
           const SizedBox(width: 2),
-          _buildLabel(context, labelText, textColor, settings.showBatteryAsRange),
+          _buildLabel(context, labelText, textColor, showBatteryAsRange),
         ],
       ],
     );
@@ -530,13 +531,13 @@ class SeatboxIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vehicle = VehicleSync.watch(context);
+    final seatboxLock = context.select((VehicleSync v) => v.state.seatboxLock);
     final ThemeState(:isDark) = ThemeCubit.watch(context);
 
     final iconColor = isDark ? Colors.white : Colors.black;
 
     // Show seatbox open icon when seatbox:lock is not "closed"
-    final showSeatboxOpen = vehicle.seatboxLock != SeatboxLock.closed;
+    final showSeatboxOpen = seatboxLock != SeatboxLock.closed;
 
     if (!showSeatboxOpen) {
       return const SizedBox.shrink();
@@ -665,15 +666,32 @@ class _CombinedBatteryDisplayState extends State<CombinedBatteryDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    final battery0 = Battery0Sync.watch(context); // battery:0 (main battery)
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<Battery0Sync, BatteryData>(
+          listenWhen: (prev, curr) => prev.charge != curr.charge || prev.fault != curr.fault,
+          listener: (context, battery0) {
+            _checkBatteryWarnings(battery0);
+            final battery1 = context.read<Battery1Sync>().state;
+            _checkBatteryFaults(battery0, battery1);
+          },
+        ),
+        BlocListener<Battery1Sync, BatteryData>(
+          listenWhen: (prev, curr) => prev.fault != curr.fault,
+          listener: (context, battery1) {
+            final battery0 = context.read<Battery0Sync>().state;
+            _checkBatteryFaults(battery0, battery1);
+          },
+        ),
+      ],
+      child: _buildBody(context),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    final battery0 = Battery0Sync.watch(context);
     final battery1 = Battery1Sync.watch(context);
     final ThemeState(:isDark) = ThemeCubit.watch(context);
-
-    // Check for battery warnings
-    _checkBatteryWarnings(battery0);
-
-    // Check for battery faults
-    _checkBatteryFaults(battery0, battery1);
 
     // Show turtle icon when battery is present and ≤20%
     final showTurtle = battery0.present && battery0.charge <= 20;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
@@ -15,13 +16,13 @@ class UnifiedBottomStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final engineData = EngineSync.watch(context);
+    final odometer = context.select((EngineSync e) => e.state.odometer);
     final trip = TripCubit.watch(context);
     final ThemeState(:theme, :isDark) = ThemeCubit.watch(context);
     final textColor = isDark ? Colors.white : Colors.black;
 
     final currentTrip = trip.distanceTravelled / 1000;
-    final currentTotal = engineData.odometer / 1000;
+    final currentTotal = odometer / 1000;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

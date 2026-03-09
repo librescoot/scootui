@@ -6,28 +6,12 @@ import '../../state/vehicle.dart';
 import '../indicators/indicator_lights.dart';
 
 /// Blinker row for cluster and CarPlay screens.
-/// Manages animation restart keys when blinker state changes.
-class BlinkerRow extends StatefulWidget {
+class BlinkerRow extends StatelessWidget {
   const BlinkerRow({super.key});
 
   @override
-  State<BlinkerRow> createState() => _BlinkerRowState();
-}
-
-class _BlinkerRowState extends State<BlinkerRow> {
-  Key _leftKey = UniqueKey();
-  Key _rightKey = UniqueKey();
-
-  @override
   Widget build(BuildContext context) {
-    return BlocConsumer<VehicleSync, VehicleData>(
-      listenWhen: (prev, curr) => prev.blinkerState != curr.blinkerState,
-      listener: (context, state) {
-        setState(() {
-          _leftKey = UniqueKey();
-          _rightKey = UniqueKey();
-        });
-      },
+    return BlocBuilder<VehicleSync, VehicleData>(
       buildWhen: (prev, curr) => prev.blinkerState != curr.blinkerState,
       builder: (context, vehicleState) {
         final overlayActive = context.read<SettingsSync>().state.blinkerOverlayEnabled;
@@ -45,11 +29,10 @@ class _BlinkerRowState extends State<BlinkerRow> {
   Widget _buildLeft(VehicleData vehicleState, bool overlayActive) {
     final showIcon = vehicleState.blinkerState == BlinkerState.left ||
         vehicleState.blinkerState == BlinkerState.both;
-    // Hide single-side icon when overlay is handling it
     final useOverlay = overlayActive && vehicleState.blinkerState == BlinkerState.left;
     if (!showIcon || useOverlay) return const SizedBox(width: 56);
     return SizedBox(
-      key: _leftKey,
+      key: ValueKey('left-${vehicleState.blinkerState}'),
       width: 56,
       height: 56,
       child: Center(
@@ -67,7 +50,7 @@ class _BlinkerRowState extends State<BlinkerRow> {
     final useOverlay = overlayActive && vehicleState.blinkerState == BlinkerState.right;
     if (!showIcon || useOverlay) return const SizedBox(width: 56);
     return SizedBox(
-      key: _rightKey,
+      key: ValueKey('right-${vehicleState.blinkerState}'),
       width: 56,
       height: 56,
       child: Center(

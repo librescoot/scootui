@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
@@ -100,6 +101,28 @@ class StatusIndicators extends StatelessWidget {
     return gps.state == GpsState.error;
   }
 
+  // Field-based variants used when GPS fields are accessed via select()
+  bool _gpsIsActiveFields(GpsState state, bool hasRecentFix) {
+    if (state == GpsState.off) return hasRecentFix;
+    return state == GpsState.fixEstablished && hasRecentFix;
+  }
+
+  bool _gpsHasErrorFields(GpsState state) => state == GpsState.error;
+
+  String _gpsIconFields(GpsState state, bool hasRecentFix, bool hasTimestamp) {
+    if (state == GpsState.off) {
+      if (hasRecentFix) return _Icons.gpsFixEstablished;
+      if (hasTimestamp) return _Icons.gpsSearching;
+      return _Icons.gpsOff;
+    }
+    return switch (state) {
+      GpsState.searching => _Icons.gpsSearching,
+      GpsState.fixEstablished => hasRecentFix ? _Icons.gpsFixEstablished : _Icons.gpsSearching,
+      GpsState.error => _Icons.gpsError,
+      GpsState.off => _Icons.gpsOff,
+    };
+  }
+
   bool bluetoothIsActive(BluetoothData bluetooth) {
     return bluetooth.status == ConnectionStatus.connected;
   }
@@ -153,11 +176,16 @@ class StatusIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // GPS: select only the fields used here — avoids 1 Hz rebuilds from lat/lng/speed changes
+    final (gpsState, gpsRecent, gpsHasTs) = context.select(
+        (GpsSync g) => (g.state.state, g.state.hasRecentFix, g.state.timestamp.isNotEmpty));
+    // Internet and Bluetooth are event-driven (not periodic), watch() is fine
     final internet = InternetSync.watch(context);
     final bluetooth = BluetoothSync.watch(context);
-    final gps = GpsSync.watch(context);
-    final settings = SettingsSync.watch(context);
-    final ThemeState(:isDark) = ThemeCubit.watch(context);
+    // Settings: select only the four display-control flags
+    final (showGps, showBt, showCloud, showInternet) = context.select((SettingsSync s) =>
+        (s.state.showGps, s.state.showBluetooth, s.state.showCloud, s.state.showInternet));
+    final isDark = context.select((ThemeCubit t) => t.state.isDark);
 
     final color = isDark ? Colors.white : Colors.black;
     final size = 24.0;
@@ -166,16 +194,16 @@ class StatusIndicators extends StatelessWidget {
       const OtaStatusIndicator(),
     ];
 
-    if (shouldShowIndicator(settings.showGps ?? 'error', gpsIsActive(gps), gpsHasError(gps))) {
+    if (shouldShowIndicator(showGps ?? 'error', _gpsIsActiveFields(gpsState, gpsRecent), _gpsHasErrorFields(gpsState))) {
       children.add(IndicatorLight(
-        icon: IndicatorLight.svgAsset(gpsIcon(gps)),
+        icon: IndicatorLight.svgAsset(_gpsIconFields(gpsState, gpsRecent, gpsHasTs)),
         isActive: true,
         size: size,
         activeColor: color,
       ));
     }
 
-    if (shouldShowIndicator(settings.showBluetooth ?? 'active-or-error', bluetoothIsActive(bluetooth), bluetoothHasError(bluetooth))) {
+    if (shouldShowIndicator(showBt ?? 'active-or-error', bluetoothIsActive(bluetooth), bluetoothHasError(bluetooth))) {
       children.add(IndicatorLight(
         icon: IndicatorLight.svgAsset(bluetoothIcon(bluetooth)),
         isActive: true,
@@ -184,7 +212,7 @@ class StatusIndicators extends StatelessWidget {
       ));
     }
 
-    if (shouldShowIndicator(settings.showCloud ?? 'error', cloudIsActive(internet), cloudHasError(internet))) {
+    if (shouldShowIndicator(showCloud ?? 'error', cloudIsActive(internet), cloudHasError(internet))) {
       children.add(IndicatorLight(
         icon: IndicatorLight.svgAsset(cloudIcon(internet)),
         isActive: true,
@@ -193,7 +221,7 @@ class StatusIndicators extends StatelessWidget {
       ));
     }
 
-    if (shouldShowIndicator(settings.showInternet ?? 'always', internetIsActive(internet), false)) {
+    if (shouldShowIndicator(showInternet ?? 'always', internetIsActive(internet), false)) {
       children.add(InternetIndicator(
         iconName: internetIcon(internet),
         internet: internet,
