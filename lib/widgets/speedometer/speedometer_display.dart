@@ -144,16 +144,18 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     }
 
     if (speed != _targetSpeed) {
-      // Pivot from the current animated position so mid-animation updates
-      // track toward the real speed instead of being dropped.
-      _animationStartSpeed = _speedController.isAnimating
-          ? _animationStartSpeed +
-              Curves.easeInOutCubic.transform(_speedController.value) *
-                  (_targetSpeed - _animationStartSpeed)
-          : _lastSpeed;
+      // Retarget: update start position to current animated value, keep
+      // the controller running from its current progress so rapid updates
+      // don't perpetually restart the animation.
+      if (_speedController.isAnimating) {
+        final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
+        _animationStartSpeed = _animationStartSpeed +
+            curvedValue * (_targetSpeed - _animationStartSpeed);
+      } else {
+        _animationStartSpeed = _lastSpeed;
+        _speedController.forward();
+      }
       _targetSpeed = speed;
-      _speedController.reset();
-      _speedController.forward();
     }
   }
 
