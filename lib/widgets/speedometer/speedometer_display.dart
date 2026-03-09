@@ -30,13 +30,11 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   late AnimationController _overspeedPulseController;
   late AnimationController _accelerationPulseController;
   late Animation<Color?> _colorAnimation;
-  late Listenable _effectAnimations;
 
-  double _displayedSpeed = 0.0;
+  final ValueNotifier<double> _speedNotifier = ValueNotifier(0.0);
   double _targetSpeed = 0.0;
   Duration _lastTickTime = Duration.zero;
 
-  // Time constant: reaches ~63% in this duration, ~95% in 3x
   static const double _timeConstantMs = 100.0;
   static const double _snapThreshold = 0.3;
 
@@ -71,12 +69,6 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     );
 
     _colorAnimation = const AlwaysStoppedAnimation<Color?>(null);
-
-    _effectAnimations = Listenable.merge([
-      _colorController,
-      _overspeedPulseController,
-      _accelerationPulseController,
-    ]);
   }
 
   void _onTick(Duration elapsed) {
@@ -84,17 +76,17 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     _lastTickTime = elapsed;
     if (dtMs <= 0) return;
 
-    final diff = _targetSpeed - _displayedSpeed;
+    final diff = _targetSpeed - _speedNotifier.value;
     if (diff.abs() < _snapThreshold) {
-      if (_displayedSpeed != _targetSpeed) {
-        setState(() { _displayedSpeed = _targetSpeed; });
+      if (_speedNotifier.value != _targetSpeed) {
+        _speedNotifier.value = _targetSpeed;
       }
       _speedTicker.stop();
       _lastTickTime = Duration.zero;
       return;
     }
     final alpha = 1.0 - math.exp(-dtMs / _timeConstantMs);
-    setState(() { _displayedSpeed += diff * alpha; });
+    _speedNotifier.value += diff * alpha;
   }
 
   void _ensureTickerRunning() {
@@ -107,6 +99,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   @override
   void dispose() {
     _speedTicker.dispose();
+    _speedNotifier.dispose();
     _colorController.dispose();
     _overspeedPulseController.dispose();
     _accelerationPulseController.dispose();
@@ -217,11 +210,9 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         builder: (context, theme) {
           final labelPainters = _buildLabelPainters(theme.isDark);
 
-          return AnimatedBuilder(
-            animation: _effectAnimations,
-            builder: (context, _) {
-              final animatedSpeed = _displayedSpeed;
-
+          return ValueListenableBuilder<double>(
+            valueListenable: _speedNotifier,
+            builder: (context, animatedSpeed, _) {
               Color backgroundColor;
               if (_colorController.isAnimating && _colorAnimation.value != null) {
                 backgroundColor = _colorAnimation.value!;
