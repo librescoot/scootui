@@ -49,15 +49,15 @@ MenuNode buildMenuTree(BuildContext context) {
       ),
 
       // Toggle Hazard Lights (only show for stock UNU MDB)
-       MenuNode.action(
-         id: 'hazard_lights',
-         title: l10n.menuToggleHazardLights,
-         onAction: (context) {
-           context.read<VehicleSync>().toggleHazardLights();
-           context.read<MenuCubit>().hideMenu();
-         },
-         isVisible: (context) => isStockUnuMdb.value,
-       ),
+      MenuNode.action(
+        id: 'hazard_lights',
+        title: l10n.menuToggleHazardLights,
+        onAction: (context) {
+          context.read<VehicleSync>().toggleHazardLights();
+          context.read<MenuCubit>().hideMenu();
+        },
+        isVisible: (context) => isStockUnuMdb.value,
+      ),
 
       // Switch to Cluster View (conditional - only show when on map)
       MenuNode.action(
@@ -151,30 +151,30 @@ MenuNode buildMenuTree(BuildContext context) {
                 },
               ),
               ...savedLocations.currentLocations.map((location) => MenuNode.submenu(
-                id: 'location_${location.id}',
-                title: location.label,
-                children: [
-                  MenuNode.action(
-                    id: 'start_nav_${location.id}',
-                    title: l10n.menuStartNavigation,
-                    onAction: (context) async {
-                      await context.read<NavigationSync>().setDestination(
-                        location.latitude,
-                        location.longitude,
-                        address: location.label,
-                      );
-                      context.read<MenuCubit>().hideMenu();
-                    },
-                  ),
-                  MenuNode.action(
-                    id: 'delete_${location.id}',
-                    title: l10n.menuDeleteLocation,
-                    onAction: (context) async {
-                      await context.read<SavedLocationsCubit>().deleteLocation(location.id);
-                    },
-                  ),
-                ],
-              )),
+                    id: 'location_${location.id}',
+                    title: location.label,
+                    children: [
+                      MenuNode.action(
+                        id: 'start_nav_${location.id}',
+                        title: l10n.menuStartNavigation,
+                        onAction: (context) async {
+                          await context.read<NavigationSync>().setDestination(
+                                location.latitude,
+                                location.longitude,
+                                address: location.label,
+                              );
+                          context.read<MenuCubit>().hideMenu();
+                        },
+                      ),
+                      MenuNode.action(
+                        id: 'delete_${location.id}',
+                        title: l10n.menuDeleteLocation,
+                        onAction: (context) async {
+                          await context.read<SavedLocationsCubit>().deleteLocation(location.id);
+                        },
+                      ),
+                    ],
+                  )),
             ],
           ),
           MenuNode.action(
@@ -274,8 +274,7 @@ MenuNode buildMenuTree(BuildContext context) {
                     title: l10n.menuBatteryPercentage,
                     currentValue: (settings.batteryDisplayMode ?? 'percentage') == 'percentage' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>()
-                          .updateBatteryDisplayModeSetting('percentage');
+                      await context.read<SettingsService>().updateBatteryDisplayModeSetting('percentage');
                     },
                   ),
                   MenuNode.setting(
@@ -283,8 +282,7 @@ MenuNode buildMenuTree(BuildContext context) {
                     title: l10n.menuBatteryRange,
                     currentValue: (settings.batteryDisplayMode ?? 'percentage') == 'range' ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>()
-                          .updateBatteryDisplayModeSetting('range');
+                      await context.read<SettingsService>().updateBatteryDisplayModeSetting('range');
                     },
                   ),
                 ],
@@ -514,7 +512,7 @@ MenuNode buildMenuTree(BuildContext context) {
                     },
                   ),
                 ],
-               ),
+              ),
               MenuNode.submenu(
                 id: 'navigation_routing',
                 title: l10n.menuNavigationRouting,
@@ -524,7 +522,8 @@ MenuNode buildMenuTree(BuildContext context) {
                     title: l10n.menuOnlineOpenStreetMap,
                     currentValue: settings.valhallaUrl == AppConfig.valhallaOnlineEndpoint ? 1 : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>()
+                      await context
+                          .read<SettingsService>()
                           .updateValhallaEndpointSetting(AppConfig.valhallaOnlineEndpoint);
                     },
                   ),
@@ -534,16 +533,18 @@ MenuNode buildMenuTree(BuildContext context) {
                     currentValue: (settings.valhallaUrl == null ||
                             settings.valhallaUrl!.isEmpty ||
                             settings.valhallaUrl == AppConfig.valhallaOnDeviceEndpoint)
-                        ? 1 : 0,
+                        ? 1
+                        : 0,
                     onAction: (context) async {
-                      await context.read<SettingsService>()
+                      await context
+                          .read<SettingsService>()
                           .updateValhallaEndpointSetting(AppConfig.valhallaOnDeviceEndpoint);
                     },
                   ),
                 ],
               ),
-             ],
-           ),
+            ],
+          ),
 
           // Blinker Style submenu
           MenuNode.submenu(
@@ -651,25 +652,25 @@ MenuNode buildMenuTree(BuildContext context) {
             ],
           ),
 
-           // System submenu
-           MenuNode.submenu(
-             id: 'settings_system',
-             title: l10n.menuSystem,
-             children: [
-               MenuNode.action(
-                 id: 'enter_ums_mode',
-                 title: l10n.menuEnterUmsMode,
-                 onAction: (context) async {
-                   await context.read<MDBRepository>().set('usb', 'mode', 'ums-by-dbc');
-                   context.read<MenuCubit>().hideMenu();
-                 },
-               ),
-             ],
-           ),
-         ],
-       ),
+          // System submenu
+          MenuNode.submenu(
+            id: 'settings_system',
+            title: l10n.menuSystem,
+            children: [
+              MenuNode.action(
+                id: 'enter_ums_mode',
+                title: l10n.menuEnterUmsMode,
+                onAction: (context) async {
+                  await context.read<MDBRepository>().set('usb', 'mode', 'ums-by-dbc');
+                  context.read<MenuCubit>().hideMenu();
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
 
-       // Reset Trip Statistics
+      // Reset Trip Statistics
       MenuNode.action(
         id: 'reset_trip',
         title: l10n.menuResetTripStatistics,

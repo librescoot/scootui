@@ -275,10 +275,10 @@ class _MapBlinkerRow extends StatelessWidget {
     final (theme, isDark) = context.select((ThemeCubit t) => (t.state.theme, t.state.isDark));
     final overlayActive = context.select((SettingsSync s) => s.state.blinkerOverlayEnabled);
 
-    final showLeft = (blinkerState == BlinkerState.left || blinkerState == BlinkerState.both)
-        && !(overlayActive && blinkerState == BlinkerState.left);
-    final showRight = (blinkerState == BlinkerState.right || blinkerState == BlinkerState.both)
-        && !(overlayActive && blinkerState == BlinkerState.right);
+    final showLeft = (blinkerState == BlinkerState.left || blinkerState == BlinkerState.both) &&
+        !(overlayActive && blinkerState == BlinkerState.left);
+    final showRight = (blinkerState == BlinkerState.right || blinkerState == BlinkerState.both) &&
+        !(overlayActive && blinkerState == BlinkerState.right);
 
     // Need full VehicleData for IndicatorLights; read without subscribing again
     final vehicleState = context.read<VehicleSync>().state;
@@ -338,13 +338,11 @@ class _MapWarningIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (isUnableToDrive, blinkerState, scooterState) = context.select(
-        (VehicleSync v) => (v.state.isUnableToDrive, v.state.blinkerState, v.state.state));
+    final (isUnableToDrive, blinkerState, scooterState) =
+        context.select((VehicleSync v) => (v.state.isUnableToDrive, v.state.blinkerState, v.state.state));
     final (theme, isDark) = context.select((ThemeCubit t) => (t.state.theme, t.state.isDark));
 
-    if (isUnableToDrive != Toggle.on &&
-        blinkerState != BlinkerState.both &&
-        scooterState != ScooterState.parked) {
+    if (isUnableToDrive != Toggle.on && blinkerState != BlinkerState.both && scooterState != ScooterState.parked) {
       return const SizedBox.shrink();
     }
 
@@ -367,15 +365,13 @@ class _MapWarningIndicators extends StatelessWidget {
           children: [
             if (isUnableToDrive == Toggle.on) ...[
               IndicatorLights.engineWarning(vehicleState),
-              if (blinkerState == BlinkerState.both || scooterState == ScooterState.parked)
-                const SizedBox(width: 8),
+              if (blinkerState == BlinkerState.both || scooterState == ScooterState.parked) const SizedBox(width: 8),
             ],
             if (blinkerState == BlinkerState.both) ...[
               IndicatorLights.hazards(vehicleState),
               if (scooterState == ScooterState.parked) const SizedBox(width: 8),
             ],
-            if (scooterState == ScooterState.parked)
-              IndicatorLights.parkingBrake(vehicleState),
+            if (scooterState == ScooterState.parked) IndicatorLights.parkingBrake(vehicleState),
           ],
         ),
       ),

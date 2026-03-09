@@ -121,12 +121,10 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     if (_isRegenerating != regenerating) {
       _isRegenerating = regenerating;
 
-      final fromColor = _isRegenerating
-          ? (isDark ? Colors.grey.shade800 : Colors.grey.shade200)
-          : Colors.red.withOpacity(0.3);
-      final toColor = _isRegenerating
-          ? Colors.red.withOpacity(0.3)
-          : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+      final fromColor =
+          _isRegenerating ? (isDark ? Colors.grey.shade800 : Colors.grey.shade200) : Colors.red.withOpacity(0.3);
+      final toColor =
+          _isRegenerating ? Colors.red.withOpacity(0.3) : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
 
       _colorAnimation = ColorTween(begin: fromColor, end: toColor).animate(
         CurvedAnimation(parent: _colorController, curve: Curves.easeInOut),
@@ -214,104 +212,104 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
           return ExcludeSemantics(
             child: AnimatedBuilder(
-            animation: Listenable.merge([
-              _overspeedPulseController,
-              _accelerationPulseController,
-              _colorController,
-            ]),
-            builder: (context, _) {
-              return ValueListenableBuilder<double>(
-              valueListenable: _speedNotifier,
-              builder: (context, animatedSpeed, _) {
-              Color backgroundColor;
-              if (_colorController.isAnimating && _colorAnimation.value != null) {
-                backgroundColor = _colorAnimation.value!;
-              } else {
-                backgroundColor = _isRegenerating
-                    ? Colors.red.withOpacity(0.3)
-                    : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
-              }
+              animation: Listenable.merge([
+                _overspeedPulseController,
+                _accelerationPulseController,
+                _colorController,
+              ]),
+              builder: (context, _) {
+                return ValueListenableBuilder<double>(
+                  valueListenable: _speedNotifier,
+                  builder: (context, animatedSpeed, _) {
+                    Color backgroundColor;
+                    if (_colorController.isAnimating && _colorAnimation.value != null) {
+                      backgroundColor = _colorAnimation.value!;
+                    } else {
+                      backgroundColor = _isRegenerating
+                          ? Colors.red.withOpacity(0.3)
+                          : (theme.isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+                    }
 
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  CustomPaint(
-                    size: const Size(300, 240),
-                    painter: _SpeedometerPainter(
-                      progress: math.min(animatedSpeed / widget.maxArcSpeed, 1.0),
-                      isDark: theme.isDark,
-                      isRegenerating: _isRegenerating,
-                      backgroundColor: backgroundColor,
-                      maxArcSpeed: widget.maxArcSpeed,
-                      animatedSpeed: animatedSpeed,
-                      colorTransitionStartSpeed: widget.colorTransitionStartSpeed,
-                      isOverSpeed: animatedSpeed > widget.maxArcSpeed,
-                      overspeedPulseValue: _overspeedPulseController.value,
-                      isAccelerating: _isAccelerating,
-                      accelerationPulseValue: _accelerationPulseController.value,
-                      labelPainters: labelPainters,
-                    ),
-                  ),
-                  Transform.translate(
-                    offset: const Offset(0, 40),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    return Stack(
+                      alignment: Alignment.center,
                       children: [
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            text: animatedSpeed.toStringAsFixed(0),
-                            style: TextStyle(
-                              fontSize: 96,
-                              height: 1,
-                              fontWeight: FontWeight.bold,
-                              color: theme.isDark ? Colors.white : Colors.black,
-                            ),
+                        Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
                           ),
                         ),
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            text: 'km/h',
-                            style: TextStyle(
-                              fontSize: 22,
-                              height: 0.9,
-                              color: theme.isDark ? Colors.white60 : Colors.black54,
-                            ),
+                        CustomPaint(
+                          size: const Size(300, 240),
+                          painter: _SpeedometerPainter(
+                            progress: math.min(animatedSpeed / widget.maxArcSpeed, 1.0),
+                            isDark: theme.isDark,
+                            isRegenerating: _isRegenerating,
+                            backgroundColor: backgroundColor,
+                            maxArcSpeed: widget.maxArcSpeed,
+                            animatedSpeed: animatedSpeed,
+                            colorTransitionStartSpeed: widget.colorTransitionStartSpeed,
+                            isOverSpeed: animatedSpeed > widget.maxArcSpeed,
+                            overspeedPulseValue: _overspeedPulseController.value,
+                            isAccelerating: _isAccelerating,
+                            accelerationPulseValue: _accelerationPulseController.value,
+                            labelPainters: labelPainters,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SpeedLimitIndicator(iconSize: 27),
-                            const SizedBox(width: 4),
-                            SizedBox(
-                              width: 140,
-                              child: RoadNameDisplay(
-                                textStyle: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
+                        Transform.translate(
+                          offset: const Offset(0, 40),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  text: animatedSpeed.toStringAsFixed(0),
+                                  style: TextStyle(
+                                    fontSize: 96,
+                                    height: 1,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.isDark ? Colors.white : Colors.black,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  text: 'km/h',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    height: 0.9,
+                                    color: theme.isDark ? Colors.white60 : Colors.black54,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SpeedLimitIndicator(iconSize: 27),
+                                  const SizedBox(width: 4),
+                                  SizedBox(
+                                    width: 140,
+                                    child: RoadNameDisplay(
+                                      textStyle: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-          },
-          ),
+                    );
+                  },
+                );
+              },
+            ),
           );
         },
       ),

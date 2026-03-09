@@ -171,26 +171,19 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _loadCurrentValues() async {
     try {
       // Load vehicle states
-      final blinkerState =
-          await widget.repository.get('vehicle', 'blinker:state');
-      final handlebarPosition =
-          await widget.repository.get('vehicle', 'handlebar:position');
-      final kickstandState =
-          await widget.repository.get('vehicle', 'kickstand');
+      final blinkerState = await widget.repository.get('vehicle', 'blinker:state');
+      final handlebarPosition = await widget.repository.get('vehicle', 'handlebar:position');
+      final kickstandState = await widget.repository.get('vehicle', 'kickstand');
       final vehicleState = await widget.repository.get('vehicle', 'state');
-      final leftBrakeState =
-          await widget.repository.get('vehicle', 'brake:left');
-      final rightBrakeState =
-          await widget.repository.get('vehicle', 'brake:right');
-      final seatboxLockState =
-          await widget.repository.get('vehicle', 'seatbox:lock');
+      final leftBrakeState = await widget.repository.get('vehicle', 'brake:left');
+      final rightBrakeState = await widget.repository.get('vehicle', 'brake:right');
+      final seatboxLockState = await widget.repository.get('vehicle', 'seatbox:lock');
 
       // Load system states
       final bluetoothStatus = await widget.repository.get('ble', 'status');
       final internetStatus = await widget.repository.get('internet', 'status');
       final internetAccessTech = await widget.repository.get('internet', 'access-tech');
-      final signalQuality =
-          await widget.repository.get('internet', 'signal-quality');
+      final signalQuality = await widget.repository.get('internet', 'signal-quality');
       final cloudStatus = await widget.repository.get('internet', 'unu-cloud');
       final gpsState = await widget.repository.get('gps', 'state');
 
@@ -205,13 +198,11 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       final mdbDownloadProgress = await widget.repository.get('ota', 'download-progress:mdb');
 
       // Load battery states
-      final battery0Present =
-          await widget.repository.get('battery:0', 'present');
+      final battery0Present = await widget.repository.get('battery:0', 'present');
       final battery0Charge = await widget.repository.get('battery:0', 'charge');
       final battery0State = await widget.repository.get('battery:0', 'state');
 
-      final battery1Present =
-          await widget.repository.get('battery:1', 'present');
+      final battery1Present = await widget.repository.get('battery:1', 'present');
       final battery1Charge = await widget.repository.get('battery:1', 'charge');
       final battery1State = await widget.repository.get('battery:1', 'state');
 
@@ -224,26 +215,18 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       final motorKersReasonOff = await widget.repository.get('engine-ecu', 'kers-reason-off');
 
       // Load battery fault codes from Sets
-      final battery0FaultMembers =
-          await widget.repository.getSetMembers('battery:0:fault');
-      final battery1FaultMembers =
-          await widget.repository.getSetMembers('battery:1:fault');
+      final battery0FaultMembers = await widget.repository.getSetMembers('battery:0:fault');
+      final battery1FaultMembers = await widget.repository.getSetMembers('battery:1:fault');
 
       // Load CB battery values
-      final cbBatteryPresent =
-          await widget.repository.get('cb-battery', 'present');
-      final cbBatteryCharge =
-          await widget.repository.get('cb-battery', 'charge');
-      final cbBatteryChargeStatus =
-          await widget.repository.get('cb-battery', 'charge-status');
+      final cbBatteryPresent = await widget.repository.get('cb-battery', 'present');
+      final cbBatteryCharge = await widget.repository.get('cb-battery', 'charge');
+      final cbBatteryChargeStatus = await widget.repository.get('cb-battery', 'charge-status');
 
       // Load AUX battery values
-      final auxBatteryCharge =
-          await widget.repository.get('aux-battery', 'charge');
-      final auxBatteryVoltage =
-          await widget.repository.get('aux-battery', 'voltage');
-      final auxBatteryChargeStatus =
-          await widget.repository.get('aux-battery', 'charge-status');
+      final auxBatteryCharge = await widget.repository.get('aux-battery', 'charge');
+      final auxBatteryVoltage = await widget.repository.get('aux-battery', 'voltage');
+      final auxBatteryChargeStatus = await widget.repository.get('aux-battery', 'charge-status');
 
       // Load engine values
       final speed = await widget.repository.get('engine-ecu', 'speed');
@@ -323,14 +306,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (motorKersReasonOff != null) _motorKersReasonOff = motorKersReasonOff;
 
         // Battery fault codes
-        _battery0Fault = battery0FaultMembers
-            .map((m) => int.tryParse(m) ?? 0)
-            .where((f) => f != 0)
-            .toSet();
-        _battery1Fault = battery1FaultMembers
-            .map((m) => int.tryParse(m) ?? 0)
-            .where((f) => f != 0)
-            .toSet();
+        _battery0Fault = battery0FaultMembers.map((m) => int.tryParse(m) ?? 0).where((f) => f != 0).toSet();
+        _battery1Fault = battery1FaultMembers.map((m) => int.tryParse(m) ?? 0).where((f) => f != 0).toSet();
 
         // CB battery values
         if (cbBatteryPresent != null) {
@@ -360,8 +337,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (rpm != null) _simulatedRpm = int.tryParse(rpm) ?? 0;
         if (odometer != null) {
           final odometerValue = double.tryParse(odometer) ?? 0.0;
-          _simulatedOdometer =
-              odometerValue / 1000.0; // Convert from meters to km
+          _simulatedOdometer = odometerValue / 1000.0; // Convert from meters to km
         }
 
         if (gpsLatitude != null) _gpsLatitude = double.tryParse(gpsLatitude) ?? 0.0;
@@ -440,10 +416,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _publishEvent('engine-ecu', 'speed', _simulatedSpeed.toString()),
       _publishEvent('engine-ecu', 'rpm', _simulatedRpm.toString()),
       _publishEvent('engine-ecu', 'motor:voltage', _motorVoltage.toString()),
-      _publishEvent('engine-ecu', 'motor:current',
-          (_simulatedMotorCurrent * 1000).toString()),
-      _publishEvent(
-          'engine-ecu', 'odometer', (_simulatedOdometer * 1000).toString()),
+      _publishEvent('engine-ecu', 'motor:current', (_simulatedMotorCurrent * 1000).toString()),
+      _publishEvent('engine-ecu', 'odometer', (_simulatedOdometer * 1000).toString()),
     ];
     await Future.wait(futures);
   }
@@ -452,12 +426,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
     final futures = [
       _publishEvent('battery:0', 'present', _battery0Present.toString()),
       _publishEvent('battery:1', 'present', _battery1Present.toString()),
-      if (_battery0Present)
-        _publishEvent(
-            'battery:0', 'charge', _simulatedBatteryCharge0.toString()),
-      if (_battery1Present)
-        _publishEvent(
-            'battery:1', 'charge', _simulatedBatteryCharge1.toString()),
+      if (_battery0Present) _publishEvent('battery:0', 'charge', _simulatedBatteryCharge0.toString()),
+      if (_battery1Present) _publishEvent('battery:1', 'charge', _simulatedBatteryCharge1.toString()),
     ];
     await Future.wait(futures);
 
@@ -469,10 +439,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   Future<void> _updateBatteryFaults(int batteryId, Set<int> faults) async {
     final setKey = 'battery:$batteryId:fault';
     final currentMembers = await widget.repository.getSetMembers(setKey);
-    final currentFaults = currentMembers
-        .map((m) => int.tryParse(m) ?? 0)
-        .where((f) => f != 0)
-        .toSet();
+    final currentFaults = currentMembers.map((m) => int.tryParse(m) ?? 0).where((f) => f != 0).toSet();
 
     // Add new faults
     for (final fault in faults) {
@@ -562,8 +529,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   void _startGpsTimestampSimulation() {
     _gpsTimestampTimer?.cancel();
-    _gpsTimestampTimer =
-        Timer.periodic(const Duration(seconds: 1), (timer) async {
+    _gpsTimestampTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (_gpsState == 'fix-established') {
         final currentTimestamp = DateTime.now().toIso8601String();
         await _publishEvent('gps', 'timestamp', currentTimestamp);
@@ -716,8 +682,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text(
-            'Fault Codes (Current: ${_battery0Fault.isEmpty ? "None" : _battery0Fault.map((f) => "B$f").join(", ")})',
+        Text('Fault Codes (Current: ${_battery0Fault.isEmpty ? "None" : _battery0Fault.map((f) => "B$f").join(", ")})',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
         const SizedBox(height: 4),
         Wrap(
@@ -768,8 +733,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           },
         ),
         const SizedBox(height: 8),
-        Text(
-            'Fault Codes (Current: ${_battery1Fault.isEmpty ? "None" : _battery1Fault.map((f) => "B$f").join(", ")})',
+        Text('Fault Codes (Current: ${_battery1Fault.isEmpty ? "None" : _battery1Fault.map((f) => "B$f").join(", ")})',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
         const SizedBox(height: 4),
         Wrap(
@@ -860,12 +824,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         ),
         _buildSegmentedButton(
           'Charge Status',
-          [
-            'not-charging',
-            'float-charge',
-            'absorption-charge',
-            'bulk-charge'
-          ],
+          ['not-charging', 'float-charge', 'absorption-charge', 'bulk-charge'],
           _auxBatteryChargeStatus,
           (value) {
             setState(() => _auxBatteryChargeStatus = value);
@@ -936,9 +895,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: const Size(0, 32),
-                  backgroundColor: _seatboxButtonState == 'on'
-                      ? Colors.green.shade700
-                      : Colors.blue.shade700,
+                  backgroundColor: _seatboxButtonState == 'on' ? Colors.green.shade700 : Colors.blue.shade700,
                   foregroundColor: Colors.white,
                 ),
                 onPressed: () {},
@@ -1160,8 +1117,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           100,
           (value) {
             setState(() => _signalQuality = value.toInt());
-            _publishEvent(
-                'internet', 'signal-quality', value.toInt().toString());
+            _publishEvent('internet', 'signal-quality', value.toInt().toString());
           },
         ),
         _groupSpacer,
@@ -1635,8 +1591,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 color: Colors.red.withOpacity(0.8),
                 child: Text(
                   _errorMessage!,
@@ -1784,10 +1739,8 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 minimumSize: const Size(0, 32),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                backgroundColor:
-                    isSelected ? Theme.of(context).colorScheme.primary : null,
-                foregroundColor:
-                    isSelected ? Theme.of(context).colorScheme.onPrimary : null,
+                backgroundColor: isSelected ? Theme.of(context).colorScheme.primary : null,
+                foregroundColor: isSelected ? Theme.of(context).colorScheme.onPrimary : null,
               ),
               onPressed: () => onSelected(option),
               child: Text(option, style: const TextStyle(fontSize: 12)),
@@ -1800,18 +1753,14 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
 
   Widget _buildFaultButton(int batteryId, String label, int faultCode) {
     final currentFaultSet = batteryId == 0 ? _battery0Fault : _battery1Fault;
-    final isSelected = faultCode == 0
-        ? currentFaultSet.isEmpty
-        : currentFaultSet.contains(faultCode);
+    final isSelected = faultCode == 0 ? currentFaultSet.isEmpty : currentFaultSet.contains(faultCode);
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         minimumSize: const Size(0, 28),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        backgroundColor: isSelected
-            ? (faultCode == 0 ? Colors.green : Colors.red.shade700)
-            : null,
+        backgroundColor: isSelected ? (faultCode == 0 ? Colors.green : Colors.red.shade700) : null,
         foregroundColor: isSelected ? Colors.white : null,
       ),
       onPressed: () async {

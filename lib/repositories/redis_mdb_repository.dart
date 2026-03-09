@@ -122,8 +122,7 @@ class RedisMDBRepository implements MDBRepository {
   static String getRedisHost() {
     final runtime = Platform.environment['SCOOTUI_REDIS_HOST'];
     if (runtime != null && runtime.isNotEmpty) return runtime;
-    const compiled = String.fromEnvironment('SCOOTUI_REDIS_HOST',
-        defaultValue: '192.168.7.1');
+    const compiled = String.fromEnvironment('SCOOTUI_REDIS_HOST', defaultValue: '192.168.7.1');
     return compiled;
   }
 
@@ -134,8 +133,7 @@ class RedisMDBRepository implements MDBRepository {
     return repo;
   }
 
-  RedisMDBRepository({required String host, required int port})
-      : _pool = ConnectionPool(host: host, port: port);
+  RedisMDBRepository({required String host, required int port}) : _pool = ConnectionPool(host: host, port: port);
 
   void _updateConnectionState(RedisConnectionState newState) {
     if (_connectionState == newState) return;
@@ -178,7 +176,8 @@ class RedisMDBRepository implements MDBRepository {
     }
   }
 
-  Future<T> _withConnection<T>(Future<T> Function(Command) action, {Duration? timeout, bool allowWhileDisconnected = false}) async {
+  Future<T> _withConnection<T>(Future<T> Function(Command) action,
+      {Duration? timeout, bool allowWhileDisconnected = false}) async {
     if (!allowWhileDisconnected && _connectionState != RedisConnectionState.connected) {
       throw StateError('Redis not connected');
     }
@@ -186,9 +185,9 @@ class RedisMDBRepository implements MDBRepository {
     Command? cmd;
     try {
       cmd = await _pool.getConnection().timeout(
-        timeout ?? _operationTimeout,
-        onTimeout: () => throw TimeoutException('Redis connection pool timeout'),
-      );
+            timeout ?? _operationTimeout,
+            onTimeout: () => throw TimeoutException('Redis connection pool timeout'),
+          );
       final result = await action(cmd).timeout(
         timeout ?? _operationTimeout,
         onTimeout: () => throw TimeoutException('Redis operation timeout'),
@@ -207,7 +206,9 @@ class RedisMDBRepository implements MDBRepository {
       }
       // Discard broken connection instead of returning it to pool
       if (cmd != null) {
-        try { cmd.get_connection().close(); } catch (_) {}
+        try {
+          cmd.get_connection().close();
+        } catch (_) {}
         cmd = null;
       }
       _handleConnectionFailure();
@@ -217,7 +218,9 @@ class RedisMDBRepository implements MDBRepository {
         print('RedisMDBRepository: Operation failed: $e');
       }
       if (cmd != null) {
-        try { cmd.get_connection().close(); } catch (_) {}
+        try {
+          cmd.get_connection().close();
+        } catch (_) {}
         cmd = null;
       }
       _handleConnectionFailure();
@@ -228,7 +231,6 @@ class RedisMDBRepository implements MDBRepository {
       }
     }
   }
-
 
   @override
   Future<void> dashboardReady() async {
@@ -254,8 +256,7 @@ class RedisMDBRepository implements MDBRepository {
   }
 
   @override
-  Future<void> set(String cluster, String variable, String value,
-      {bool publish = true}) {
+  Future<void> set(String cluster, String variable, String value, {bool publish = true}) {
     return _withConnection((cmd) async {
       await cmd.send_object(["HSET", cluster, variable, value]);
       if (publish) {
@@ -309,9 +310,9 @@ class RedisMDBRepository implements MDBRepository {
     try {
       final con = RedisConnection();
       cmd = await con.connect(_pool.host, _pool.port).timeout(
-        _operationTimeout,
-        onTimeout: () => throw TimeoutException('Redis pubsub connection timeout'),
-      );
+            _operationTimeout,
+            onTimeout: () => throw TimeoutException('Redis pubsub connection timeout'),
+          );
 
       final ps = PubSub(cmd);
       ps.subscribe([channel]);
@@ -385,7 +386,8 @@ class RedisMDBRepository implements MDBRepository {
         await _pool.closeAll();
 
         // Test connection with a simple PING
-        await _withConnection((cmd) => cmd.send_object(['PING']), timeout: const Duration(seconds: 3), allowWhileDisconnected: true);
+        await _withConnection((cmd) => cmd.send_object(['PING']),
+            timeout: const Duration(seconds: 3), allowWhileDisconnected: true);
 
         // If we get here, connection succeeded
         _updateConnectionState(RedisConnectionState.connected);
@@ -408,8 +410,7 @@ class RedisMDBRepository implements MDBRepository {
 
   @override
   Future<void> push(String channel, String command) {
-    return _withConnection(
-        (cmd) => cmd.send_object(["LPUSH", channel, command]));
+    return _withConnection((cmd) => cmd.send_object(["LPUSH", channel, command]));
   }
 
   @override

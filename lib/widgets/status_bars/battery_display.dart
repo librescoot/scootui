@@ -50,14 +50,10 @@ class BatteryStatusDisplay extends StatelessWidget {
     }
 
     // Calculate range: 45km * SOH * SOC
-    final rangeKm = AppConfig.maxBatteryRangeKm *
-        (battery.stateOfHealth / 100.0) *
-        (battery.charge / 100.0);
+    final rangeKm = AppConfig.maxBatteryRangeKm * (battery.stateOfHealth / 100.0) * (battery.charge / 100.0);
 
     // Show integers for range >= 10km, one decimal for < 10km
-    final rangeString = rangeKm >= 10.0
-        ? rangeKm.round().toString()
-        : rangeKm.toStringAsFixed(1);
+    final rangeString = rangeKm >= 10.0 ? rangeKm.round().toString() : rangeKm.toStringAsFixed(1);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -355,8 +351,7 @@ class BatteryWarningIndicators extends StatefulWidget {
   const BatteryWarningIndicators({super.key});
 
   @override
-  State<BatteryWarningIndicators> createState() =>
-      _BatteryWarningIndicatorsState();
+  State<BatteryWarningIndicators> createState() => _BatteryWarningIndicatorsState();
 }
 
 class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
@@ -382,8 +377,7 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     _auxCriticalVoltageDebouncer = ConditionDebouncer(delay: debounceDelay);
   }
 
-  bool _shouldShowCbWarning(
-      CbBatteryData cbBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowCbWarning(CbBatteryData cbBattery, BatteryData mainBattery, VehicleData vehicle) {
     final cbChargeOk = cbBattery.charge < 95;
     final cbNotCharging = cbBattery.chargeStatus == ChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
@@ -391,34 +385,21 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     final mainActive = mainBattery.state == BatteryState.active;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    return cbChargeOk &&
-        cbNotCharging &&
-        mainPresent &&
-        mainNonZero &&
-        mainActive &&
-        seatboxClosed;
+    return cbChargeOk && cbNotCharging && mainPresent && mainNonZero && mainActive && seatboxClosed;
   }
 
-  bool _shouldShowAuxLowChargeWarning(
-      AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowAuxLowChargeWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final auxLowCharge = auxBattery.charge <= 25;
-    final auxNotCharging =
-        auxBattery.chargeStatus == AuxChargeStatus.notCharging;
+    final auxNotCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
     final mainNonZero = mainBattery.charge > 0;
     final mainActive = mainBattery.state == BatteryState.active;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
 
-    return auxLowCharge &&
-        auxNotCharging &&
-        mainPresent &&
-        mainNonZero &&
-        mainActive &&
-        seatboxClosed;
+    return auxLowCharge && auxNotCharging && mainPresent && mainNonZero && mainActive && seatboxClosed;
   }
 
-  bool _shouldShowAuxLowVoltageWarning(
-      AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowAuxLowVoltageWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final lowVoltage = auxBattery.voltage < 11500;
     final notCharging = auxBattery.chargeStatus == AuxChargeStatus.notCharging;
     final mainPresent = mainBattery.present;
@@ -427,8 +408,7 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
     return lowVoltage && notCharging && mainPresent && seatboxClosed;
   }
 
-  bool _shouldShowAuxCriticalVoltageWarning(
-      AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
+  bool _shouldShowAuxCriticalVoltageWarning(AuxBatteryData auxBattery, BatteryData mainBattery, VehicleData vehicle) {
     final criticalVoltage = auxBattery.voltage < 11000; // 11.0V = 11000mV
     final mainPresent = mainBattery.present;
     final seatboxClosed = vehicle.seatboxLock == SeatboxLock.closed;
@@ -446,24 +426,16 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
 
     // Check warning conditions and apply debouncing
     final cbCondition = _shouldShowCbWarning(cbBattery, mainBattery, vehicle);
-    final auxLowChargeCondition =
-        _shouldShowAuxLowChargeWarning(auxBattery, mainBattery, vehicle);
-    final auxLowVoltageCondition =
-        _shouldShowAuxLowVoltageWarning(auxBattery, mainBattery, vehicle);
-    final auxCriticalVoltageCondition =
-        _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery, vehicle);
+    final auxLowChargeCondition = _shouldShowAuxLowChargeWarning(auxBattery, mainBattery, vehicle);
+    final auxLowVoltageCondition = _shouldShowAuxLowVoltageWarning(auxBattery, mainBattery, vehicle);
+    final auxCriticalVoltageCondition = _shouldShowAuxCriticalVoltageWarning(auxBattery, mainBattery, vehicle);
 
     // Apply debouncing - warnings only show after condition is true for 3 seconds
     final showCbWarning = _cbWarningDebouncer.update(cbCondition);
-    final showAuxLowChargeWarning =
-        _auxLowChargeDebouncer.update(auxLowChargeCondition);
-    final showAuxLowVoltageWarning =
-        _auxLowVoltageDebouncer.update(auxLowVoltageCondition);
-    final showAuxCriticalVoltageWarning =
-        _auxCriticalVoltageDebouncer.update(auxCriticalVoltageCondition);
-    final showAnyAuxWarning = showAuxLowChargeWarning ||
-        showAuxLowVoltageWarning ||
-        showAuxCriticalVoltageWarning;
+    final showAuxLowChargeWarning = _auxLowChargeDebouncer.update(auxLowChargeCondition);
+    final showAuxLowVoltageWarning = _auxLowVoltageDebouncer.update(auxLowVoltageCondition);
+    final showAuxCriticalVoltageWarning = _auxCriticalVoltageDebouncer.update(auxCriticalVoltageCondition);
+    final showAnyAuxWarning = showAuxLowChargeWarning || showAuxLowVoltageWarning || showAuxCriticalVoltageWarning;
 
     // Defer toast side-effects to post-frame callback (build must be pure)
     final toasts = <String>[];

@@ -61,9 +61,7 @@ class _BlinkerOverlayContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = ThemeCubit.watch(context).isDark;
     final inactiveColor = isDark ? Colors.white12 : Colors.black12;
-    final iconName = isLeft
-        ? 'librescoot-turn-left.svg'
-        : 'librescoot-turn-right.svg';
+    final iconName = isLeft ? 'librescoot-turn-left.svg' : 'librescoot-turn-right.svg';
 
     svg(Color color) => SvgPicture.asset(
           'assets/icons/$iconName',
@@ -80,13 +78,11 @@ class _BlinkerOverlayContent extends StatelessWidget {
             control: Control.loop,
             tween: TweenSequence<int>([
               TweenSequenceItem(
-                tween: IntTween(begin: 0, end: 204)
-                    .chain(CurveTween(curve: Curves.easeInOutExpo)),
+                tween: IntTween(begin: 0, end: 204).chain(CurveTween(curve: Curves.easeInOutExpo)),
                 weight: 250,
               ),
               TweenSequenceItem(
-                tween: IntTween(begin: 204, end: 0)
-                    .chain(CurveTween(curve: Curves.easeInOutExpo)),
+                tween: IntTween(begin: 204, end: 0).chain(CurveTween(curve: Curves.easeInOutExpo)),
                 weight: 250,
               ),
               TweenSequenceItem(

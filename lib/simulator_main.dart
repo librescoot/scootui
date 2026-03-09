@@ -23,8 +23,8 @@ void main() async {
   // Suppress vector map tile cancellation exceptions
   FlutterError.onError = (FlutterErrorDetails details) {
     final exception = details.exception;
-    final isCancelledException = exception.toString().contains('Cancelled') &&
-        details.stack.toString().contains('vector_map_tiles');
+    final isCancelledException =
+        exception.toString().contains('Cancelled') && details.stack.toString().contains('vector_map_tiles');
 
     if (!isCancelledException) {
       FlutterError.presentError(details);
@@ -33,8 +33,8 @@ void main() async {
 
   // Also handle async errors from isolates and image loading
   PlatformDispatcher.instance.onError = (error, stack) {
-    final isCancelledException = error.toString().contains('Cancelled') &&
-        stack.toString().contains('vector_map_tiles');
+    final isCancelledException =
+        error.toString().contains('Cancelled') && stack.toString().contains('vector_map_tiles');
 
     if (isCancelledException) {
       return true; // Suppress the error
@@ -94,25 +94,25 @@ class SimulatorApp extends StatelessWidget {
           builder: (context, state) {
             return OKToast(
               child: ToastListenerWrapper(
-              child: MaterialApp(
-                title: 'Cluster Simulator',
-                theme: state.lightTheme,
-                darkTheme: state.darkTheme,
-                themeMode: state.themeMode,
-                debugShowCheckedModeBanner: false,
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
-                supportedLocales: AppLocalizations.supportedLocales,
-                builder: (context, child) {
-                  L10nService.update(AppLocalizations.of(context));
-                  return child!;
-                },
-                home: Builder(
-                  builder: (context) => SimulatorScreen(
-                    repository: context.read<MDBRepository>(),
+                child: MaterialApp(
+                  title: 'Cluster Simulator',
+                  theme: state.lightTheme,
+                  darkTheme: state.darkTheme,
+                  themeMode: state.themeMode,
+                  debugShowCheckedModeBanner: false,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  builder: (context, child) {
+                    L10nService.update(AppLocalizations.of(context));
+                    return child!;
+                  },
+                  home: Builder(
+                    builder: (context) => SimulatorScreen(
+                      repository: context.read<MDBRepository>(),
+                    ),
                   ),
                 ),
               ),
-            ),
             );
           },
         ),
