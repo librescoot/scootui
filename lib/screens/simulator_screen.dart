@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import '../repositories/mdb_repository.dart';
 import 'main_screen.dart';
 
@@ -1103,7 +1102,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         _buildGroupHeading('Signal Quality'),
         _buildSegmentedButton(
           '',
-          ['UNKNOWN', '2G', '3G', '4G', '5G'],
+          ['UNKNOWN', 'GSM', 'EDGE', '3G', '4G'],
           _internetAccessTech,
           (value) {
             setState(() => _internetAccessTech = value);
