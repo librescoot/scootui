@@ -53,7 +53,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   void initState() {
     super.initState();
 
-    _speedTicker = createTicker(_onTick)..start();
+    _speedTicker = createTicker(_onTick);
 
     _colorController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -89,11 +89,19 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       if (_displayedSpeed != _targetSpeed) {
         setState(() { _displayedSpeed = _targetSpeed; });
       }
+      _speedTicker.stop();
+      _lastTickTime = Duration.zero;
       return;
     }
-    // Framerate-independent exponential decay: 1 - e^(-dt/tau)
     final alpha = 1.0 - math.exp(-dtMs / _timeConstantMs);
     setState(() { _displayedSpeed += diff * alpha; });
+  }
+
+  void _ensureTickerRunning() {
+    if (!_speedTicker.isActive) {
+      _lastTickTime = Duration.zero;
+      _speedTicker.start();
+    }
   }
 
   @override
@@ -107,7 +115,10 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
   void _updateAnimationState(EngineData engineData, SettingsData settings, bool isDark) {
     final speed = _getDisplaySpeed(engineData, settings);
-    _targetSpeed = speed;
+    if (speed != _targetSpeed) {
+      _targetSpeed = speed;
+      _ensureTickerRunning();
+    }
 
     final regenerating = engineData.motorCurrent < 0;
     final isAccelerating = engineData.motorCurrent > 0 && !regenerating;
