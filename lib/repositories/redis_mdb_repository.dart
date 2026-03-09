@@ -106,6 +106,7 @@ class RedisMDBRepository implements MDBRepository {
   final _connectionStateController = StreamController<RedisConnectionState>.broadcast();
   Stream<RedisConnectionState> get connectionStateStream => _connectionStateController.stream;
   RedisConnectionState get connectionState => _connectionState;
+  bool _hasEverConnected = false;
 
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
@@ -144,12 +145,15 @@ class RedisMDBRepository implements MDBRepository {
     _connectionStateController.add(newState);
 
     if (newState == RedisConnectionState.connected) {
+      _hasEverConnected = true;
       _prolongedDisconnectTimer?.cancel();
       _prolongedDisconnectTimer = null;
       if (_prolongedDisconnect) {
         _prolongedDisconnect = false;
         _prolongedDisconnectController.add(false);
       }
+      // Re-send dashboard ready after (re)connection
+      dashboardReady();
     } else if (oldState == RedisConnectionState.connected) {
       _prolongedDisconnectTimer?.cancel();
       _prolongedDisconnectTimer = Timer(_prolongedDisconnectThreshold, () {
@@ -160,7 +164,7 @@ class RedisMDBRepository implements MDBRepository {
       });
     }
 
-    if (suppressConnectionToasts) return;
+    if (suppressConnectionToasts || !_hasEverConnected) return;
 
     if (newState == RedisConnectionState.disconnected) {
       ToastService.showError(L10nService.current.connectionLost);
@@ -188,7 +192,8 @@ class RedisMDBRepository implements MDBRepository {
         onTimeout: () => throw TimeoutException('Redis operation timeout'),
       );
 
-      // Operation succeeded - ensure we're in connected state
+      // Operation succeeded - mark as connected
+      if (!_hasEverConnected) _hasEverConnected = true;
       if (_connectionState != RedisConnectionState.connected) {
         _updateConnectionState(RedisConnectionState.connected);
       }
