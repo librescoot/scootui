@@ -26,7 +26,7 @@ abstract mixin class $EngineData implements Syncable<EngineData> {
   double get temperature;
   get syncSettings => SyncSettings(
       "engine-ecu",
-      Duration(microseconds: 1000000),
+      Duration(microseconds: 200000),
       [
         SyncFieldSettings(
             name: "powerState",

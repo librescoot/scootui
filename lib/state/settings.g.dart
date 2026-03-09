@@ -258,7 +258,7 @@ abstract mixin class $SettingsData implements Syncable<SettingsData> {
         dualBattery,
         alarmEnabled,
         alarmHonk,
-        alarmDuration,
+        alarmDuration
       ];
   @override
   String toString() {
