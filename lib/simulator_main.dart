@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'cubits/all.dart';
@@ -91,7 +92,8 @@ class SimulatorApp extends StatelessWidget {
         providers: allCubits,
         child: BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, state) {
-            return ToastListenerWrapper(
+            return OKToast(
+              child: ToastListenerWrapper(
               child: MaterialApp(
                 title: 'Cluster Simulator',
                 theme: state.lightTheme,
@@ -110,6 +112,7 @@ class SimulatorApp extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
             );
           },
         ),

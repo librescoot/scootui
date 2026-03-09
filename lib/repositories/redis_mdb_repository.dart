@@ -141,6 +141,7 @@ class RedisMDBRepository implements MDBRepository {
     if (_connectionState == newState) return;
 
     final oldState = _connectionState;
+    final hadConnected = _hasEverConnected;
     _connectionState = newState;
     _connectionStateController.add(newState);
 
@@ -164,7 +165,8 @@ class RedisMDBRepository implements MDBRepository {
       });
     }
 
-    if (suppressConnectionToasts || !_hasEverConnected) return;
+    // Suppress toasts until we've had at least one successful connection
+    if (suppressConnectionToasts || !hadConnected) return;
 
     if (newState == RedisConnectionState.disconnected) {
       ToastService.showError(L10nService.current.connectionLost);
