@@ -103,6 +103,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
   // GPS timestamp simulation
   Timer? _gpsTimestampTimer;
 
+  // Cached to avoid rebuilds when simulator controls change
+  static const _mainScreen = MainScreen();
+
   // Card builders
   late final List<Widget Function()> _cardBuilders = [
     _buildMotorCard,
@@ -1584,7 +1587,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     SizedBox(
                       width: 480,
                       height: 480,
-                      child: MainScreen(),
+                      child: _mainScreen,
                     ),
                   ]),
                 ),
