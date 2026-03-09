@@ -37,7 +37,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   Duration _lastTickTime = Duration.zero;
 
   // Time constant: reaches ~63% in this duration, ~95% in 3x
-  static const double _timeConstantMs = 150.0;
+  static const double _timeConstantMs = 100.0;
   static const double _snapThreshold = 0.3;
 
   bool _isRegenerating = false;
