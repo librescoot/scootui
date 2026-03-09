@@ -107,6 +107,7 @@ class RedisMDBRepository implements MDBRepository {
   Stream<RedisConnectionState> get connectionStateStream => _connectionStateController.stream;
   RedisConnectionState get connectionState => _connectionState;
   bool _hasEverConnected = false;
+  bool get hasEverConnected => _hasEverConnected;
 
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
@@ -164,13 +165,16 @@ class RedisMDBRepository implements MDBRepository {
     }
 
     // Suppress toasts until we've had at least one successful connection
-    if (suppressConnectionToasts || !hadConnected) return;
+    if (suppressConnectionToasts || !hadConnected) {
+      print('RedisMDBRepository: Toast suppressed (suppress=$suppressConnectionToasts, hadConnected=$hadConnected)');
+      return;
+    }
 
     if (newState == RedisConnectionState.disconnected) {
-      ToastService.showError(L10nService.current.connectionLost);
-    } else if (newState == RedisConnectionState.reconnecting && oldState == RedisConnectionState.disconnected) {
-      ToastService.showWarning(L10nService.current.connectionReconnecting);
+      ToastService.dismiss('connection-state');
+      ToastService.showPermanentError(L10nService.current.connectionLost, 'connection-state');
     } else if (newState == RedisConnectionState.connected && oldState != RedisConnectionState.connected) {
+      ToastService.dismiss('connection-state');
       ToastService.showSuccess(L10nService.current.connectionRestored);
       _reconnectAttempts = 0;
     }
@@ -193,8 +197,6 @@ class RedisMDBRepository implements MDBRepository {
         onTimeout: () => throw TimeoutException('Redis operation timeout'),
       );
 
-      // Operation succeeded - mark as connected
-      if (!_hasEverConnected) _hasEverConnected = true;
       if (_connectionState != RedisConnectionState.connected) {
         _updateConnectionState(RedisConnectionState.connected);
       }
@@ -373,10 +375,10 @@ class RedisMDBRepository implements MDBRepository {
     _reconnectAttempts++;
     _updateConnectionState(RedisConnectionState.reconnecting);
 
-    // Exponential backoff: 1s, 2s, 5s, 10s, 10s, ...
-    final delays = [1, 2, 5, 10];
+    // Exponential backoff: 1s, 2s, 5s, 5s, ...
+    final delays = [1, 2, 5];
     final delayIndex = _reconnectAttempts - 1;
-    final delaySeconds = delayIndex < delays.length ? delays[delayIndex] : 10;
+    final delaySeconds = delayIndex < delays.length ? delays[delayIndex] : 5;
 
     print('RedisMDBRepository: Reconnection attempt $_reconnectAttempts in ${delaySeconds}s');
 
