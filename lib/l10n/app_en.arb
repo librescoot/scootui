@@ -411,7 +411,7 @@
       "licenseId": {"type": "String"}
     }
   },
-  "aboutScamWarning": "If you paid money for this software, you may have been the victim of a scam. Please report it at {websiteUrl}.",
+  "aboutScamWarning": "If you paid money for this software, or if you purchased a new scooter from a shop or vendor with this software preinstalled, you may have been the victim of a scam. Please report it at {websiteUrl}.",
   "@aboutScamWarning": {
     "placeholders": {
       "websiteUrl": {"type": "String"}

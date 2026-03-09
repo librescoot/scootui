@@ -815,7 +815,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String aboutScamWarning(String websiteUrl) {
-    return 'Falls du für diese Software bezahlt hast, bist du möglicherweise Opfer eines Betrugs geworden. Bitte melde es auf $websiteUrl.';
+    return 'Falls du für diese Software bezahlt hast, oder wenn du einen neuen Roller von einem Händler oder Verkäufer mit vorinstallierter Software erworben hast, bist du möglicherweise Opfer eines Betrugs geworden. Bitte melde es auf $websiteUrl.';
   }
 
   @override
