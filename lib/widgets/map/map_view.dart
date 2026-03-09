@@ -120,20 +120,17 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTi
   late AnimationController _controller;
   late Animation<double> _latAnimation;
   late Animation<double> _lngAnimation;
-  late LatLng _currentPosition;
+  late LatLng _lastPosition;
 
   @override
   void initState() {
     super.initState();
-    _currentPosition = widget.targetPosition;
+    _lastPosition = widget.targetPosition;
 
     _controller = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
-
-    _controller.addListener(_onAnimationTick);
-    _controller.addStatusListener(_onAnimationStatus);
 
     _updateAnimation();
   }
@@ -142,6 +139,7 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTi
   void didUpdateWidget(AnimatedMarkerLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.targetPosition != widget.targetPosition) {
+      _lastPosition = LatLng(_latAnimation.value, _lngAnimation.value);
       _updateAnimation();
       _controller.forward(from: 0.0);
     }
@@ -149,7 +147,7 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTi
 
   void _updateAnimation() {
     _latAnimation = Tween<double>(
-      begin: _currentPosition.latitude,
+      begin: _lastPosition.latitude,
       end: widget.targetPosition.latitude,
     ).animate(CurvedAnimation(
       parent: _controller,
@@ -157,7 +155,7 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTi
     ));
 
     _lngAnimation = Tween<double>(
-      begin: _currentPosition.longitude,
+      begin: _lastPosition.longitude,
       end: widget.targetPosition.longitude,
     ).animate(CurvedAnimation(
       parent: _controller,
@@ -165,26 +163,8 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTi
     ));
   }
 
-  void _onAnimationTick() {
-    if (mounted) {
-      setState(() {
-        _currentPosition = LatLng(_latAnimation.value, _lngAnimation.value);
-      });
-    }
-  }
-
-  void _onAnimationStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed && mounted) {
-      setState(() {
-        _currentPosition = widget.targetPosition;
-      });
-    }
-  }
-
   @override
   void dispose() {
-    _controller.removeListener(_onAnimationTick);
-    _controller.removeStatusListener(_onAnimationStatus);
     _controller.dispose();
     super.dispose();
   }
@@ -195,38 +175,44 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer> with SingleTi
     final backgroundColor = isDark ? Colors.grey.shade800.withOpacity(0.7) : Colors.grey.shade300.withOpacity(0.7);
     final borderColor = isDark ? Colors.grey.shade600.withOpacity(0.9) : Colors.grey.shade500.withOpacity(0.9);
 
-    final markers = <Marker>[
-      Marker(
-        point: _currentPosition,
-        width: 37,
-        height: 37,
-        rotate: true,
-        child: Container(
-          width: 37,
-          height: 37,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 1.0),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final currentPosition = LatLng(_latAnimation.value, _lngAnimation.value);
+        final markers = <Marker>[
+          Marker(
+            point: currentPosition,
+            width: 37,
+            height: 37,
+            rotate: true,
+            child: Container(
+              width: 37,
+              height: 37,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: borderColor, width: 1.0),
+              ),
+              child: const Icon(
+                Icons.navigation,
+                color: Colors.blue,
+                size: 24.0,
+              ),
+            ),
           ),
-          child: const Icon(
-            Icons.navigation,
-            color: Colors.blue,
-            size: 24.0,
-          ),
-        ),
-      ),
-    ];
+        ];
 
-    if (widget.destination != null) {
-      markers.add(Marker(
-        point: widget.destination!,
-        rotate: true,
-        child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
-      ));
-    }
+        if (widget.destination != null) {
+          markers.add(Marker(
+            point: widget.destination!,
+            rotate: true,
+            child: const Icon(Icons.location_pin, color: Colors.red, size: 30.0),
+          ));
+        }
 
-    return MarkerLayer(markers: markers);
+        return MarkerLayer(markers: markers);
+      },
+    );
   }
 }
 
@@ -316,31 +302,40 @@ class ScaleBarPainter extends CustomPainter {
       oldDelegate.strokeColor != strokeColor;
 }
 
-class ScaleBar extends StatelessWidget {
+class ScaleBar extends StatefulWidget {
   final double? zoom;
   final double latitude;
 
   const ScaleBar({super.key, this.zoom, required this.latitude});
 
-  // Calculate appropriate scale bar distance and width
-  (String, double) _calculateScale() {
-    final currentZoom = zoom ?? 17.0; // Default to zoom 17 if camera not ready
-    // Calculate meters per pixel at this zoom level and latitude
-    const earthCircumference = 40075000.0; // meters at equator
-    final metersPerPixel = (earthCircumference * math.cos(latitude * math.pi / 180)) / (256 * math.pow(2, currentZoom));
+  @override
+  State<ScaleBar> createState() => _ScaleBarState();
+}
 
-    // Target scale bar width in pixels (max 1/3 of 480px screen = 160px)
+class _ScaleBarState extends State<ScaleBar> {
+  ({String label, double width})? _cachedScale;
+  double? _cachedZoom;
+  double? _cachedLat;
+
+  ({String label, double width}) _calculateScale() {
+    final currentZoom = widget.zoom ?? 17.0;
+    final lat = widget.latitude;
+
+    if (_cachedZoom == currentZoom && _cachedLat == lat && _cachedScale != null) {
+      return _cachedScale!;
+    }
+
+    const earthCircumference = 40075000.0;
+    final metersPerPixel = (earthCircumference * math.cos(lat * math.pi / 180)) / (256 * math.pow(2, currentZoom));
+
     const maxWidth = 160.0;
     final targetMeters = metersPerPixel * maxWidth;
 
-    // Round to nice numbers
     final scales = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
-    int scaleMeters = scales.firstWhere((s) => s >= targetMeters * 0.6, orElse: () => 20);
+    final scaleMeters = scales.firstWhere((s) => s >= targetMeters * 0.6, orElse: () => 20);
 
-    // Calculate actual pixel width for this scale
     final actualWidth = scaleMeters / metersPerPixel;
 
-    // Format label
     String label;
     if (scaleMeters >= 1000) {
       final km = scaleMeters / 1000;
@@ -349,7 +344,10 @@ class ScaleBar extends StatelessWidget {
       label = '$scaleMeters m';
     }
 
-    return (label, actualWidth.clamp(40.0, maxWidth));
+    _cachedScale = (label: label, width: actualWidth.clamp(40.0, maxWidth));
+    _cachedZoom = currentZoom;
+    _cachedLat = lat;
+    return _cachedScale!;
   }
 
   @override
@@ -357,7 +355,7 @@ class ScaleBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final barColor = isDark ? Colors.grey.shade400 : Colors.grey.shade700;
 
-    final (label, width) = _calculateScale();
+    final (:label, :width) = _calculateScale();
 
     return SizedBox(
       width: width,
