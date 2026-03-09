@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubits/mdb_cubits.dart';
@@ -24,30 +25,27 @@ class SpeedometerDisplay extends StatefulWidget {
 }
 
 class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProviderStateMixin {
-  late AnimationController _speedController;
+  late Ticker _speedTicker;
   late AnimationController _colorController;
   late AnimationController _overspeedPulseController;
   late AnimationController _accelerationPulseController;
   late Animation<Color?> _colorAnimation;
-  late Listenable _allAnimations;
+  late Listenable _effectAnimations;
 
-  double _animationStartSpeed = 0.0;
+  double _displayedSpeed = 0.0;
   double _targetSpeed = 0.0;
+  Duration _lastTickTime = Duration.zero;
 
-  double get _currentAnimatedSpeed {
-    if (_speedController.isAnimating || _speedController.value > 0) {
-      final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
-      return _animationStartSpeed + curvedValue * (_targetSpeed - _animationStartSpeed);
-    }
-    return _targetSpeed;
-  }
+  // Time constant: reaches ~63% in this duration, ~95% in 3x
+  static const double _timeConstantMs = 100.0;
+  static const double _snapThreshold = 0.3;
+
   bool _isRegenerating = false;
   bool _isOverSpeed = false;
   bool _isAccelerating = false;
   bool _lastAccelerationState = false;
   int _accelerationDebounceFrames = 0;
 
-  // Cached label painters — rebuilt only when isDark or maxArcSpeed changes
   List<_LabelPainter>? _cachedLabelPainters;
   bool? _cachedIsDark;
 
@@ -55,10 +53,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   void initState() {
     super.initState();
 
-    _speedController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
+    _speedTicker = createTicker(_onTick)..start();
 
     _colorController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -77,17 +72,33 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
     _colorAnimation = const AlwaysStoppedAnimation<Color?>(null);
 
-    _allAnimations = Listenable.merge([
-      _speedController,
+    _effectAnimations = Listenable.merge([
       _colorController,
       _overspeedPulseController,
       _accelerationPulseController,
     ]);
   }
 
+  void _onTick(Duration elapsed) {
+    final dtMs = (elapsed - _lastTickTime).inMicroseconds / 1000.0;
+    _lastTickTime = elapsed;
+    if (dtMs <= 0) return;
+
+    final diff = _targetSpeed - _displayedSpeed;
+    if (diff.abs() < _snapThreshold) {
+      if (_displayedSpeed != _targetSpeed) {
+        setState(() { _displayedSpeed = _targetSpeed; });
+      }
+      return;
+    }
+    // Framerate-independent exponential decay: 1 - e^(-dt/tau)
+    final alpha = 1.0 - math.exp(-dtMs / _timeConstantMs);
+    setState(() { _displayedSpeed += diff * alpha; });
+  }
+
   @override
   void dispose() {
-    _speedController.dispose();
+    _speedTicker.dispose();
     _colorController.dispose();
     _overspeedPulseController.dispose();
     _accelerationPulseController.dispose();
@@ -96,6 +107,8 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
   void _updateAnimationState(EngineData engineData, SettingsData settings, bool isDark) {
     final speed = _getDisplaySpeed(engineData, settings);
+    _targetSpeed = speed;
+
     final regenerating = engineData.motorCurrent < 0;
     final isAccelerating = engineData.motorCurrent > 0 && !regenerating;
 
@@ -144,13 +157,6 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       }
     } else {
       _accelerationDebounceFrames = 0;
-    }
-
-    if (speed != _targetSpeed) {
-      // Snapshot current displayed speed as new start point
-      _animationStartSpeed = _currentAnimatedSpeed;
-      _targetSpeed = speed;
-      _speedController.forward(from: 0.0);
     }
   }
 
@@ -201,9 +207,9 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
           final labelPainters = _buildLabelPainters(theme.isDark);
 
           return AnimatedBuilder(
-            animation: _allAnimations,
+            animation: _effectAnimations,
             builder: (context, _) {
-              final animatedSpeed = _currentAnimatedSpeed;
+              final animatedSpeed = _displayedSpeed;
 
               Color backgroundColor;
               if (_colorController.isAnimating && _colorAnimation.value != null) {
