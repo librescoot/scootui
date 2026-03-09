@@ -22,48 +22,12 @@ class ConnectionPool {
   final List<Command> _connections = [];
   final List<Completer<Command>> _waitingQueue = [];
   int _activeConnections = 0;
-  Timer? _healthCheckTimer;
-  final Duration _healthCheckInterval = const Duration(seconds: 10);
 
   ConnectionPool({
     required this.host,
     required this.port,
     this.maxConnections = 10,
-  }) {
-    _startHealthCheck();
-  }
-
-  void _startHealthCheck() {
-    _healthCheckTimer = Timer.periodic(_healthCheckInterval, (_) {
-      _checkConnections();
-    });
-  }
-
-  Future<void> _checkConnections() async {
-    if (_connections.isEmpty) return;
-
-    final List<Command> validConnections = [];
-
-    for (final cmd in List.from(_connections)) {
-      try {
-        // Use PING command to check if connection is still alive
-        final result = await cmd.send_object(["PING"]);
-        if (result == "PONG") {
-          validConnections.add(cmd);
-        } else {
-          _activeConnections--;
-        }
-      } catch (e) {
-        cmd.get_connection().close();
-        _activeConnections--;
-        // Connection is invalid, discard it
-      }
-    }
-
-    _connections
-      ..clear()
-      ..addAll(validConnections);
-  }
+  });
 
   Future<Command> getConnection() async {
     // If there's an available connection, return it immediately
@@ -96,10 +60,17 @@ class ConnectionPool {
     _connections.add(cmd);
   }
 
-  Future<void> dispose() async {
-    _healthCheckTimer?.cancel();
+  Future<void> closeIdle() async {
+    for (final cmd in _connections) {
+      try {
+        await cmd.get_connection().close();
+      } catch (_) {}
+      _activeConnections--;
+    }
+    _connections.clear();
+  }
 
-    // Close all connections in the pool
+  Future<void> dispose() async {
     for (final cmd in _connections) {
       try {
         await cmd.get_connection().close();
@@ -114,7 +85,7 @@ class ConnectionPool {
 
 class RedisMDBRepository implements MDBRepository {
   final ConnectionPool _pool;
-  static const Duration _operationTimeout = Duration(seconds: 10);
+  static const Duration _operationTimeout = Duration(seconds: 2);
 
   // When true, suppresses connection state toast notifications (used during UMS mode)
   bool suppressConnectionToasts = false;
@@ -381,11 +352,11 @@ class RedisMDBRepository implements MDBRepository {
 
     _reconnectTimer = Timer(Duration(seconds: delaySeconds), () async {
       try {
-        // Try to recreate connection pool
-        await _pool.dispose();
+        // Close idle connections — active ones will fail on next use
+        await _pool.closeIdle();
 
         // Test connection with a simple PING
-        await _withConnection((cmd) => cmd.send_object(['PING']), timeout: const Duration(seconds: 5));
+        await _withConnection((cmd) => cmd.send_object(['PING']), timeout: const Duration(seconds: 3));
 
         // If we get here, connection succeeded
         _updateConnectionState(RedisConnectionState.connected);
