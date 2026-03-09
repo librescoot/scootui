@@ -840,7 +840,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get connectionReconnecting => 'Verbindung zum Fahrzeugsystem wird wiederhergestellt...';
 
   @override
-  String get connectionRestored => 'Verbindung zum Fahrzeugsystem hergestellt';
+  String get connectionRestored => 'Fahrzeugsystem verbunden';
 
   @override
   String get shortcutPressToConfirm => 'Zum Bestätigen drücken';

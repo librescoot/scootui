@@ -279,7 +279,7 @@
 
   "connectionLost": "Verbindung zum Fahrzeugsystem verloren",
   "connectionReconnecting": "Verbindung zum Fahrzeugsystem wird wiederhergestellt...",
-  "connectionRestored": "Verbindung zum Fahrzeugsystem hergestellt",
+  "connectionRestored": "Fahrzeugsystem verbunden",
 
   "shortcutPressToConfirm": "Zum Bestätigen drücken",
 
