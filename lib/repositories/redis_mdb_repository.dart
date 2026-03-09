@@ -30,19 +30,21 @@ class ConnectionPool {
   });
 
   Future<Command> getConnection() async {
-    // If there's an available connection, return it immediately
     if (_connections.isNotEmpty) {
       return _connections.removeLast();
     }
 
-    // If we haven't reached max connections yet, create a new one
     if (_activeConnections < maxConnections) {
       _activeConnections++;
-      final con = RedisConnection();
-      return await con.connect(host, port);
+      try {
+        final con = RedisConnection();
+        return await con.connect(host, port);
+      } catch (e) {
+        _activeConnections--;
+        rethrow;
+      }
     }
 
-    // If we reached here, we need to wait for a connection to be released
     final completer = Completer<Command>();
     _waitingQueue.add(completer);
     return completer.future;
@@ -60,14 +62,21 @@ class ConnectionPool {
     _connections.add(cmd);
   }
 
-  Future<void> closeIdle() async {
+  Future<void> closeAll() async {
     for (final cmd in _connections) {
       try {
         await cmd.get_connection().close();
       } catch (_) {}
-      _activeConnections--;
     }
     _connections.clear();
+
+    // Fail any waiters so they don't hang forever
+    for (final completer in _waitingQueue) {
+      completer.completeError(StateError('Connection pool reset'));
+    }
+    _waitingQueue.clear();
+
+    _activeConnections = 0;
   }
 
   Future<void> dispose() async {
@@ -161,7 +170,11 @@ class RedisMDBRepository implements MDBRepository {
     }
   }
 
-  Future<T> _withConnection<T>(Future<T> Function(Command) action, {Duration? timeout}) async {
+  Future<T> _withConnection<T>(Future<T> Function(Command) action, {Duration? timeout, bool allowWhileDisconnected = false}) async {
+    if (!allowWhileDisconnected && _connectionState != RedisConnectionState.connected) {
+      throw StateError('Redis not connected');
+    }
+
     Command? cmd;
     try {
       cmd = await _pool.getConnection().timeout(
@@ -353,10 +366,10 @@ class RedisMDBRepository implements MDBRepository {
     _reconnectTimer = Timer(Duration(seconds: delaySeconds), () async {
       try {
         // Close idle connections — active ones will fail on next use
-        await _pool.closeIdle();
+        await _pool.closeAll();
 
         // Test connection with a simple PING
-        await _withConnection((cmd) => cmd.send_object(['PING']), timeout: const Duration(seconds: 3));
+        await _withConnection((cmd) => cmd.send_object(['PING']), timeout: const Duration(seconds: 3), allowWhileDisconnected: true);
 
         // If we get here, connection succeeded
         _updateConnectionState(RedisConnectionState.connected);
