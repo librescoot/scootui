@@ -212,6 +212,9 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
         },
         onDone: () {
           print("SyncableCubit (${state.syncSettings.channel}): PUBSUB closed");
+          if (!_isPaused && !_isClosing) {
+            _setupPubsubSubscription();
+          }
         },
         cancelOnError: false,
       );
@@ -246,11 +249,21 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
 
     _setupConnectionStateListener();
 
-    // Initial fetch
+    // If already disconnected before we subscribed, pre-pause so
+    // _resumePolling() will act when connection is restored.
+    try {
+      final dynamic repo = redisRepository;
+      final connState = repo.connectionState?.toString().split('.').last;
+      if (connState == 'disconnected' || connState == 'reconnecting') {
+        _isPaused = true;
+        print("SyncableCubit (${state.syncSettings.channel}): Starting paused (already disconnected)");
+        return;
+      }
+    } catch (_) {}
+
     _doHgetall();
     _startPollTimer();
 
-    // Set up set field timers
     for (final field in settings.setFields) {
       _setFields[field.name] = field;
       _doRefreshSet(field.name, field);

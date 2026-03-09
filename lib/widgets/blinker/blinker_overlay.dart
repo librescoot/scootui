@@ -30,7 +30,7 @@ class _BlinkerOverlayState extends State<BlinkerOverlay> {
         return BlocConsumer<VehicleSync, VehicleData>(
           listenWhen: (prev, curr) => prev.blinkerState != curr.blinkerState,
           listener: (context, _) {
-            setState(() => _animKey = UniqueKey());
+            if (mounted) setState(() => _animKey = UniqueKey());
           },
           buildWhen: (prev, curr) => prev.blinkerState != curr.blinkerState,
           builder: (context, vehicle) {

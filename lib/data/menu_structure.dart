@@ -553,7 +553,7 @@ MenuNode buildMenuTree(BuildContext context) {
               MenuNode.setting(
                 id: 'blinker_small',
                 title: l10n.menuBlinkerStyleIcon,
-                currentValue: (settings.blinkerStyle ?? 'small') == 'icon' ? 1 : 0,
+                currentValue: (settings.blinkerStyle ?? 'icon') == 'icon' ? 1 : 0,
                 onAction: (context) async {
                   await context.read<SettingsService>().updateBlinkerStyleSetting('icon');
                 },
@@ -561,7 +561,7 @@ MenuNode buildMenuTree(BuildContext context) {
               MenuNode.setting(
                 id: 'blinker_overlay',
                 title: l10n.menuBlinkerStyleOverlay,
-                currentValue: (settings.blinkerStyle ?? 'small') == 'overlay' ? 1 : 0,
+                currentValue: (settings.blinkerStyle ?? 'icon') == 'overlay' ? 1 : 0,
                 onAction: (context) async {
                   await context.read<SettingsService>().updateBlinkerStyleSetting('overlay');
                 },

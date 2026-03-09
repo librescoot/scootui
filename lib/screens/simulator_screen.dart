@@ -160,7 +160,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       _clearErrorMessage();
     } catch (e) {
       // Error already set by _loadCurrentValues, or set it here
-      if (_errorMessage == null) {
+      if (_errorMessage == null && mounted) {
         setState(() {
           _errorMessage = 'Error initializing: $e';
         });
@@ -264,7 +264,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
       final navigationAddress = await widget.repository.get('navigation', 'address');
       final navigationTimestamp = await widget.repository.get('navigation', 'timestamp');
 
-      // Update state with loaded values
+      if (!mounted) return;
       setState(() {
         if (blinkerState != null) _blinkerState = blinkerState;
         if (handlebarPosition != null) _handlebarPosition = handlebarPosition;
@@ -364,14 +364,16 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (navigationTimestamp != null) _navigationTimestamp = navigationTimestamp;
       });
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Error loading values: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error loading values: $e';
+        });
+      }
     }
   }
 
   void _clearErrorMessage() {
-    if (_errorMessage != null) {
+    if (_errorMessage != null && mounted) {
       setState(() {
         _errorMessage = null;
       });

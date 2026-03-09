@@ -30,8 +30,9 @@ final List<SingleChildWidget> allRepositories = [
               });
               return repo;
             }),
-  RepositoryProvider(
+  RepositoryProvider<SettingsService>(
     create: (context) => SettingsService(context.read<MDBRepository>())..initialize(),
+    dispose: (service) => service.dispose(),
   ),
   RepositoryProvider(
     create: (context) => AutoThemeService(context.read<MDBRepository>()),

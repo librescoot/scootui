@@ -83,11 +83,13 @@ class ConnectionPool {
     for (final cmd in _connections) {
       try {
         await cmd.get_connection().close();
-      } catch (_) {
-        // Ignore errors during disposal
-      }
+      } catch (_) {}
     }
     _connections.clear();
+    for (final completer in _waitingQueue) {
+      completer.completeError(StateError('Connection pool disposed'));
+    }
+    _waitingQueue.clear();
     _activeConnections = 0;
   }
 }
@@ -193,16 +195,23 @@ class RedisMDBRepository implements MDBRepository {
 
       return result;
     } on TimeoutException catch (e) {
-      // Only log if we're currently connected (unexpected timeout)
       if (_connectionState == RedisConnectionState.connected) {
         print('RedisMDBRepository: Operation timed out: $e');
+      }
+      // Discard broken connection instead of returning it to pool
+      if (cmd != null) {
+        try { cmd.get_connection().close(); } catch (_) {}
+        cmd = null;
       }
       _handleConnectionFailure();
       rethrow;
     } catch (e) {
-      // Only log if we're currently connected (unexpected error)
       if (_connectionState == RedisConnectionState.connected) {
         print('RedisMDBRepository: Operation failed: $e');
+      }
+      if (cmd != null) {
+        try { cmd.get_connection().close(); } catch (_) {}
+        cmd = null;
       }
       _handleConnectionFailure();
       rethrow;

@@ -273,7 +273,7 @@ class _MapBlinkerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final blinkerState = context.select((VehicleSync v) => v.state.blinkerState);
     final (theme, isDark) = context.select((ThemeCubit t) => (t.state.theme, t.state.isDark));
-    final overlayActive = context.read<SettingsSync>().state.blinkerOverlayEnabled;
+    final overlayActive = context.select((SettingsSync s) => s.state.blinkerOverlayEnabled);
 
     final showLeft = (blinkerState == BlinkerState.left || blinkerState == BlinkerState.both)
         && !(overlayActive && blinkerState == BlinkerState.left);

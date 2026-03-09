@@ -107,6 +107,8 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   }
 
   void _updateAnimationState(EngineData engineData, SettingsData settings, bool isDark) {
+    if (!mounted) return;
+
     final speed = _getDisplaySpeed(engineData, settings);
     if (speed != _targetSpeed) {
       _targetSpeed = speed;
@@ -211,9 +213,16 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
           final labelPainters = _buildLabelPainters(theme.isDark);
 
           return ExcludeSemantics(
-            child: ValueListenableBuilder<double>(
-            valueListenable: _speedNotifier,
-            builder: (context, animatedSpeed, _) {
+            child: AnimatedBuilder(
+            animation: Listenable.merge([
+              _overspeedPulseController,
+              _accelerationPulseController,
+              _colorController,
+            ]),
+            builder: (context, _) {
+              return ValueListenableBuilder<double>(
+              valueListenable: _speedNotifier,
+              builder: (context, animatedSpeed, _) {
               Color backgroundColor;
               if (_colorController.isAnimating && _colorAnimation.value != null) {
                 backgroundColor = _colorAnimation.value!;
@@ -300,6 +309,8 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
                 ],
               );
             },
+          );
+          },
           ),
           );
         },

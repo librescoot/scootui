@@ -465,29 +465,37 @@ class _BatteryWarningIndicatorsState extends State<BatteryWarningIndicators> {
         showAuxLowVoltageWarning ||
         showAuxCriticalVoltageWarning;
 
-    // Show toast only on false→true transitions to avoid duplicate toasts across rebuilds
+    // Defer toast side-effects to post-frame callback (build must be pure)
+    final toasts = <String>[];
     if (showCbWarning && !_prevCbWarning) {
-      ToastService.showWarning(L10nService.current.batteryCbNotCharging);
+      toasts.add(L10nService.current.batteryCbNotCharging);
     }
     _prevCbWarning = showCbWarning;
 
     if (showAuxLowChargeWarning && !_prevAuxLowChargeWarning) {
-      ToastService.showWarning(L10nService.current.batteryAuxLowNotCharging);
+      toasts.add(L10nService.current.batteryAuxLowNotCharging);
     }
     _prevAuxLowChargeWarning = showAuxLowChargeWarning;
 
     if (showAuxLowVoltageWarning && !_prevAuxLowVoltageWarning) {
-      ToastService.showWarning(L10nService.current.batteryAuxVoltageLow);
+      toasts.add(L10nService.current.batteryAuxVoltageLow);
     }
     _prevAuxLowVoltageWarning = showAuxLowVoltageWarning;
 
     if (showAuxCriticalVoltageWarning && !_prevAuxCriticalVoltageWarning) {
-      final message = mainBattery.present
+      toasts.add(mainBattery.present
           ? L10nService.current.batteryAuxVoltageVeryLowReplace
-          : L10nService.current.batteryAuxVoltageVeryLowCharge;
-      ToastService.showWarning(message);
+          : L10nService.current.batteryAuxVoltageVeryLowCharge);
     }
     _prevAuxCriticalVoltageWarning = showAuxCriticalVoltageWarning;
+
+    if (toasts.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        for (final msg in toasts) {
+          ToastService.showWarning(msg);
+        }
+      });
+    }
 
     final List<Widget> warningIcons = [];
 
