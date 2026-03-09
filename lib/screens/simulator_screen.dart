@@ -277,8 +277,9 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (bluetoothStatus != null) _bluetoothStatus = bluetoothStatus;
         if (internetStatus != null) _internetStatus = internetStatus;
         if (internetAccessTech != null) _internetAccessTech = internetAccessTech;
-        if (signalQuality != null)
+        if (signalQuality != null) {
           _signalQuality = int.tryParse(signalQuality) ?? 0;
+        }
         if (cloudStatus != null) _cloudStatus = cloudStatus;
         if (gpsState != null) _gpsState = gpsState;
 
@@ -292,24 +293,31 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
         if (mdbUpdateMethod != null) _mdbUpdateMethod = mdbUpdateMethod;
         if (mdbDownloadProgress != null) _mdbDownloadProgress = int.tryParse(mdbDownloadProgress) ?? 0;
 
-        if (battery0Present != null)
+        if (battery0Present != null) {
           _battery0Present = battery0Present.toLowerCase() == 'true';
-        if (battery0Charge != null)
+        }
+        if (battery0Charge != null) {
           _simulatedBatteryCharge0 = int.tryParse(battery0Charge) ?? 100;
+        }
         if (battery0State != null) _battery0State = battery0State;
 
-        if (battery1Present != null)
+        if (battery1Present != null) {
           _battery1Present = battery1Present.toLowerCase() == 'true';
-        if (battery1Charge != null)
+        }
+        if (battery1Charge != null) {
           _simulatedBatteryCharge1 = int.tryParse(battery1Charge) ?? 100;
+        }
         if (battery1State != null) _battery1State = battery1State;
 
-        if (motorVoltage != null)
+        if (motorVoltage != null) {
           _motorVoltage = int.tryParse(motorVoltage) ?? 50000;
-        if (motorRpm != null)
+        }
+        if (motorRpm != null) {
           _motorRpm = int.tryParse(motorRpm) ?? 0;
-        if (motorTemperature != null)
+        }
+        if (motorTemperature != null) {
           _motorTemperature = int.tryParse(motorTemperature) ?? 25;
+        }
         if (motorThrottle != null) _motorThrottle = motorThrottle;
         if (motorKers != null) _motorKers = motorKers;
         if (motorKersReasonOff != null) _motorKersReasonOff = motorKersReasonOff;
@@ -325,12 +333,15 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
             .toSet();
 
         // CB battery values
-        if (cbBatteryPresent != null)
+        if (cbBatteryPresent != null) {
           _cbBatteryPresent = cbBatteryPresent.toLowerCase() == 'true';
-        if (cbBatteryCharge != null)
+        }
+        if (cbBatteryCharge != null) {
           _cbBatteryCharge = int.tryParse(cbBatteryCharge) ?? 100;
-        if (cbBatteryChargeStatus != null)
+        }
+        if (cbBatteryChargeStatus != null) {
           _cbBatteryChargeStatus = cbBatteryChargeStatus;
+        }
 
         // AUX battery values
         if (auxBatteryCharge != null) {
@@ -338,10 +349,12 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
           // Round to nearest 25% increment
           _auxBatteryCharge = ((charge / 25).round() * 25).clamp(0, 100);
         }
-        if (auxBatteryVoltage != null)
+        if (auxBatteryVoltage != null) {
           _auxBatteryVoltage = int.tryParse(auxBatteryVoltage) ?? 12500;
-        if (auxBatteryChargeStatus != null)
+        }
+        if (auxBatteryChargeStatus != null) {
           _auxBatteryChargeStatus = auxBatteryChargeStatus;
+        }
 
         if (speed != null) _simulatedSpeed = int.tryParse(speed) ?? 0;
         if (rpm != null) _simulatedRpm = int.tryParse(rpm) ?? 0;
@@ -1334,7 +1347,7 @@ class _SimulatorScreenState extends State<SimulatorScreen> {
                     ),
                     onPressed: () {
                       final now = DateTime.now().toUtc();
-                      final timestamp = now.toIso8601String().split('.')[0] + 'Z';
+                      final timestamp = '${now.toIso8601String().split('.')[0]}Z';
                       setState(() => _navigationTimestamp = timestamp);
                       _updateNavigationValues();
                     },
