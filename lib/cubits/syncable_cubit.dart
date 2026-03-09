@@ -6,63 +6,109 @@ import '../builders/sync/annotations.dart';
 import '../builders/sync/settings.dart';
 import '../repositories/mdb_repository.dart';
 
+/// Syncs cubit state from Redis using periodic HGETALL + pubsub notifications.
+///
+/// Each cubit polls its Redis hash at the interval defined by its @StateClass
+/// annotation. Pubsub messages trigger an immediate HGETALL and reset the
+/// timer, so updates arrive promptly without per-field GET calls.
 abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
   final MDBRepository redisRepository;
 
   bool _isClosing = false;
   bool _isPaused = false;
-  bool _hasLoggedError = false; // Track if we've already logged connection errors
-  final Map<String, Timer> _timers = {};
-  final Map<String, SyncFieldSettings> _fields = {};
+  bool _hasLoggedError = false;
+
+  Timer? _pollTimer;
+  Timer? _pubsubDebounce;
+  final Map<String, Timer> _setTimers = {};
   final Map<String, SyncSetFieldSettings> _setFields = {};
+
   StreamSubscription? _connectionStateSubscription;
   StreamSubscription? _pubsubSubscription;
 
-  void _doRefresh(String variable) {
+  /// Fields where null/empty from HGETALL means "cleared" rather than "absent".
+  static const _nullableClearableFields = {'destination'};
+
+  void _doHgetall() {
     if (_isPaused || _isClosing) return;
 
-    // print("SyncableCubit (${state.syncSettings.channel}): _doRefresh called for variable: $variable");
-    redisRepository.get(state.syncSettings.channel, variable).then((value) {
+    redisRepository.getAll(state.syncSettings.channel).then((values) {
       if (_isPaused || _isClosing) return;
 
-      // Log recovery if we were in error state
       if (_hasLoggedError) {
         print("SyncableCubit (${state.syncSettings.channel}): Connection recovered");
         _hasLoggedError = false;
       }
 
-      // print("SyncableCubit (${state.syncSettings.channel}): Got value for $variable: $value");
-      if (value == null && variable != "destination") {
-        // Allow 'destination' to be cleared (become null effectively)
-        // print("SyncableCubit (${state.syncSettings.channel}): Value is null for $variable and it's not 'destination', returning.");
-        return;
-      }
-      // If variable is 'destination' and value is null, it means it was cleared.
-      // We should emit an update with an empty string or handle as cleared.
-      // The `update` method in `NavigationData` should handle `null` appropriately for `destination`.
-      emit(state.update(
-          variable,
-          value ??
-              "")); // Pass empty string if null, or let `update` handle null
-      _refresh(variable);
+      _applyHgetallResult(values);
     }).catchError((e) {
-      // Only log the first error to avoid spam
       if (!_hasLoggedError) {
-        print(
-            "SyncableCubit (${state.syncSettings.channel}): Redis connection error: $e");
+        print("SyncableCubit (${state.syncSettings.channel}): Redis error: $e");
         _hasLoggedError = true;
       }
-      // Don't schedule next refresh on error - connection recovery will restart polling
+    });
+  }
+
+  void _applyHgetallResult(List<(String, String)> values) {
+    final received = <String, String>{};
+    for (final (key, value) in values) {
+      received[key] = value;
+    }
+
+    T newState = state;
+    bool changed = false;
+
+    for (final field in state.syncSettings.fields) {
+      final value = received[field.variable];
+      if (value != null) {
+        final updated = newState.update(field.variable, value);
+        if (updated != newState) {
+          newState = updated;
+          changed = true;
+        }
+      } else if (_nullableClearableFields.contains(field.variable)) {
+        final updated = newState.update(field.variable, "");
+        if (updated != newState) {
+          newState = updated;
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      emit(newState);
+    }
+  }
+
+  void _startPollTimer() {
+    _pollTimer?.cancel();
+    final interval = state.syncSettings.interval;
+    _pollTimer = Timer.periodic(interval, (_) => _doHgetall());
+  }
+
+  void _onPubsubMessage(String variable) {
+    if (_isPaused || _isClosing) return;
+
+    // Check if this is a set field
+    final setField = _setFields[variable];
+    if (setField != null) {
+      _doRefreshSet(variable, setField);
+      return;
+    }
+
+    // Debounce: coalesce rapid pubsub messages into a single HGETALL
+    _pubsubDebounce?.cancel();
+    _pubsubDebounce = Timer(const Duration(milliseconds: 50), () {
+      _doHgetall();
+      _startPollTimer(); // Reset periodic timer after pubsub-triggered fetch
     });
   }
 
   void _doRefreshSet(String name, SyncSetFieldSettings field) {
     if (_isPaused || _isClosing) return;
 
-    // Interpolate discriminator if needed
     String interpolateKey(String key) {
       if (field.setKey.contains('\$')) {
-        // Simple string interpolation for discriminator
         final discriminator = state.syncSettings.discriminator;
         if (discriminator != null) {
           final discriminatorValue = (state as dynamic).id ?? '';
@@ -77,14 +123,7 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
     redisRepository.getSetMembers(setKey).then((members) {
       if (_isPaused || _isClosing) return;
 
-      // Log recovery if we were in error state
-      if (_hasLoggedError) {
-        print("SyncableCubit (${state.syncSettings.channel}): Connection recovered");
-        _hasLoggedError = false;
-      }
-
       Set<dynamic> parsedSet;
-
       switch (field.elementType) {
         case SyncFieldType.set_int:
           parsedSet = members.map((m) => int.tryParse(m) ?? 0).toSet();
@@ -97,70 +136,41 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
       }
 
       emit(state.updateSet(name, parsedSet));
-      _refreshSet(name, field);
     }).catchError((e) {
-      // Only log the first error to avoid spam
       if (!_hasLoggedError) {
-        print(
-            "SyncableCubit (${state.syncSettings.channel}): Redis connection error: $e");
+        print("SyncableCubit (${state.syncSettings.channel}): Redis error (set): $e");
         _hasLoggedError = true;
       }
-      // Don't schedule next refresh on error - connection recovery will restart polling
     });
   }
 
+  void _scheduleSetTimer(String name, SyncSetFieldSettings field) {
+    final interval = field.interval ?? state.syncSettings.interval;
+    _setTimers[name]?.cancel();
+    _setTimers[name] = Timer.periodic(interval, (_) => _doRefreshSet(name, field));
+  }
+
   void refreshAllFields() {
-    for (final field in state.syncSettings.fields) {
-      _doRefresh(field.variable);
-    }
+    _doHgetall();
     for (final field in state.syncSettings.setFields) {
       _doRefreshSet(field.name, field);
     }
-  }
-
-  void _refresh(String variable) {
-    // print("SyncableCubit (${state.syncSettings.channel}): _refresh called for variable: $variable");
-    if (_isClosing || _isPaused) return;
-
-    Timer getTimer() {
-      final newInterval =
-          _fields[variable]?.interval ?? state.syncSettings.interval;
-
-      return Timer(newInterval, () => _doRefresh(variable));
-    }
-
-    _timers.update(variable, (activeTimer) {
-      activeTimer.cancel();
-      return getTimer();
-    }, ifAbsent: getTimer);
-  }
-
-  void _refreshSet(String name, SyncSetFieldSettings field) {
-    if (_isClosing || _isPaused) return;
-
-    Timer getTimer() {
-      final newInterval = field.interval ?? state.syncSettings.interval;
-      return Timer(newInterval, () => _doRefreshSet(name, field));
-    }
-
-    final timerKey = "set:$name";
-    _timers.update(timerKey, (activeTimer) {
-      activeTimer.cancel();
-      return getTimer();
-    }, ifAbsent: getTimer);
   }
 
   void _pausePolling() {
     if (_isPaused) return;
     _isPaused = true;
 
-    // Cancel all active timers
-    for (final timer in _timers.values) {
+    _pollTimer?.cancel();
+    _pollTimer = null;
+    _pubsubDebounce?.cancel();
+    _pubsubDebounce = null;
+
+    for (final timer in _setTimers.values) {
       timer.cancel();
     }
-    _timers.clear();
+    _setTimers.clear();
 
-    // Cancel PUBSUB subscription
     _pubsubSubscription?.cancel();
     _pubsubSubscription = null;
 
@@ -170,76 +180,54 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
   void _resumePolling() {
     if (!_isPaused) return;
     _isPaused = false;
-    _hasLoggedError = false; // Reset error state on connection recovery
+    _hasLoggedError = false;
 
-    print("SyncableCubit (${state.syncSettings.channel}): Polling resumed, fetching current values");
+    print("SyncableCubit (${state.syncSettings.channel}): Polling resumed");
 
-    // Immediately fetch all current values
-    for (final field in state.syncSettings.fields) {
-      _doRefresh(field.variable);
-    }
+    _doHgetall();
+    _startPollTimer();
 
-    // Immediately fetch all set field values
     for (final field in state.syncSettings.setFields) {
       _doRefreshSet(field.name, field);
+      _scheduleSetTimer(field.name, field);
     }
 
-    // Restart PUBSUB subscription
     _setupPubsubSubscription();
   }
 
   void _setupPubsubSubscription() {
-    final settings = state.syncSettings;
-
-    // Cancel existing subscription if any
     _pubsubSubscription?.cancel();
 
-    print("SyncableCubit (${state.syncSettings.channel}): Setting up PUBSUB subscription");
-
     try {
-      _pubsubSubscription = redisRepository.subscribe(settings.channel).listen(
+      _pubsubSubscription = redisRepository.subscribe(state.syncSettings.channel).listen(
         (rec) {
           if (_isPaused || _isClosing) return;
-
-          final (channel, pubSubVar) = rec;
-          // print("SyncableCubit (${state.syncSettings.channel}): Received PUBSUB message on channel '$channel': $pubSubVar");
-
-          if (channel == settings.channel) {
-            // Check if this is a set field update
-            final setField = _setFields[pubSubVar];
-            if (setField != null) {
-              _doRefreshSet(pubSubVar, setField);
-            } else {
-              _doRefresh(pubSubVar);
-            }
+          final (channel, variable) = rec;
+          if (channel == state.syncSettings.channel) {
+            _onPubsubMessage(variable);
           }
         },
         onError: (e) {
-          print("SyncableCubit (${state.syncSettings.channel}): Error in PUBSUB subscription: $e");
-          // Don't restart here - let connection recovery handle it
+          print("SyncableCubit (${state.syncSettings.channel}): PUBSUB error: $e");
         },
         onDone: () {
-          print("SyncableCubit (${state.syncSettings.channel}): PUBSUB subscription closed");
+          print("SyncableCubit (${state.syncSettings.channel}): PUBSUB closed");
         },
         cancelOnError: false,
       );
     } catch (e) {
-      print("SyncableCubit (${state.syncSettings.channel}): Error setting up PUBSUB subscription: $e");
-      // Will retry when connection is restored
+      print("SyncableCubit (${state.syncSettings.channel}): PUBSUB setup error: $e");
     }
   }
 
   void _setupConnectionStateListener() {
-    // Check if repository supports connection state monitoring
     try {
       final dynamic repo = redisRepository;
       final hasStream = repo.connectionStateStream != null;
 
       if (hasStream) {
-        print("SyncableCubit (${state.syncSettings.channel}): Setting up connection state listener");
         _connectionStateSubscription = (repo.connectionStateStream as Stream).listen((connectionState) {
           final stateStr = connectionState.toString().split('.').last;
-          print("SyncableCubit (${state.syncSettings.channel}): Connection state changed to $stateStr");
 
           if (stateStr == 'connected') {
             _resumePolling();
@@ -247,54 +235,39 @@ abstract class SyncableCubit<T extends Syncable<T>> extends Cubit<T> {
             _pausePolling();
           }
         });
-      } else {
-        print("SyncableCubit (${state.syncSettings.channel}): Repository does not support connection state monitoring");
       }
     } catch (e) {
-      print("SyncableCubit (${state.syncSettings.channel}): Error setting up connection state listener: $e");
+      // Repository doesn't support connection state monitoring
     }
   }
 
   void start() {
     final settings = state.syncSettings;
 
-    // Set up connection state monitoring
     _setupConnectionStateListener();
 
-    redisRepository.getAll(settings.channel).then((values) {
-      if (values.isEmpty) return;
+    // Initial fetch
+    _doHgetall();
+    _startPollTimer();
 
-      T newState = state;
-      for (final (variable, value) in values) {
-        newState = newState.update(variable, value);
-      }
-
-      emit(newState);
-    }).catchError((e) {
-      print("SyncableCubit (${state.syncSettings.channel}): Error in initial getAll: $e");
-      // Don't crash - polling will fetch values when connection recovers
-    });
-
-    // set up all field timers
-    for (final field in settings.fields) {
-      _fields[field.variable] = field;
-      _refresh(field.variable);
-    }
-
-    // set up all set field timers
+    // Set up set field timers
     for (final field in settings.setFields) {
       _setFields[field.name] = field;
       _doRefreshSet(field.name, field);
+      _scheduleSetTimer(field.name, field);
     }
 
-    // Set up PUBSUB subscription
     _setupPubsubSubscription();
   }
 
   @override
   Future<void> close() async {
     _isClosing = true;
-    _timers.forEach((_, timer) => timer.cancel());
+    _pollTimer?.cancel();
+    _pubsubDebounce?.cancel();
+    for (final timer in _setTimers.values) {
+      timer.cancel();
+    }
     await _connectionStateSubscription?.cancel();
     await _pubsubSubscription?.cancel();
 
