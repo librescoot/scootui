@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
-
 import '../cubits/address_cubit.dart';
 import '../cubits/carplay_cubit.dart';
 import '../cubits/debug_overlay_cubit.dart';
@@ -16,6 +15,7 @@ import '../env_config.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/redis_mdb_repository.dart';
 import '../services/toast_service.dart';
+import '../widgets/toast_listener_wrapper.dart';
 import '../state/bluetooth.dart';
 import '../widgets/blinker/blinker_overlay.dart';
 import '../widgets/bluetooth_pin_code_overlay.dart';
@@ -93,77 +93,83 @@ class _MainScreenState extends State<MainScreen> {
     final menu = context.watch<MenuCubit>();
     final debugMode = context.watch<DebugOverlayCubit>().state;
 
-    return BlocListener<ShutdownCubit, ShutdownState>(
-      listenWhen: (prev, curr) => prev.status != curr.status,
-      listener: (context, shutdownState) {
-        if (shutdownState.status == ShutdownStatus.exiting && !_poweroffScheduled) {
-          debugPrint('Poweroff: shutdown animation complete, executing poweroff');
-          if (Platform.isLinux && Platform.environment['USER'] == 'root') {
-            _poweroffScheduled = true;
-            Process.run('poweroff', []);
-          }
-        }
-      },
-      child: BlocListener<VehicleSync, VehicleData>(
-      listenWhen: (prev, curr) => prev.state != curr.state,
-      listener: (context, vehicleData) {
-        final vehicleState = vehicleData.state;
+    return OKToast(
+      child: ToastListenerWrapper(
+        child: BlocListener<ShutdownCubit, ShutdownState>(
+          listenWhen: (prev, curr) => prev.status != curr.status,
+          listener: (context, shutdownState) {
+            if (shutdownState.status == ShutdownStatus.exiting && !_poweroffScheduled) {
+              debugPrint('Poweroff: shutdown animation complete, executing poweroff');
+              if (Platform.isLinux && Platform.environment['USER'] == 'root') {
+                _poweroffScheduled = true;
+                Process.run('poweroff', []);
+              }
+            }
+          },
+          child: BlocListener<VehicleSync, VehicleData>(
+            listenWhen: (prev, curr) => prev.state != curr.state,
+            listener: (context, vehicleData) {
+              final vehicleState = vehicleData.state;
 
-        if (vehicleState != ScooterState.unknown && _startupTimer != null) {
-          _startupTimer?.cancel();
-          _startupTimer = null;
-        }
-      },
-      child: BlocBuilder<VehicleSync, VehicleData>(
-        buildWhen: (prev, curr) {
-          final prevAllowed = _allowedStates.contains(prev.state);
-          final currAllowed = _allowedStates.contains(curr.state);
-          if (prevAllowed != currAllowed) return true;
-          if (!currAllowed && prev.stateRaw != curr.stateRaw) return true;
-          final prevUnknown = prev.state == ScooterState.unknown;
-          final currUnknown = curr.state == ScooterState.unknown;
-          return prevUnknown != currUnknown;
-        },
-        builder: (context, vehicleData) {
-          final vehicleState = vehicleData.state;
+              if (vehicleState != ScooterState.unknown && _startupTimer != null) {
+                _startupTimer?.cancel();
+                _startupTimer = null;
+              }
+            },
+            child: BlocBuilder<VehicleSync, VehicleData>(
+              buildWhen: (prev, curr) {
+                final prevAllowed = _allowedStates.contains(prev.state);
+                final currAllowed = _allowedStates.contains(curr.state);
+                if (prevAllowed != currAllowed) return true;
+                if (!currAllowed && prev.stateRaw != curr.stateRaw) return true;
+                final prevUnknown = prev.state == ScooterState.unknown;
+                final currUnknown = curr.state == ScooterState.unknown;
+                return prevUnknown != currUnknown;
+              },
+              builder: (context, vehicleData) {
+                final vehicleState = vehicleData.state;
 
-          if (!_allowedStates.contains(vehicleState)) {
-            return SizedBox(
-              width: EnvConfig.resolution.width,
-              height: EnvConfig.resolution.height,
-              child: MaintenanceScreen(stateRaw: vehicleData.stateRaw),
-            );
-          }
+                if (!_allowedStates.contains(vehicleState)) {
+                  return SizedBox(
+                    width: EnvConfig.resolution.width,
+                    height: EnvConfig.resolution.height,
+                    child: MaintenanceScreen(stateRaw: vehicleData.stateRaw),
+                  );
+                }
 
-          if (vehicleState == ScooterState.unknown && _startupGraceElapsed) {
-            return SizedBox(
-              width: EnvConfig.resolution.width,
-              height: EnvConfig.resolution.height,
-              child: const MaintenanceScreen(showConnectionInfo: true),
-            );
-          }
-
-          final repo = context.read<MDBRepository>();
-          if (_prolongedDisconnectStream != null && repo is RedisMDBRepository) {
-            return StreamBuilder<bool>(
-              stream: _prolongedDisconnectStream,
-              initialData: repo.prolongedDisconnect,
-              builder: (context, snapshot) {
-                if (snapshot.data == true) {
+                if (vehicleState == ScooterState.unknown && _startupGraceElapsed) {
                   return SizedBox(
                     width: EnvConfig.resolution.width,
                     height: EnvConfig.resolution.height,
                     child: const MaintenanceScreen(showConnectionInfo: true),
                   );
                 }
+
+                // Only show full-screen connection screen if Redis never connected;
+                // once connected, mid-session disconnects just show a toast
+                final repo = context.read<MDBRepository>();
+                if (repo is RedisMDBRepository && !repo.hasEverConnected && _prolongedDisconnectStream != null) {
+                  return StreamBuilder<bool>(
+                    stream: _prolongedDisconnectStream,
+                    initialData: repo.prolongedDisconnect,
+                    builder: (context, snapshot) {
+                      if (snapshot.data == true) {
+                        return SizedBox(
+                          width: EnvConfig.resolution.width,
+                          height: EnvConfig.resolution.height,
+                          child: const MaintenanceScreen(showConnectionInfo: true),
+                        );
+                      }
+                      return _buildMainUI(context, state, menu, debugMode);
+                    },
+                  );
+                }
+
                 return _buildMainUI(context, state, menu, debugMode);
               },
-            );
-          }
-
-          return _buildMainUI(context, state, menu, debugMode);
-        },
-      ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -213,9 +219,8 @@ class _MainScreenState extends State<MainScreen> {
 
         // Show toast when transitioning to error state
         if (isError) {
-          final errorMessage = bluetooth.serviceError.isNotEmpty
-              ? bluetooth.serviceError
-              : context.l10n.bluetoothCommError;
+          final errorMessage =
+              bluetooth.serviceError.isNotEmpty ? bluetooth.serviceError : context.l10n.bluetoothCommError;
           debugPrint('BLE: Showing error toast: $errorMessage');
           ToastService.showError(context.l10n.bluetoothError(errorMessage));
         }
@@ -223,21 +228,20 @@ class _MainScreenState extends State<MainScreen> {
       child: SizedBox(
         width: EnvConfig.resolution.width,
         height: EnvConfig.resolution.height,
-        child: OKToast(
-          child: Stack(
-            children: [
+        child: Stack(
+          children: [
             switch (state) {
               // Map, cluster, and CarPlay screens allow menu access
               ScreenMap() => menuTrigger(const MapScreen()),
               ScreenCluster() => menuTrigger(const ClusterScreen()),
               ScreenCarPlay() => menuTrigger(BlocProvider(
-                    create: (context) => CarPlayCubit(),
-                    child: const CarPlayScreen(),
-                  )),
+                  create: (context) => CarPlayCubit(),
+                  child: const CarPlayScreen(),
+                )),
               ScreenAddressSelection() => BlocProvider(
-                    create: AddressCubit.create,
-                    child: const AddressSelectionScreen(),
-                  ),
+                  create: AddressCubit.create,
+                  child: const AddressSelectionScreen(),
+                ),
               ScreenOtaBackground() => const OtaBackgroundScreen(),
               ScreenOta() => const OtaScreen(),
               ScreenDebug() => const DebugScreen(),
@@ -272,7 +276,6 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
-    ),
     );
   }
 

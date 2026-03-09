@@ -17,7 +17,6 @@ import 'repositories/address_repository.dart' as addr;
 import 'repositories/all.dart';
 import 'repositories/tiles_repository.dart' as tiles;
 import 'screens/main_screen.dart';
-import 'widgets/toast_listener_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,8 +24,8 @@ void main() async {
   // Suppress vector map tile cancellation exceptions
   FlutterError.onError = (FlutterErrorDetails details) {
     final exception = details.exception;
-    final isCancelledException = exception.toString().contains('Cancelled') &&
-        details.stack.toString().contains('vector_map_tiles');
+    final isCancelledException =
+        exception.toString().contains('Cancelled') && details.stack.toString().contains('vector_map_tiles');
 
     if (!isCancelledException) {
       FlutterError.presentError(details);
@@ -35,8 +34,8 @@ void main() async {
 
   // Also handle async errors from isolates and image loading
   PlatformDispatcher.instance.onError = (error, stack) {
-    final isCancelledException = error.toString().contains('Cancelled') &&
-        stack.toString().contains('vector_map_tiles');
+    final isCancelledException =
+        error.toString().contains('Cancelled') && stack.toString().contains('vector_map_tiles');
 
     if (isCancelledException) {
       return true; // Suppress the error
@@ -114,7 +113,6 @@ void _fadeInOverlay() {
       .catchError((_) {});
 }
 
-
 Future<void> _setupPlatformConfigurations() async {
   if (kIsWeb) {
     // Web-specific setup
@@ -164,23 +162,21 @@ class ScooterClusterApp extends StatelessWidget {
           builder: (context, themeState) {
             return BlocBuilder<LocaleCubit, Locale>(
               builder: (context, locale) {
-                return ToastListenerWrapper(
-                  child: MaterialApp(
-                    title: 'ScootUI',
-                    theme: themeState.lightTheme,
-                    darkTheme: themeState.darkTheme,
-                    themeMode: themeState.effectiveThemeMode,
-                    locale: locale,
-                    localizationsDelegates: AppLocalizations.localizationsDelegates,
-                    supportedLocales: AppLocalizations.supportedLocales,
-                    debugShowCheckedModeBanner: false,
-                    builder: (context, child) {
-                      L10nService.update(AppLocalizations.of(context));
-                      return child!;
-                    },
-                    home: Scaffold(
-                      body: MainScreen(),
-                    ),
+                return MaterialApp(
+                  title: 'ScootUI',
+                  theme: themeState.lightTheme,
+                  darkTheme: themeState.darkTheme,
+                  themeMode: themeState.effectiveThemeMode,
+                  locale: locale,
+                  localizationsDelegates: AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  debugShowCheckedModeBanner: false,
+                  builder: (context, child) {
+                    L10nService.update(AppLocalizations.of(context));
+                    return child!;
+                  },
+                  home: Scaffold(
+                    body: MainScreen(),
                   ),
                 );
               },
