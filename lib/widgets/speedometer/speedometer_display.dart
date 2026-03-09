@@ -49,7 +49,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     super.initState();
 
     _speedController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
@@ -144,18 +144,17 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     }
 
     if (speed != _targetSpeed) {
-      // Retarget: update start position to current animated value, keep
-      // the controller running from its current progress so rapid updates
-      // don't perpetually restart the animation.
       if (_speedController.isAnimating) {
+        // Retarget: capture current interpolated position, keep running
         final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
         _animationStartSpeed = _animationStartSpeed +
             curvedValue * (_targetSpeed - _animationStartSpeed);
       } else {
+        // Animation finished or never started — restart from current value
         _animationStartSpeed = _lastSpeed;
-        _speedController.forward();
       }
       _targetSpeed = speed;
+      _speedController.forward(from: 0.0);
     }
   }
 
