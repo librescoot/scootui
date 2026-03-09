@@ -210,7 +210,8 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
         builder: (context, theme) {
           final labelPainters = _buildLabelPainters(theme.isDark);
 
-          return ValueListenableBuilder<double>(
+          return ExcludeSemantics(
+            child: ValueListenableBuilder<double>(
             valueListenable: _speedNotifier,
             builder: (context, animatedSpeed, _) {
               Color backgroundColor;
@@ -299,6 +300,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
                 ],
               );
             },
+          ),
           );
         },
       ),
