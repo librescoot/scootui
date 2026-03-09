@@ -34,11 +34,10 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
 
   double _displayedSpeed = 0.0;
   double _targetSpeed = 0.0;
+  Duration _lastTickTime = Duration.zero;
 
-  // Smoothing factor per frame. At 25fps (40ms/frame):
-  // 0.2 → reaches ~87% of target in 4 frames (160ms), ~98% in 8 frames (320ms)
-  static const double _smoothingFactor = 0.2;
-  // Snap to target when difference is negligible
+  // Time constant: reaches ~63% in this duration, ~95% in 3x
+  static const double _timeConstantMs = 150.0;
   static const double _snapThreshold = 0.3;
 
   bool _isRegenerating = false;
@@ -81,6 +80,10 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   }
 
   void _onTick(Duration elapsed) {
+    final dtMs = (elapsed - _lastTickTime).inMicroseconds / 1000.0;
+    _lastTickTime = elapsed;
+    if (dtMs <= 0) return;
+
     final diff = _targetSpeed - _displayedSpeed;
     if (diff.abs() < _snapThreshold) {
       if (_displayedSpeed != _targetSpeed) {
@@ -88,7 +91,9 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
       }
       return;
     }
-    setState(() { _displayedSpeed += diff * _smoothingFactor; });
+    // Framerate-independent exponential decay: 1 - e^(-dt/tau)
+    final alpha = 1.0 - math.exp(-dtMs / _timeConstantMs);
+    setState(() { _displayedSpeed += diff * alpha; });
   }
 
   @override
