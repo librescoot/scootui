@@ -6,7 +6,7 @@ import './enums.dart';
 
 part 'engine.g.dart';
 
-@StateClass("engine-ecu", Duration(seconds: 1))
+@StateClass("engine-ecu", Duration(milliseconds: 200))
 class EngineData extends Equatable with $EngineData {
   @override
   @StateField(name: "state", defaultValue: "off", interval: Duration(seconds: 10))
