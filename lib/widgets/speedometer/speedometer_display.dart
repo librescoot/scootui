@@ -31,9 +31,16 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
   late Animation<Color?> _colorAnimation;
   late Listenable _allAnimations;
 
-  double _lastSpeed = 0.0;
   double _animationStartSpeed = 0.0;
   double _targetSpeed = 0.0;
+
+  double get _currentAnimatedSpeed {
+    if (_speedController.isAnimating || _speedController.value > 0) {
+      final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
+      return _animationStartSpeed + curvedValue * (_targetSpeed - _animationStartSpeed);
+    }
+    return _targetSpeed;
+  }
   bool _isRegenerating = false;
   bool _isOverSpeed = false;
   bool _isAccelerating = false;
@@ -51,11 +58,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     _speedController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _lastSpeed = _targetSpeed;
-        }
-      });
+    );
 
     _colorController = AnimationController(
       duration: const Duration(milliseconds: 1000),
@@ -144,15 +147,8 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
     }
 
     if (speed != _targetSpeed) {
-      if (_speedController.isAnimating) {
-        // Retarget: capture current interpolated position, keep running
-        final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
-        _animationStartSpeed = _animationStartSpeed +
-            curvedValue * (_targetSpeed - _animationStartSpeed);
-      } else {
-        // Animation finished or never started — restart from current value
-        _animationStartSpeed = _lastSpeed;
-      }
+      // Snapshot current displayed speed as new start point
+      _animationStartSpeed = _currentAnimatedSpeed;
       _targetSpeed = speed;
       _speedController.forward(from: 0.0);
     }
@@ -207,13 +203,7 @@ class _SpeedometerDisplayState extends State<SpeedometerDisplay> with TickerProv
           return AnimatedBuilder(
             animation: _allAnimations,
             builder: (context, _) {
-              double animatedSpeed;
-              if (_speedController.isAnimating) {
-                final curvedValue = Curves.easeInOutCubic.transform(_speedController.value);
-                animatedSpeed = _animationStartSpeed + (curvedValue * (_targetSpeed - _animationStartSpeed));
-              } else {
-                animatedSpeed = _lastSpeed;
-              }
+              final animatedSpeed = _currentAnimatedSpeed;
 
               Color backgroundColor;
               if (_colorController.isAnimating && _colorAnimation.value != null) {
