@@ -38,9 +38,11 @@ class $AddressStateCopyWith<$Res> {
 /// @nodoc
 
 class AddressStateLoading implements AddressState {
-  const AddressStateLoading(this.message);
+  const AddressStateLoading(this.message, {this.progress, this.addressCount});
 
   final String message;
+  final double? progress;
+  final int? addressCount;
 
   /// Create a copy of AddressState
   /// with the given fields replaced by the non-null parameter values.
@@ -54,15 +56,19 @@ class AddressStateLoading implements AddressState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is AddressStateLoading &&
-            (identical(other.message, message) || other.message == message));
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.progress, progress) ||
+                other.progress == progress) &&
+            (identical(other.addressCount, addressCount) ||
+                other.addressCount == addressCount));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, message);
+  int get hashCode => Object.hash(runtimeType, message, progress, addressCount);
 
   @override
   String toString() {
-    return 'AddressState.loading(message: $message)';
+    return 'AddressState.loading(message: $message, progress: $progress, addressCount: $addressCount)';
   }
 }
 
@@ -73,7 +79,7 @@ abstract mixin class $AddressStateLoadingCopyWith<$Res>
           AddressStateLoading value, $Res Function(AddressStateLoading) _then) =
       _$AddressStateLoadingCopyWithImpl;
   @useResult
-  $Res call({String message});
+  $Res call({String message, double? progress, int? addressCount});
 }
 
 /// @nodoc
@@ -89,12 +95,22 @@ class _$AddressStateLoadingCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   $Res call({
     Object? message = null,
+    Object? progress = freezed,
+    Object? addressCount = freezed,
   }) {
     return _then(AddressStateLoading(
       null == message
           ? _self.message
           : message // ignore: cast_nullable_to_non_nullable
               as String,
+      progress: freezed == progress
+          ? _self.progress
+          : progress // ignore: cast_nullable_to_non_nullable
+              as double?,
+      addressCount: freezed == addressCount
+          ? _self.addressCount
+          : addressCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }

@@ -221,6 +221,7 @@
   "addressConfirmAction": "Bestätigen",
   "addressNextAction": "Weiter",
   "addressCloseAction": "Schließen",
+  "addressCancelAction": "Abbrechen",
   "addressScreenTitle": "Zielcode eingeben",
 
   "standbyWarning": "Fahrzeug geht in Standby in",
@@ -264,6 +265,12 @@
   "addressRebuildingHash": "Adressdatenbank wird wegen Hash-Abweichung neu erstellt...",
   "addressHashMismatch": "Hash-Abweichung nach Neuerstellung.",
   "addressCreatingDb": "Adressdatenbank wird erstellt...",
+  "addressBuildProgress": "{count} Adressen",
+  "@addressBuildProgress": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "addressBuildFailed": "Adressdatenbank konnte nicht erstellt werden.",
   "savedLocationsFailed": "Gespeicherte Orte konnten nicht geladen werden",
 

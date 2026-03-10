@@ -119,14 +119,35 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
       AddressStateLoaded(:final addresses) => _isConfirming
           ? _buildConfirmation(_controller.getCode())
           : _buildDialInput(screenCubit, addresses),
-      AddressStateLoading(:final message) => Center(
+      AddressStateLoading(:final message, :final progress, :final addressCount) => ControlGestureDetector(
+          stream: context.read<VehicleSync>().stream,
+          onRightPress: () => screenCubit.showMap(),
+          child: Center(
             child: Column(
-          children: [
-            Text(message),
-            const SizedBox(height: 16),
-            const CircularProgressIndicator(),
-          ],
-        )),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(message),
+                const SizedBox(height: 16),
+                if (progress != null) ...[
+                  Text('${(progress * 100).toStringAsFixed(0)}%'),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: 200,
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: isDark ? Colors.white12 : Colors.black12,
+                    ),
+                  ),
+                  if (addressCount != null && addressCount > 0) ...[
+                    const SizedBox(height: 8),
+                    Text(context.l10n.addressBuildProgress(addressCount)),
+                  ],
+                ] else
+                  const CircularProgressIndicator(),
+              ],
+            ),
+          ),
+        ),
       AddressStateError(:final message) => ControlGestureDetector(
           stream: context.read<VehicleSync>().stream,
           onRightPress: () {
@@ -162,7 +183,7 @@ class _AddressSelectionScreenState extends State<AddressSelectionScreen> {
             rightAction: switch (addressCubit.state) {
               AddressStateLoaded() => _isConfirming ? context.l10n.addressConfirmAction : context.l10n.addressNextAction,
               AddressStateError() => context.l10n.addressCloseAction,
-              _ => null,
+              AddressStateLoading() => context.l10n.addressCancelAction,
             },
           ),
         ],

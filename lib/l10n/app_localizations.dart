@@ -1334,6 +1334,12 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get addressCloseAction;
 
+  /// No description provided for @addressCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get addressCancelAction;
+
   /// No description provided for @addressScreenTitle.
   ///
   /// In en, this message translates to:
@@ -1562,6 +1568,12 @@ abstract class AppLocalizations {
   /// **'Creating address database...'**
   String get addressCreatingDb;
 
+  /// No description provided for @addressBuildProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} addresses'**
+  String addressBuildProgress(int count);
+
   /// No description provided for @addressBuildFailed.
   ///
   /// In en, this message translates to:
@@ -1595,7 +1607,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutScamWarning.
   ///
   /// In en, this message translates to:
-  /// **'If you paid money for this software, you may have been the victim of a scam. Please report it at {websiteUrl}.'**
+  /// **'If you paid money for this software, or if you purchased a new scooter from a shop or vendor with this software preinstalled, you may have been the victim of a scam. Please report it at {websiteUrl}.'**
   String aboutScamWarning(String websiteUrl);
 
   /// No description provided for @aboutOpenSourceComponents.

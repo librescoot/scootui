@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -14,52 +16,96 @@ class AddressCubit extends Cubit<AddressState> {
   final addresses.AddressRepository addressRepository;
   final tiles.TilesRepository tilesRepository;
 
+  Isolate? _buildIsolate;
+  ReceivePort? _buildPort;
+
   AddressCubit({
     required this.addressRepository,
     required this.tilesRepository,
-  }) : super(const AddressState.loading('Loading address database...'));
+  }) : super(AddressState.loading(L10nService.current.addressLoading));
 
   Future<void> _load() async {
-    final mapHash = await tilesRepository.getMapHash();
-    if (mapHash == null) {
-      emit(AddressState.error(L10nService.current.addressMapNotFound));
-      return;
-    }
+    try {
+      final db = await addressRepository.loadDatabase();
+      switch (db) {
+        case addresses.NotFound():
+          final mapHash = await tilesRepository.getMapHash();
+          if (mapHash == null) {
+            emit(AddressState.error(L10nService.current.addressMapNotFound));
+            return;
+          }
+          emit(AddressState.loading(L10nService.current.addressCreatingDb));
+          await _startBuild(mapHash);
 
-    final db = await addressRepository.loadDatabase();
-    emit(await _unpackDb(db, mapHash, true));
+        case addresses.Success(:final database):
+          final mapHash = await tilesRepository.getMapHash();
+          if (mapHash == null) {
+            emit(AddressState.error(L10nService.current.addressMapNotFound));
+            return;
+          }
+          if (database.mapHash != mapHash) {
+            emit(AddressState.loading(L10nService.current.addressRebuildingHash));
+            await _startBuild(mapHash);
+          } else {
+            emit(AddressState.loaded(database.addresses));
+          }
+
+        case addresses.Error(message: final errorMessage):
+          emit(AddressState.error(errorMessage));
+      }
+    } catch (e, st) {
+      print('[AddressCubit] Error loading address database: $e\n$st');
+      if (!isClosed) emit(AddressState.error(L10nService.current.addressBuildFailed));
+    }
   }
 
-  Future<AddressState> _unpackDb(
-      addresses.Addresses db, String mapHash, bool rebuild) async {
-    switch (db) {
-      case addresses.Success(:final database):
-        if (database.mapHash != mapHash) {
-          if (rebuild) {
-            emit(AddressState.loading(
-                L10nService.current.addressRebuildingHash));
-            return _unpackDb(
-                await addressRepository.buildDatabase(tilesRepository),
-                mapHash,
-                false);
-          } else {
-            return AddressState.error(L10nService.current.addressHashMismatch);
+  Future<void> _startBuild(String mapHash) async {
+    try {
+      final (:isolate, :port) = await addressRepository.buildDatabase(tilesRepository);
+      _buildIsolate = isolate;
+      _buildPort = port;
+
+      await for (final message in port) {
+        if (isClosed) break;
+
+        if (message is (double, int)) {
+          final (progress, addressCount) = message;
+          emit(AddressState.loading(
+            L10nService.current.addressCreatingDb,
+            progress: progress,
+            addressCount: addressCount,
+          ));
+        } else if (message is addresses.Addresses) {
+          _buildIsolate = null;
+          _buildPort = null;
+          port.close();
+
+          switch (message) {
+            case addresses.Success(:final database):
+              if (database.mapHash == mapHash) {
+                if (!isClosed) emit(AddressState.loaded(database.addresses));
+              } else {
+                if (!isClosed) emit(AddressState.error(L10nService.current.addressHashMismatch));
+              }
+            case addresses.NotFound():
+              if (!isClosed) emit(AddressState.error(L10nService.current.addressBuildFailed));
+            case addresses.Error(message: final errorMessage):
+              if (!isClosed) emit(AddressState.error(errorMessage));
           }
-        } else {
-          return AddressState.loaded(database.addresses);
+          break;
         }
-      case addresses.NotFound():
-        if (rebuild) {
-          emit(AddressState.loading(L10nService.current.addressCreatingDb));
-          return _unpackDb(
-              await addressRepository.buildDatabase(tilesRepository),
-              mapHash,
-              false);
-        }
-        return AddressState.error(L10nService.current.addressBuildFailed);
-      case addresses.Error(:final message):
-        return AddressState.error(message);
+      }
+    } catch (e, st) {
+      print('[AddressCubit] Error building address database: $e\n$st');
+      if (!isClosed) emit(AddressState.error(L10nService.current.addressBuildFailed));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _buildPort?.close();
+    _buildIsolate?.kill(priority: Isolate.immediate);
+    return super.close();
   }
 
   static AddressCubit create(BuildContext context) => AddressCubit(

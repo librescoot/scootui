@@ -13,9 +13,7 @@ import 'cubits/theme_cubit.dart';
 import 'env_config.dart';
 import 'l10n/app_localizations.dart';
 import 'services/l10n_service.dart';
-import 'repositories/address_repository.dart' as addr;
 import 'repositories/all.dart';
-import 'repositories/tiles_repository.dart' as tiles;
 import 'screens/main_screen.dart';
 
 void main() async {
@@ -54,9 +52,6 @@ void main() async {
 
   await _setupPlatformConfigurations();
 
-  // Trigger background address database build if needed (don't await)
-  _buildAddressDatabaseIfNeeded();
-
   if (!kIsWeb && Platform.isLinux) {
     ProcessSignal.sigterm.watch().listen((_) async {
       ShutdownCubit.forceBlackout();
@@ -69,40 +64,6 @@ void main() async {
   runApp(const ScooterClusterApp());
 }
 
-void _buildAddressDatabaseIfNeeded() async {
-  try {
-    final addressRepository = addr.AddressRepository();
-    final tilesRepository = tiles.TilesRepository();
-
-    // Check if database exists and is valid
-    final result = await addressRepository.loadDatabase();
-
-    switch (result) {
-      case addr.NotFound():
-        // Database doesn't exist, build it
-        print('[Startup] Address database not found, building in background...');
-        await addressRepository.buildDatabase(tilesRepository);
-        print('[Startup] Address database build complete');
-        break;
-
-      case addr.Success(:final database):
-        // Check if map hash matches
-        final currentHash = await tilesRepository.getMapHash();
-        if (currentHash != null && currentHash != database.mapHash) {
-          print('[Startup] Map hash mismatch, rebuilding address database...');
-          await addressRepository.buildDatabase(tilesRepository);
-          print('[Startup] Address database rebuild complete');
-        }
-        break;
-
-      case addr.Error(:final message):
-        print('[Startup] Error loading address database: $message');
-        break;
-    }
-  } catch (e) {
-    print('[Startup] Failed to build address database: $e');
-  }
-}
 
 void _fadeInOverlay() {
   if (kIsWeb) return;

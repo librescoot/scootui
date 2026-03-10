@@ -681,6 +681,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressCloseAction => 'Close';
 
   @override
+  String get addressCancelAction => 'Cancel';
+
+  @override
   String get addressScreenTitle => 'Enter Destination Code';
 
   @override
@@ -795,6 +798,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addressCreatingDb => 'Creating address database...';
+
+  @override
+  String addressBuildProgress(int count) {
+    return '$count addresses';
+  }
 
   @override
   String get addressBuildFailed => 'Failed to build address database.';

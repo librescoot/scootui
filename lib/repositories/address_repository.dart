@@ -116,6 +116,38 @@ sealed class Addresses with _$Addresses {
 const _addressDatabaseFilename = 'address_database.json';
 const _currentDatabaseVersion = 2;
 
+typedef _BuildIsolateArgs = ({
+  SendPort sendPort,
+  RootIsolateToken token,
+  tiles.TilesRepository tilesRepository,
+});
+
+// Top-level isolate entry: sends (double, int) for progress, then Addresses as final result
+void _buildIsolateEntry(_BuildIsolateArgs args) async {
+  BackgroundIsolateBinaryMessenger.ensureInitialized(args.token);
+
+  try {
+    final result = await _processTilesWithProgress(
+      args.tilesRepository,
+      (progress) => args.sendPort.send(progress),
+    );
+
+    if (result is Success) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final dir = Directory('${appDir.path}/scootui');
+      await dir.create(recursive: true);
+      final tmpFile = File('${dir.path}/.$_addressDatabaseFilename.tmp');
+      await tmpFile.writeAsString(jsonEncode(result.database.toJson()));
+      await tmpFile.rename('${dir.path}/$_addressDatabaseFilename');
+    }
+
+    args.sendPort.send(result);
+  } catch (e, st) {
+    print('[AddressRepository] Error in build isolate: $e\n$st');
+    args.sendPort.send(Addresses.error(e.toString()));
+  }
+}
+
 class AddressRepository {
   static AddressRepository create(BuildContext context) => AddressRepository();
 
@@ -124,61 +156,62 @@ class AddressRepository {
 
     developer.log('Loading address database from disk', name: 'AddressRepository');
 
-    return await Isolate.run(() async {
-      BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
+    try {
+      return await Isolate.run(() async {
+        BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
 
-      final file = await _getFile();
-      if (file == null) {
-        developer.log('Failed to get database file path', name: 'AddressRepository');
-        return const Addresses.error('File not found');
-      }
+        final file = await _getFile();
+        if (file == null) {
+          developer.log('Failed to get database file path', name: 'AddressRepository');
+          return const Addresses.error('File not found');
+        }
 
-      if (!await file.exists()) {
-        developer.log('Address database file does not exist, will need to build', name: 'AddressRepository');
-        return const Addresses.notFound();
-      }
+        if (!await file.exists()) {
+          developer.log('Address database file does not exist, will need to build', name: 'AddressRepository');
+          return const Addresses.notFound();
+        }
 
-      final jsonString = await file.readAsString();
-      final json = jsonDecode(jsonString) as Map<String, dynamic>;
-      final oldVersion = json['version'] as int? ?? 1;
+        final jsonString = await file.readAsString();
+        final json = jsonDecode(jsonString) as Map<String, dynamic>;
+        final oldVersion = json['version'] as int? ?? 1;
 
-      final database = AddressDatabase.fromJson(json);
-      developer.log('Loaded address database with ${database.addresses.length} addresses', name: 'AddressRepository');
+        final database = AddressDatabase.fromJson(json);
+        developer.log('Loaded address database with ${database.addresses.length} addresses', name: 'AddressRepository');
 
-      // If old version, re-save in new format
-      if (oldVersion != _currentDatabaseVersion) {
-        print('[AddressRepository] Migrating database from version $oldVersion to $_currentDatabaseVersion');
-        await _saveDatabase(database);
-        print('[AddressRepository] Migration complete');
-      }
+        // If old version, re-save in new format
+        if (oldVersion != _currentDatabaseVersion) {
+          print('[AddressRepository] Migrating database from version $oldVersion to $_currentDatabaseVersion');
+          await _saveDatabase(database);
+          print('[AddressRepository] Migration complete');
+        }
 
-      return Addresses.success(database);
-    });
+        return Addresses.success(database);
+      });
+    } catch (e, st) {
+      print('[AddressRepository] Error loading database: $e\n$st');
+      return Addresses.error(e.toString());
+    }
   }
 
-  Future<Addresses> buildDatabase(tiles.TilesRepository tilesRepository) async {
+  /// Spawns a background isolate to build the address database from map tiles.
+  /// The returned [ReceivePort] emits [double] values (0.0–1.0) for progress,
+  /// followed by an [Addresses] value as the final result.
+  Future<({Isolate isolate, ReceivePort port})> buildDatabase(
+      tiles.TilesRepository tilesRepository) async {
     final token = RootIsolateToken.instance;
+    if (token == null) {
+      throw Exception('RootIsolateToken is not available');
+    }
 
     developer.log('Building address database from map tiles', name: 'AddressRepository');
 
-    return await Isolate.run(() async {
-      BackgroundIsolateBinaryMessenger.ensureInitialized(token!);
+    final port = ReceivePort();
+    final isolate = await Isolate.spawn<_BuildIsolateArgs>(
+      _buildIsolateEntry,
+      (sendPort: port.sendPort, token: token, tilesRepository: tilesRepository),
+    );
 
-      final addresses = await _processTiles(tilesRepository);
-
-      Future<Addresses> saveAndReturnDatabase(AddressDatabase database) async {
-        print('[AddressRepository] Saving address database to disk');
-        await _saveDatabase(database);
-        print('[AddressRepository] Address database saved successfully');
-        return Addresses.success(database);
-      }
-
-      return switch (addresses) {
-        Success(:final database) => await saveAndReturnDatabase(database),
-        NotFound() => const Addresses.error('Map hash not found'),
-        Error(:final message) => Addresses.error(message),
-      };
-    });
+    return (isolate: isolate, port: port);
   }
 
   Future<File?> _getFile() async {
@@ -203,7 +236,8 @@ class AddressRepository {
   }
 }
 
-Future<Addresses> _processTiles(tiles.TilesRepository tilesRepository) async {
+Future<Addresses> _processTilesWithProgress(
+    tiles.TilesRepository tilesRepository, void Function((double, int)) onProgress) async {
   final mapHash = await tilesRepository.getMapHash();
   if (mapHash == null) {
     return const Addresses.error('Map hash not found');
@@ -212,7 +246,7 @@ Future<Addresses> _processTiles(tiles.TilesRepository tilesRepository) async {
   final mbTiles = await tilesRepository.getMbTiles();
   switch (mbTiles) {
     case tiles.Success(:final mbTiles):
-      final addresses = _extractAddresses(mbTiles);
+      final addresses = _extractAddresses(mbTiles, onProgress: onProgress);
       mbTiles.dispose();
       return Addresses.success(
           AddressDatabase(mapHash: mapHash, addresses: addresses));
@@ -223,7 +257,7 @@ Future<Addresses> _processTiles(tiles.TilesRepository tilesRepository) async {
   }
 }
 
-List<LatLng> _extractAddresses(MbTiles mbTiles) {
+List<LatLng> _extractAddresses(MbTiles mbTiles, {void Function((double, int))? onProgress}) {
   final addresses = <LatLng>[];
   final coordinates = _getTileCoordinatesForBounds(mbTiles, 14);
 
@@ -232,9 +266,25 @@ List<LatLng> _extractAddresses(MbTiles mbTiles) {
 
   var processedTiles = 0;
   var tilesWithAddresses = 0;
+  // Use real elapsed time so progress messages are spread across actual
+  // processing time rather than sent in a burst. The main isolate can then
+  // render each update before the next one arrives.
+  final stopwatch = Stopwatch()..start();
+  const progressIntervalMs = 200;
 
   for (var coordinate in coordinates) {
     processedTiles++;
+
+    final isLast = processedTiles == totalTiles;
+    if (isLast || stopwatch.elapsedMilliseconds >= progressIntervalMs) {
+      stopwatch.reset();
+      final progress = processedTiles / totalTiles;
+      onProgress?.call((progress, addresses.length));
+
+      final progressPct = (progress * 100).toStringAsFixed(1);
+      print('[AddressRepository] Progress: $progressPct% ($processedTiles/$totalTiles tiles, ${addresses.length} addresses found)');
+    }
+
     final tile = mbTiles.getTile(x: coordinate.x, y: coordinate.y, z: 14);
     if (tile == null) {
       continue;
@@ -270,12 +320,6 @@ List<LatLng> _extractAddresses(MbTiles mbTiles) {
       }
     } on StateError {
       continue;
-    }
-
-    // Log progress every 10% of tiles
-    if (processedTiles % (totalTiles ~/ 10).clamp(1, totalTiles) == 0 || processedTiles == totalTiles) {
-      final progress = (processedTiles / totalTiles * 100).toStringAsFixed(1);
-      print('[AddressRepository] Progress: $progress% ($processedTiles/$totalTiles tiles, ${addresses.length} addresses found)');
     }
   }
 

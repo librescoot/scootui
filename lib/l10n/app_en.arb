@@ -352,6 +352,7 @@
   "addressConfirmAction": "Confirm",
   "addressNextAction": "Next",
   "addressCloseAction": "Close",
+  "addressCancelAction": "Cancel",
   "addressScreenTitle": "Enter Destination Code",
 
   "standbyWarning": "Vehicle will enter standby in",
@@ -400,6 +401,12 @@
   "addressRebuildingHash": "Rebuilding address database due to hash mismatch...",
   "addressHashMismatch": "Map hash mismatch after rebuild.",
   "addressCreatingDb": "Creating address database...",
+  "addressBuildProgress": "{count} addresses",
+  "@addressBuildProgress": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "addressBuildFailed": "Failed to build address database.",
   "savedLocationsFailed": "Failed to load saved locations",
 
