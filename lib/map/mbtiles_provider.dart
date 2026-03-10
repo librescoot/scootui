@@ -118,18 +118,22 @@ void _startRemoteIsolate((SendPort, RootIsolateToken) init) {
     if (message is _Request) {
       switch (message) {
         case _InitRequest(:final tilesRepository):
-          final tiles = await tilesRepository.getMbTiles();
-          switch (tiles) {
-            case Success(:final mbTiles):
-              _mbTiles = mbTiles;
+          try {
+            final tiles = await tilesRepository.getMbTiles();
+            switch (tiles) {
+              case Success(:final mbTiles):
+                _mbTiles = mbTiles;
 
-              final meta = mbTiles.getMetadata();
-              _maxZoom = meta.maxZoom?.toInt();
-              initPort.send(_Response.init(InitResult.success(meta)));
-            case NotFound():
-              initPort.send(_Response.init(InitResult.error('Map file not found')));
-            case Error(:final message):
-              initPort.send(_Response.init(InitResult.error(message)));
+                final meta = mbTiles.getMetadata();
+                _maxZoom = meta.maxZoom?.toInt();
+                initPort.send(_Response.init(InitResult.success(meta)));
+              case NotFound():
+                initPort.send(_Response.init(InitResult.error('Map file not found')));
+              case Error(:final message):
+                initPort.send(_Response.init(InitResult.error(message)));
+            }
+          } catch (e) {
+            initPort.send(_Response.init(InitResult.error('Failed to initialize MBTiles: $e')));
           }
         case _GetTileRequest(:final requestId, :final tile):
           if (_mbTiles == null) {
