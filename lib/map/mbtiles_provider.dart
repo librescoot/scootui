@@ -112,6 +112,7 @@ void _startRemoteIsolate((SendPort, RootIsolateToken) init) {
   initPort.send(receivePort.sendPort);
 
   MbTiles? _mbTiles;
+  int? _maxZoom;
 
   receivePort.listen((message) async {
     if (message is _Request) {
@@ -123,6 +124,7 @@ void _startRemoteIsolate((SendPort, RootIsolateToken) init) {
               _mbTiles = mbTiles;
 
               final meta = mbTiles.getMetadata();
+              _maxZoom = meta.maxZoom?.toInt();
               initPort.send(_Response.init(InitResult.success(meta)));
             case NotFound():
               initPort.send(_Response.init(InitResult.error('Map file not found')));
@@ -134,8 +136,12 @@ void _startRemoteIsolate((SendPort, RootIsolateToken) init) {
             initPort.send(_Response.error(requestId, 'MBTiles not initialized'));
             return;
           }
-          final tmsY = ((1 << tile.z) - 1) - tile.y;
-          final tileData = _mbTiles!.getTile(x: tile.x, y: tmsY, z: tile.z);
+          final clampedZ = (_maxZoom != null && tile.z > _maxZoom!) ? _maxZoom! : tile.z;
+          final zDiff = tile.z - clampedZ;
+          final clampedX = tile.x >> zDiff;
+          final clampedY = tile.y >> zDiff;
+          final tmsY = ((1 << clampedZ) - 1) - clampedY;
+          final tileData = _mbTiles!.getTile(x: clampedX, y: tmsY, z: clampedZ);
           if (tileData == null) {
             initPort.send(_Response.error(requestId, 'Tile not found'));
             return;
