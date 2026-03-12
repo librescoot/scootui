@@ -73,7 +73,7 @@ class _Content extends StatelessWidget {
             children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 48, 32, 24),
+                  padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
                   child: Column(
                     children: [
                       Text(
@@ -81,7 +81,7 @@ class _Content extends StatelessWidget {
                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: fg),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       _StatusRow(
                         label: l10n.navSetupLocalDisplayMaps,
                         available: navState.localDisplayMapsAvailable,
@@ -99,17 +99,17 @@ class _Content extends StatelessWidget {
                         const SizedBox(height: 4),
                         _DownloadSection(isDark: isDark, navState: navState),
                       ],
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Text(
                         l10n.navSetupNoRoutingBody,
                         style: TextStyle(fontSize: 14, color: fgDim, height: 1.4),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       QrImageView(
                         data: _docsUrl,
                         version: QrVersions.auto,
-                        size: 130,
+                        size: 110,
                         backgroundColor: Colors.white,
                         eyeStyle: const QrEyeStyle(
                           eyeShape: QrEyeShape.square,
