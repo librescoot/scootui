@@ -151,6 +151,18 @@ class MapDownloadCubit extends Cubit<MapDownloadState> {
     }
   }
 
+  /// Pre-resolve the region name from GPS coordinates so the UI can display it
+  /// before the user triggers a download.
+  Future<void> resolveRegion(double latitude, double longitude) async {
+    if (state.regionName != null) return;
+    try {
+      final slug = await _resolveSlug(latitude, longitude);
+      if (slug != null && !isClosed) {
+        emit(state.copyWith(regionName: _displayName(slug)));
+      }
+    } catch (_) {}
+  }
+
   Future<void> startDownload({
     required double latitude,
     required double longitude,
@@ -511,9 +523,11 @@ class MapDownloadCubit extends Cubit<MapDownloadState> {
           headers: {'User-Agent': 'LibreScoot/1.0 (navigation setup)'}),
       cancelToken: _cancelToken,
     );
-    final state = response.data?['address']?['state'] as String?;
-    if (state == null) return null;
-    return _stateToSlug[state];
+    final address = response.data?['address'] as Map<String, dynamic>?;
+    if (address == null) return null;
+    final region = address['state'] as String? ?? address['city'] as String?;
+    if (region == null) return null;
+    return _stateToSlug[region];
   }
 
   static String _displayName(String slug) =>

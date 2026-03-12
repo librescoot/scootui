@@ -46,6 +46,38 @@ class _Content extends StatelessWidget {
     final downloadState = context.watch<MapDownloadCubit>().state;
     final showDownloadSection = anyMissing || downloadState.updateAvailable || downloadState.hasPartialDownload;
 
+    final internet = context.watch<InternetSync>().state;
+    final gps = context.watch<GpsSync>().state;
+    final isOnline = internet.status == ConnectionStatus.connected;
+    final hasGps = gps.state == GpsState.fixEstablished && gps.latitude != 0;
+    final canDownload = showDownloadSection &&
+        downloadState.status == MapDownloadStatus.idle &&
+        isOnline &&
+        hasGps;
+
+    // Pre-resolve region name so the user sees it before downloading
+    if (hasGps && isOnline && downloadState.regionName == null) {
+      context.read<MapDownloadCubit>().resolveRegion(gps.latitude, gps.longitude);
+    }
+
+    final String downloadLabel;
+    if (downloadState.updateAvailable) {
+      downloadLabel = l10n.navSetupUpdateButton;
+    } else if (downloadState.hasPartialDownload && !downloadState.updateAvailable) {
+      downloadLabel = l10n.navSetupResumeButton;
+    } else {
+      downloadLabel = l10n.navSetupDownloadButton;
+    }
+
+    void triggerDownload() {
+      context.read<MapDownloadCubit>().startDownload(
+            latitude: gps.latitude,
+            longitude: gps.longitude,
+            needsDisplayMaps: downloadState.updateAvailable || !navState.localDisplayMapsAvailable,
+            needsRoutingMaps: downloadState.updateAvailable || !navState.routingAvailable,
+          );
+    }
+
     final String title;
     if (!navState.routingAvailable && !navState.localDisplayMapsAvailable) {
       title = l10n.navSetupTitleBothUnavailable;
@@ -67,6 +99,7 @@ class _Content extends StatelessWidget {
         initialData: vehicleSync.state,
         requireInitialRelease: true,
         onRightTap: () => context.read<ScreenCubit>().closeNavigationSetup(),
+        onLeftTap: canDownload ? triggerDownload : null,
         child: Container(
           color: bg,
           child: Column(
@@ -137,7 +170,7 @@ class _Content extends StatelessWidget {
                   border: Border(top: BorderSide(color: divider)),
                 ),
                 child: ControlHints(
-                  leftAction: null,
+                  leftAction: canDownload ? downloadLabel : null,
                   rightAction: l10n.aboutBackAction,
                 ),
               ),
@@ -211,14 +244,8 @@ class _DownloadSection extends StatelessWidget {
             : downloadState.errorMessage == 'unsupported'
                 ? l10n.navSetupDownloadUnsupported
                 : l10n.navSetupDownloadError;
-        return Column(
-          children: [
-            Text(errorMsg,
-                style: TextStyle(fontSize: 13, color: Colors.red.shade400)),
-            const SizedBox(height: 4),
-            _downloadButton(context, gps, l10n, downloadState),
-          ],
-        );
+        return Text(errorMsg,
+            style: TextStyle(fontSize: 13, color: Colors.red.shade400));
 
       case MapDownloadStatus.idle:
         if (!isOnline) {
@@ -229,33 +256,13 @@ class _DownloadSection extends StatelessWidget {
           return Text(l10n.navSetupDownloadWaitingGps,
               style: TextStyle(fontSize: 13, color: fgDim));
         }
-        return _downloadButton(context, gps, l10n, downloadState);
+        final region = downloadState.regionName;
+        if (region != null) {
+          return Text(region,
+              style: TextStyle(fontSize: 13, color: fgDim));
+        }
+        return const SizedBox.shrink();
     }
-  }
-
-  Widget _downloadButton(
-      BuildContext context, GpsData gps, dynamic l10n, MapDownloadState downloadState) {
-    final isUpdate = downloadState.updateAvailable;
-    final isResume = downloadState.hasPartialDownload && !isUpdate;
-    final label = isUpdate
-        ? l10n.navSetupUpdateButton
-        : isResume
-            ? l10n.navSetupResumeButton
-            : l10n.navSetupDownloadButton;
-    final icon = isUpdate ? Icons.update_outlined : Icons.download_outlined;
-
-    return TextButton.icon(
-      style: TextButton.styleFrom(padding: EdgeInsets.zero),
-      icon: Icon(icon, color: Colors.green.shade600, size: 18),
-      label: Text(label,
-          style: TextStyle(color: Colors.green.shade600, fontSize: 13)),
-      onPressed: () => context.read<MapDownloadCubit>().startDownload(
-            latitude: gps.latitude,
-            longitude: gps.longitude,
-            needsDisplayMaps: isUpdate || !navState.localDisplayMapsAvailable,
-            needsRoutingMaps: isUpdate || !navState.routingAvailable,
-          ),
-    );
   }
 }
 

@@ -90,7 +90,7 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Navigation Setup (shown when display maps or routing is unavailable)
+      // Navigation Setup (shown when local maps or routing is unavailable)
       MenuNode.action(
         id: 'navigation_setup',
         title: l10n.menuNavigationSetup,
@@ -99,9 +99,8 @@ MenuNode buildMenuTree(BuildContext context) {
           final internet = context.read<InternetSync>().state;
           final s = context.read<SettingsSync>().state;
           final isOnline = internet.modemState == ModemState.connected;
-          final hasDisplayMaps = navState.localDisplayMapsAvailable || s.mapType == MapType.online;
           final routingReady = navState.routingAvailable || (isOnline && s.valhallaUrl == AppConfig.valhallaOnlineEndpoint);
-          return !hasDisplayMaps || !routingReady;
+          return !navState.localDisplayMapsAvailable || !routingReady;
         },
         onAction: (context) {
           context.read<MenuCubit>().hideMenu();
@@ -109,19 +108,19 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Navigation submenu (shown only when both display maps and routing are ready)
+      // Navigation submenu (shown only when local maps and routing are both ready)
       MenuNode.submenu(
         id: 'navigation',
         title: l10n.menuNavigation,
         headerTitle: l10n.menuNavigationHeader,
         isVisible: (context) {
           final navState = context.read<NavigationAvailabilityCubit>().state;
+          if (!navState.localDisplayMapsAvailable) return false;
           final internet = context.read<InternetSync>().state;
           final s = context.read<SettingsSync>().state;
           final isOnline = internet.modemState == ModemState.connected;
-          final hasDisplayMaps = navState.localDisplayMapsAvailable || s.mapType == MapType.online;
           final routingReady = navState.routingAvailable || (isOnline && s.valhallaUrl == AppConfig.valhallaOnlineEndpoint);
-          return hasDisplayMaps && routingReady;
+          return routingReady;
         },
         children: [
           MenuNode.action(
