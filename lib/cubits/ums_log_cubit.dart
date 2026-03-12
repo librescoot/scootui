@@ -29,10 +29,18 @@ class UmsLogCubit extends Cubit<List<String>> {
     emit([]);
   }
 
+  // Strip leading timestamp ("YYYY-MM-DD HH:MM:SS " = 20 chars) for display.
+  static String _stripTimestamp(String entry) {
+    if (entry.length > 20 && entry[10] == ' ' && entry[13] == ':') {
+      return entry.substring(20);
+    }
+    return entry;
+  }
+
   Future<void> _poll() async {
     try {
       final entries = await _repository.lrange("usb:log", 0, 19);
-      emit(entries.reversed.toList());
+      emit(entries.reversed.map(_stripTimestamp).toList());
     } catch (_) {}
   }
 
