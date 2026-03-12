@@ -182,6 +182,90 @@ abstract class AppLocalizations {
   /// **'Scan for setup instructions'**
   String get navSetupScanForInstructions;
 
+  /// No description provided for @navSetupDownloadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Download maps'**
+  String get navSetupDownloadButton;
+
+  /// No description provided for @navSetupDownloadLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting your region...'**
+  String get navSetupDownloadLocating;
+
+  /// No description provided for @navSetupDownloadProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {percent}%'**
+  String navSetupDownloadProgress(int percent);
+
+  /// No description provided for @navSetupDownloadInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing maps...'**
+  String get navSetupDownloadInstalling;
+
+  /// No description provided for @navSetupDownloadDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Maps installed. Restarting navigation services...'**
+  String get navSetupDownloadDone;
+
+  /// No description provided for @navSetupDownloadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get navSetupDownloadError;
+
+  /// No description provided for @navSetupDownloadWaitingGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for GPS fix...'**
+  String get navSetupDownloadWaitingGps;
+
+  /// No description provided for @navSetupDownloadNoInternet.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get navSetupDownloadNoInternet;
+
+  /// No description provided for @navSetupDownloadUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'No maps available for your location'**
+  String get navSetupDownloadUnsupported;
+
+  /// No description provided for @navSetupUpdateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Update maps'**
+  String get navSetupUpdateButton;
+
+  /// No description provided for @navSetupResumeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume download'**
+  String get navSetupResumeButton;
+
+  /// No description provided for @navSetupCheckingUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get navSetupCheckingUpdates;
+
+  /// No description provided for @navSetupDownloadProgressBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {downloaded} / {total} MB'**
+  String navSetupDownloadProgressBytes(String downloaded, String total);
+
+  /// No description provided for @navSetupInsufficientSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough storage space'**
+  String get navSetupInsufficientSpace;
+
   /// No description provided for @menuEnterDestinationCode.
   ///
   /// In en, this message translates to:

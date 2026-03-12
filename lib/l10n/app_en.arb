@@ -17,6 +17,31 @@
   "navSetupRoutingEngine": "Routing engine",
   "navSetupNoRoutingBody": "Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.",
   "navSetupScanForInstructions": "Scan for setup instructions",
+  "navSetupDownloadButton": "Download maps",
+  "navSetupDownloadLocating": "Detecting your region...",
+  "navSetupDownloadProgress": "Downloading... {percent}%",
+  "@navSetupDownloadProgress": {
+    "placeholders": {
+      "percent": {"type": "int"}
+    }
+  },
+  "navSetupDownloadInstalling": "Installing maps...",
+  "navSetupDownloadDone": "Maps installed. Restarting navigation services...",
+  "navSetupDownloadError": "Download failed",
+  "navSetupDownloadWaitingGps": "Waiting for GPS fix...",
+  "navSetupDownloadNoInternet": "No internet connection",
+  "navSetupDownloadUnsupported": "No maps available for your location",
+  "navSetupUpdateButton": "Update maps",
+  "navSetupResumeButton": "Resume download",
+  "navSetupCheckingUpdates": "Checking for updates...",
+  "navSetupDownloadProgressBytes": "Downloading... {downloaded} / {total} MB",
+  "@navSetupDownloadProgressBytes": {
+    "placeholders": {
+      "downloaded": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "navSetupInsufficientSpace": "Not enough storage space",
   "menuEnterDestinationCode": "Enter Destination Code",
   "menuSavedLocations": "Saved Locations",
   "menuSavedLocationsHeader": "SAVED LOCATIONS",

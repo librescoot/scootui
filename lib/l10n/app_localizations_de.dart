@@ -55,6 +55,52 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navSetupScanForInstructions => 'Für Anleitung scannen';
 
   @override
+  String get navSetupDownloadButton => 'Karten herunterladen';
+
+  @override
+  String get navSetupDownloadLocating => 'Region wird erkannt...';
+
+  @override
+  String navSetupDownloadProgress(int percent) {
+    return 'Herunterladen... $percent%';
+  }
+
+  @override
+  String get navSetupDownloadInstalling => 'Karten werden installiert...';
+
+  @override
+  String get navSetupDownloadDone => 'Karten installiert. Navigationsdienste werden neu gestartet...';
+
+  @override
+  String get navSetupDownloadError => 'Download fehlgeschlagen';
+
+  @override
+  String get navSetupDownloadWaitingGps => 'Warte auf GPS-Signal...';
+
+  @override
+  String get navSetupDownloadNoInternet => 'Keine Internetverbindung';
+
+  @override
+  String get navSetupDownloadUnsupported => 'Keine Karten für Ihren Standort verfügbar';
+
+  @override
+  String get navSetupUpdateButton => 'Karten aktualisieren';
+
+  @override
+  String get navSetupResumeButton => 'Download fortsetzen';
+
+  @override
+  String get navSetupCheckingUpdates => 'Suche nach Updates...';
+
+  @override
+  String navSetupDownloadProgressBytes(String downloaded, String total) {
+    return 'Herunterladen... $downloaded / $total MB';
+  }
+
+  @override
+  String get navSetupInsufficientSpace => 'Nicht genügend Speicherplatz';
+
+  @override
   String get menuEnterDestinationCode => 'Zielcode eingeben';
 
   @override
