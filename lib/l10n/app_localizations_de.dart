@@ -27,7 +27,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get menuNavigationHeader => 'NAVIGATION';
 
   @override
-  String get menuNavigationSetup => 'Navigation einrichten';
+  String get menuSetupMapMode => 'Kartenansicht einrichten';
+
+  @override
+  String get menuSetupNavigation => 'Navigation einrichten';
 
   @override
   String get navSetupTitle => 'Navigation einrichten';
@@ -50,6 +53,14 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get navSetupNoRoutingBody =>
       'Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Routing benötigt Valhalla, entweder lokal (Kartendownload erforderlich) oder als Remote-Server.';
+
+  @override
+  String get navSetupDisplayMapsBody =>
+      'Kartenkacheln können lokal (offline .mbtiles) oder online sein. Lade Offline-Kacheln für deine Region herunter oder konfiguriere Online-Kacheln in den Einstellungen.';
+
+  @override
+  String get navSetupRoutingBody =>
+      'Schritt-für-Schritt-Navigation benötigt eine Valhalla Routing-Engine, entweder lokal (Kartendownload erforderlich) oder als Remote-Server.';
 
   @override
   String get navSetupScanForInstructions => 'Für Anleitung scannen';

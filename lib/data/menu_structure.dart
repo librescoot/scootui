@@ -73,7 +73,7 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Switch to Map View (conditional - only show when on cluster)
+      // Switch to Map View (when on cluster and display maps available)
       MenuNode.action(
         id: 'switch_map',
         title: l10n.menuSwitchToMap,
@@ -90,25 +90,24 @@ MenuNode buildMenuTree(BuildContext context) {
         },
       ),
 
-      // Navigation Setup (shown when local maps or routing is unavailable)
+      // Set up Map Mode (replaces "Switch to Map View" when no display maps)
       MenuNode.action(
-        id: 'navigation_setup',
-        title: l10n.menuNavigationSetup,
+        id: 'setup_map_mode',
+        title: l10n.menuSetupMapMode,
         isVisible: (context) {
+          final screen = context.read<ScreenCubit>();
+          if (screen.state is! ScreenCluster) return false;
           final navState = context.read<NavigationAvailabilityCubit>().state;
-          final internet = context.read<InternetSync>().state;
           final s = context.read<SettingsSync>().state;
-          final isOnline = internet.modemState == ModemState.connected;
-          final routingReady = navState.routingAvailable || (isOnline && s.valhallaUrl == AppConfig.valhallaOnlineEndpoint);
-          return !navState.localDisplayMapsAvailable || !routingReady;
+          return !navState.localDisplayMapsAvailable && s.mapType != MapType.online;
         },
         onAction: (context) {
           context.read<MenuCubit>().hideMenu();
-          context.read<ScreenCubit>().showNavigationSetup();
+          context.read<ScreenCubit>().showNavigationSetup(SetupMode.displayMaps);
         },
       ),
 
-      // Navigation submenu (shown only when local maps and routing are both ready)
+      // Navigation submenu (when both display maps and routing are ready)
       MenuNode.submenu(
         id: 'navigation',
         title: l10n.menuNavigation,
@@ -183,13 +182,31 @@ MenuNode buildMenuTree(BuildContext context) {
           ),
           MenuNode.action(
             id: 'nav_setup_info',
-            title: l10n.menuNavigationSetup,
+            title: l10n.menuSetupNavigation,
             onAction: (context) {
               context.read<MenuCubit>().hideMenu();
-              context.read<ScreenCubit>().showNavigationSetup();
+              context.read<ScreenCubit>().showNavigationSetup(SetupMode.both);
             },
           ),
         ],
+      ),
+
+      // Set up Navigation (replaces Navigation submenu when routing not ready)
+      MenuNode.action(
+        id: 'setup_navigation',
+        title: l10n.menuSetupNavigation,
+        isVisible: (context) {
+          final navState = context.read<NavigationAvailabilityCubit>().state;
+          final internet = context.read<InternetSync>().state;
+          final s = context.read<SettingsSync>().state;
+          final isOnline = internet.modemState == ModemState.connected;
+          final routingReady = navState.routingAvailable || (isOnline && s.valhallaUrl == AppConfig.valhallaOnlineEndpoint);
+          return !routingReady;
+        },
+        onAction: (context) {
+          context.read<MenuCubit>().hideMenu();
+          context.read<ScreenCubit>().showNavigationSetup(SetupMode.routing);
+        },
       ),
 
       // Settings submenu

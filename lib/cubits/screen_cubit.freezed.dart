@@ -218,20 +218,67 @@ class ScreenAbout implements ScreenState {
 /// @nodoc
 
 class ScreenNavigationSetup implements ScreenState {
-  const ScreenNavigationSetup();
+  const ScreenNavigationSetup({this.setupMode = SetupMode.both});
+
+  @JsonKey()
+  final SetupMode setupMode;
+
+  /// Create a copy of ScreenState
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ScreenNavigationSetupCopyWith<ScreenNavigationSetup> get copyWith =>
+      _$ScreenNavigationSetupCopyWithImpl<ScreenNavigationSetup>(
+          this, _$identity);
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is ScreenNavigationSetup);
+        (other.runtimeType == runtimeType &&
+            other is ScreenNavigationSetup &&
+            (identical(other.setupMode, setupMode) ||
+                other.setupMode == setupMode));
   }
 
   @override
-  int get hashCode => runtimeType.hashCode;
+  int get hashCode => Object.hash(runtimeType, setupMode);
 
   @override
   String toString() {
-    return 'ScreenState.navigationSetup()';
+    return 'ScreenState.navigationSetup(setupMode: $setupMode)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $ScreenNavigationSetupCopyWith<$Res>
+    implements $ScreenStateCopyWith<$Res> {
+  factory $ScreenNavigationSetupCopyWith(ScreenNavigationSetup value,
+          $Res Function(ScreenNavigationSetup) _then) =
+      _$ScreenNavigationSetupCopyWithImpl;
+  @useResult
+  $Res call({SetupMode setupMode});
+}
+
+/// @nodoc
+class _$ScreenNavigationSetupCopyWithImpl<$Res>
+    implements $ScreenNavigationSetupCopyWith<$Res> {
+  _$ScreenNavigationSetupCopyWithImpl(this._self, this._then);
+
+  final ScreenNavigationSetup _self;
+  final $Res Function(ScreenNavigationSetup) _then;
+
+  /// Create a copy of ScreenState
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? setupMode = null,
+  }) {
+    return _then(ScreenNavigationSetup(
+      setupMode: null == setupMode
+          ? _self.setupMode
+          : setupMode // ignore: cast_nullable_to_non_nullable
+              as SetupMode,
+    ));
   }
 }
 

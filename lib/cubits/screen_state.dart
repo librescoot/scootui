@@ -11,5 +11,11 @@ sealed class ScreenState with _$ScreenState {
   const factory ScreenState.carplay() = ScreenCarPlay;
   const factory ScreenState.shuttingDown() = ScreenShuttingDown;
   const factory ScreenState.about() = ScreenAbout;
-  const factory ScreenState.navigationSetup() = ScreenNavigationSetup;
+  const factory ScreenState.navigationSetup({@Default(SetupMode.both) SetupMode setupMode}) = ScreenNavigationSetup;
+}
+
+enum SetupMode {
+  displayMaps,
+  routing,
+  both,
 }

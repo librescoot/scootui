@@ -7,7 +7,8 @@
   "menuSwitchToMap": "Zur Kartenansicht",
   "menuNavigation": "Navigation",
   "menuNavigationHeader": "NAVIGATION",
-  "menuNavigationSetup": "Navigation einrichten",
+  "menuSetupMapMode": "Kartenansicht einrichten",
+  "menuSetupNavigation": "Navigation einrichten",
 
   "navSetupTitle": "Navigation einrichten",
   "navSetupTitleRoutingUnavailable": "Routing nicht verfügbar",
@@ -16,6 +17,8 @@
   "navSetupLocalDisplayMaps": "Offline-Kartenkacheln",
   "navSetupRoutingEngine": "Routing-Engine",
   "navSetupNoRoutingBody": "Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Routing benötigt Valhalla, entweder lokal (Kartendownload erforderlich) oder als Remote-Server.",
+  "navSetupDisplayMapsBody": "Kartenkacheln können lokal (offline .mbtiles) oder online sein. Lade Offline-Kacheln für deine Region herunter oder konfiguriere Online-Kacheln in den Einstellungen.",
+  "navSetupRoutingBody": "Schritt-für-Schritt-Navigation benötigt eine Valhalla Routing-Engine, entweder lokal (Kartendownload erforderlich) oder als Remote-Server.",
   "navSetupScanForInstructions": "Für Anleitung scannen",
   "navSetupDownloadButton": "Karten herunterladen",
   "navSetupDownloadLocating": "Region wird erkannt...",

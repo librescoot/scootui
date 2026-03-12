@@ -90,9 +90,9 @@ class ScreenCubit extends Cubit<ScreenState> {
     _screenBeforeAbout = null;
   }
 
-  void showNavigationSetup() {
+  void showNavigationSetup([SetupMode mode = SetupMode.both]) {
     _screenBeforeNavigationSetup = state;
-    emit(const ScreenState.navigationSetup());
+    emit(ScreenState.navigationSetup(setupMode: mode));
   }
 
   void closeNavigationSetup() {

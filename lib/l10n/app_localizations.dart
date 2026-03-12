@@ -128,11 +128,17 @@ abstract class AppLocalizations {
   /// **'NAVIGATION'**
   String get menuNavigationHeader;
 
-  /// No description provided for @menuNavigationSetup.
+  /// No description provided for @menuSetupMapMode.
   ///
   /// In en, this message translates to:
-  /// **'Navigation Setup'**
-  String get menuNavigationSetup;
+  /// **'Set up Map Mode'**
+  String get menuSetupMapMode;
+
+  /// No description provided for @menuSetupNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up Navigation'**
+  String get menuSetupNavigation;
 
   /// No description provided for @navSetupTitle.
   ///
@@ -175,6 +181,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine, either local (routing maps required) or a remote server.'**
   String get navSetupNoRoutingBody;
+
+  /// No description provided for @navSetupDisplayMapsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Display tiles can be local (offline .mbtiles) or online. Download offline tiles for your region or configure online tiles in settings.'**
+  String get navSetupDisplayMapsBody;
+
+  /// No description provided for @navSetupRoutingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn-by-turn navigation requires a Valhalla routing engine, either local (routing maps required) or a remote server.'**
+  String get navSetupRoutingBody;
 
   /// No description provided for @navSetupScanForInstructions.
   ///

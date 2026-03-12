@@ -16,19 +16,23 @@ import '../widgets/general/control_hints.dart';
 const _docsUrl = 'https://librescoot.org/docs/navigation.html';
 
 class NavigationSetupScreen extends StatelessWidget {
-  const NavigationSetupScreen({super.key});
+  final SetupMode mode;
+
+  const NavigationSetupScreen({super.key, this.mode = SetupMode.both});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => MapDownloadCubit(),
-      child: const _Content(),
+      child: _Content(mode: mode),
     );
   }
 }
 
 class _Content extends StatelessWidget {
-  const _Content();
+  final SetupMode mode;
+
+  const _Content({required this.mode});
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +46,19 @@ class _Content extends StatelessWidget {
     final fgDim = isDark ? Colors.white60 : Colors.black54;
     final divider = isDark ? Colors.white12 : Colors.black12;
 
-    final anyMissing = !navState.localDisplayMapsAvailable || !navState.routingAvailable;
     final downloadState = context.watch<MapDownloadCubit>().state;
-    final showDownloadSection = anyMissing || downloadState.updateAvailable || downloadState.hasPartialDownload;
+    final needsDisplayMaps = !navState.localDisplayMapsAvailable;
+    final needsRoutingMaps = !navState.routingAvailable;
+    final hasRelevantPartial = switch (mode) {
+      SetupMode.displayMaps => downloadState.hasPartialDisplayDownload,
+      SetupMode.routing => downloadState.hasPartialRoutingDownload,
+      SetupMode.both => downloadState.hasPartialDownload,
+    };
+    final showDownloadSection = switch (mode) {
+      SetupMode.displayMaps => needsDisplayMaps || downloadState.updateAvailable || hasRelevantPartial,
+      SetupMode.routing => needsRoutingMaps || downloadState.updateAvailable || hasRelevantPartial,
+      SetupMode.both => needsDisplayMaps || needsRoutingMaps || downloadState.updateAvailable || hasRelevantPartial,
+    };
 
     final internet = context.watch<InternetSync>().state;
     final gps = context.watch<GpsSync>().state;
@@ -55,7 +69,6 @@ class _Content extends StatelessWidget {
         isOnline &&
         hasGps;
 
-    // Pre-resolve region name so the user sees it before downloading
     if (hasGps && isOnline && downloadState.regionName == null) {
       context.read<MapDownloadCubit>().resolveRegion(gps.latitude, gps.longitude);
     }
@@ -63,7 +76,7 @@ class _Content extends StatelessWidget {
     final String downloadLabel;
     if (downloadState.updateAvailable) {
       downloadLabel = l10n.navSetupUpdateButton;
-    } else if (downloadState.hasPartialDownload && !downloadState.updateAvailable) {
+    } else if (hasRelevantPartial) {
       downloadLabel = l10n.navSetupResumeButton;
     } else {
       downloadLabel = l10n.navSetupDownloadButton;
@@ -73,21 +86,41 @@ class _Content extends StatelessWidget {
       context.read<MapDownloadCubit>().startDownload(
             latitude: gps.latitude,
             longitude: gps.longitude,
-            needsDisplayMaps: downloadState.updateAvailable || !navState.localDisplayMapsAvailable,
-            needsRoutingMaps: downloadState.updateAvailable || !navState.routingAvailable,
+            needsDisplayMaps: downloadState.updateAvailable || (mode != SetupMode.routing && needsDisplayMaps),
+            needsRoutingMaps: downloadState.updateAvailable || (mode != SetupMode.displayMaps && needsRoutingMaps),
           );
     }
 
     final String title;
-    if (!navState.routingAvailable && !navState.localDisplayMapsAvailable) {
-      title = l10n.navSetupTitleBothUnavailable;
-    } else if (!navState.routingAvailable) {
-      title = l10n.navSetupTitleRoutingUnavailable;
-    } else if (!navState.localDisplayMapsAvailable) {
-      title = l10n.navSetupTitleMapsUnavailable;
-    } else {
-      title = l10n.navSetupTitle;
+    switch (mode) {
+      case SetupMode.displayMaps:
+        title = l10n.navSetupTitleMapsUnavailable;
+      case SetupMode.routing:
+        title = l10n.navSetupTitleRoutingUnavailable;
+      case SetupMode.both:
+        if (needsRoutingMaps && needsDisplayMaps) {
+          title = l10n.navSetupTitleBothUnavailable;
+        } else if (needsRoutingMaps) {
+          title = l10n.navSetupTitleRoutingUnavailable;
+        } else if (needsDisplayMaps) {
+          title = l10n.navSetupTitleMapsUnavailable;
+        } else {
+          title = l10n.navSetupTitle;
+        }
     }
+
+    final String body;
+    switch (mode) {
+      case SetupMode.displayMaps:
+        body = l10n.navSetupDisplayMapsBody;
+      case SetupMode.routing:
+        body = l10n.navSetupRoutingBody;
+      case SetupMode.both:
+        body = l10n.navSetupNoRoutingBody;
+    }
+
+    final showDisplayMapsRow = mode == SetupMode.displayMaps || mode == SetupMode.both;
+    final showRoutingRow = mode == SetupMode.routing || mode == SetupMode.both;
 
     return BlocListener<MapDownloadCubit, MapDownloadState>(
       listenWhen: (prev, curr) => prev.status != curr.status && curr.status == MapDownloadStatus.done,
@@ -115,26 +148,29 @@ class _Content extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      _StatusRow(
-                        label: l10n.navSetupLocalDisplayMaps,
-                        available: navState.localDisplayMapsAvailable,
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 8),
-                      _StatusRow(
-                        label: l10n.navSetupRoutingEngine,
-                        available: navState.routingAvailable,
-                        isDark: isDark,
-                      ),
+                      if (showDisplayMapsRow) ...[
+                        _StatusRow(
+                          label: l10n.navSetupLocalDisplayMaps,
+                          available: navState.localDisplayMapsAvailable,
+                          isDark: isDark,
+                        ),
+                        if (showRoutingRow) const SizedBox(height: 8),
+                      ],
+                      if (showRoutingRow)
+                        _StatusRow(
+                          label: l10n.navSetupRoutingEngine,
+                          available: navState.routingAvailable,
+                          isDark: isDark,
+                        ),
                       if (showDownloadSection) ...[
                         const SizedBox(height: 12),
                         Divider(color: divider),
                         const SizedBox(height: 4),
-                        _DownloadSection(isDark: isDark, navState: navState),
+                        _DownloadSection(isDark: isDark, mode: mode),
                       ],
                       const SizedBox(height: 12),
                       Text(
-                        l10n.navSetupNoRoutingBody,
+                        body,
                         style: TextStyle(fontSize: 14, color: fgDim, height: 1.4),
                         textAlign: TextAlign.center,
                       ),
@@ -184,9 +220,9 @@ class _Content extends StatelessWidget {
 
 class _DownloadSection extends StatelessWidget {
   final bool isDark;
-  final NavigationAvailabilityState navState;
+  final SetupMode mode;
 
-  const _DownloadSection({required this.isDark, required this.navState});
+  const _DownloadSection({required this.isDark, required this.mode});
 
   @override
   Widget build(BuildContext context) {
@@ -258,7 +294,14 @@ class _DownloadSection extends StatelessWidget {
         }
         final region = downloadState.regionName;
         if (region != null) {
-          return Text(region,
+          final sizeBytes = switch (mode) {
+            SetupMode.displayMaps => downloadState.estimatedDisplayBytes,
+            SetupMode.routing => downloadState.estimatedRoutingBytes,
+            SetupMode.both => downloadState.estimatedDisplayBytes + downloadState.estimatedRoutingBytes,
+          };
+          final sizeMB = sizeBytes > 0 ? (sizeBytes / 1048576).toStringAsFixed(0) : null;
+          final sizeText = sizeMB != null ? ' ($sizeMB MB)' : '';
+          return Text('$region$sizeText',
               style: TextStyle(fontSize: 13, color: fgDim));
         }
         return const SizedBox.shrink();

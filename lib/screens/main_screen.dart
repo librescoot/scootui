@@ -246,7 +246,7 @@ class _MainScreenState extends State<MainScreen> {
               ScreenOta() => const OtaScreen(),
               ScreenDebug() => const DebugScreen(),
               ScreenAbout() => const AboutScreen(),
-              ScreenNavigationSetup() => const NavigationSetupScreen(),
+              ScreenNavigationSetup(:final setupMode) => NavigationSetupScreen(mode: setupMode),
               ScreenShuttingDown() => menuTrigger(const ClusterScreen()), // Fallback (shouldn't happen)
             },
 

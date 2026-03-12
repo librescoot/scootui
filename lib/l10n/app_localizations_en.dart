@@ -27,7 +27,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuNavigationHeader => 'NAVIGATION';
 
   @override
-  String get menuNavigationSetup => 'Navigation Setup';
+  String get menuSetupMapMode => 'Set up Map Mode';
+
+  @override
+  String get menuSetupNavigation => 'Set up Navigation';
 
   @override
   String get navSetupTitle => 'Navigation Setup';
@@ -50,6 +53,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get navSetupNoRoutingBody =>
       'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine, either local (routing maps required) or a remote server.';
+
+  @override
+  String get navSetupDisplayMapsBody =>
+      'Display tiles can be local (offline .mbtiles) or online. Download offline tiles for your region or configure online tiles in settings.';
+
+  @override
+  String get navSetupRoutingBody =>
+      'Turn-by-turn navigation requires a Valhalla routing engine, either local (routing maps required) or a remote server.';
 
   @override
   String get navSetupScanForInstructions => 'Scan for setup instructions';

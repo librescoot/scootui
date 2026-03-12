@@ -7,7 +7,8 @@
   "menuSwitchToMap": "Switch to Map View",
   "menuNavigation": "Navigation",
   "menuNavigationHeader": "NAVIGATION",
-  "menuNavigationSetup": "Navigation Setup",
+  "menuSetupMapMode": "Set up Map Mode",
+  "menuSetupNavigation": "Set up Navigation",
 
   "navSetupTitle": "Navigation Setup",
   "navSetupTitleRoutingUnavailable": "Routing Not Available",
@@ -16,6 +17,8 @@
   "navSetupLocalDisplayMaps": "Offline display maps",
   "navSetupRoutingEngine": "Routing engine",
   "navSetupNoRoutingBody": "Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine, either local (routing maps required) or a remote server.",
+  "navSetupDisplayMapsBody": "Display tiles can be local (offline .mbtiles) or online. Download offline tiles for your region or configure online tiles in settings.",
+  "navSetupRoutingBody": "Turn-by-turn navigation requires a Valhalla routing engine, either local (routing maps required) or a remote server.",
   "navSetupScanForInstructions": "Scan for setup instructions",
   "navSetupDownloadButton": "Download maps",
   "navSetupDownloadLocating": "Detecting your region...",

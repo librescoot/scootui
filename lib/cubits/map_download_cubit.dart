@@ -27,7 +27,12 @@ class MapDownloadState {
   final MapMetadata? installedMeta;
   final int downloadedBytes;
   final int totalBytes;
-  final bool hasPartialDownload;
+  final bool hasPartialDisplayDownload;
+  final bool hasPartialRoutingDownload;
+  final int estimatedDisplayBytes;
+  final int estimatedRoutingBytes;
+
+  bool get hasPartialDownload => hasPartialDisplayDownload || hasPartialRoutingDownload;
 
   const MapDownloadState({
     this.status = MapDownloadStatus.idle,
@@ -38,7 +43,10 @@ class MapDownloadState {
     this.installedMeta,
     this.downloadedBytes = 0,
     this.totalBytes = 0,
-    this.hasPartialDownload = false,
+    this.hasPartialDisplayDownload = false,
+    this.hasPartialRoutingDownload = false,
+    this.estimatedDisplayBytes = 0,
+    this.estimatedRoutingBytes = 0,
   });
 
   MapDownloadState copyWith({
@@ -50,7 +58,10 @@ class MapDownloadState {
     MapMetadata? installedMeta,
     int? downloadedBytes,
     int? totalBytes,
-    bool? hasPartialDownload,
+    bool? hasPartialDisplayDownload,
+    bool? hasPartialRoutingDownload,
+    int? estimatedDisplayBytes,
+    int? estimatedRoutingBytes,
   }) =>
       MapDownloadState(
         status: status ?? this.status,
@@ -61,7 +72,10 @@ class MapDownloadState {
         installedMeta: installedMeta ?? this.installedMeta,
         downloadedBytes: downloadedBytes ?? this.downloadedBytes,
         totalBytes: totalBytes ?? this.totalBytes,
-        hasPartialDownload: hasPartialDownload ?? this.hasPartialDownload,
+        hasPartialDisplayDownload: hasPartialDisplayDownload ?? this.hasPartialDisplayDownload,
+        hasPartialRoutingDownload: hasPartialRoutingDownload ?? this.hasPartialRoutingDownload,
+        estimatedDisplayBytes: estimatedDisplayBytes ?? this.estimatedDisplayBytes,
+        estimatedRoutingBytes: estimatedRoutingBytes ?? this.estimatedRoutingBytes,
       );
 }
 
@@ -86,24 +100,27 @@ class MapDownloadCubit extends Cubit<MapDownloadState> {
     try {
       final downloadDir = await _downloadDir();
       final regionFile = File('${downloadDir.path}/region');
-      if (await regionFile.exists()) {
-        final region = await regionFile.readAsString();
-        final hasPartial = await _hasPartialFiles(downloadDir);
-        if (hasPartial) {
-          emit(state.copyWith(
-            hasPartialDownload: true,
-            regionName: _displayName(region.trim()),
-          ));
+      if (!await regionFile.exists()) return;
+
+      final region = await regionFile.readAsString();
+      bool hasDisplay = false;
+      bool hasRouting = false;
+
+      if (await downloadDir.exists()) {
+        await for (final f in downloadDir.list()) {
+          if (f.path.endsWith('.mbtiles.part')) hasDisplay = true;
+          if (f.path.endsWith('.tar.part')) hasRouting = true;
         }
       }
-    } catch (_) {}
-  }
 
-  Future<bool> _hasPartialFiles(Directory downloadDir) async {
-    if (!await downloadDir.exists()) return false;
-    return await downloadDir
-        .list()
-        .any((f) => f.path.endsWith('.part'));
+      if (hasDisplay || hasRouting) {
+        emit(state.copyWith(
+          hasPartialDisplayDownload: hasDisplay,
+          hasPartialRoutingDownload: hasRouting,
+          regionName: _displayName(region.trim()),
+        ));
+      }
+    } catch (_) {}
   }
 
   Future<void> checkForUpdates() async {
@@ -151,14 +168,32 @@ class MapDownloadCubit extends Cubit<MapDownloadState> {
     }
   }
 
-  /// Pre-resolve the region name from GPS coordinates so the UI can display it
-  /// before the user triggers a download.
+  /// Pre-resolve the region name and download sizes from GPS coordinates.
   Future<void> resolveRegion(double latitude, double longitude) async {
     if (state.regionName != null) return;
     try {
       final slug = await _resolveSlug(latitude, longitude);
-      if (slug != null && !isClosed) {
-        emit(state.copyWith(regionName: _displayName(slug)));
+      if (slug == null || isClosed) return;
+
+      int displayBytes = 0;
+      int routingBytes = 0;
+      try {
+        final displayRelease = await _fetchReleaseInfo('librescoot/osm-tiles');
+        final displayAsset = _findAsset(displayRelease, 'tiles_$slug.mbtiles');
+        displayBytes = (displayAsset?['size'] as int?) ?? 0;
+      } catch (_) {}
+      try {
+        final routingRelease = await _fetchReleaseInfo('librescoot/valhalla-tiles');
+        final routingAsset = _findAsset(routingRelease, 'valhalla_tiles_$slug.tar');
+        routingBytes = (routingAsset?['size'] as int?) ?? 0;
+      } catch (_) {}
+
+      if (!isClosed) {
+        emit(state.copyWith(
+          regionName: _displayName(slug),
+          estimatedDisplayBytes: displayBytes,
+          estimatedRoutingBytes: routingBytes,
+        ));
       }
     } catch (_) {}
   }
@@ -355,9 +390,9 @@ class MapDownloadCubit extends Cubit<MapDownloadState> {
     } catch (e) {
       if (e is DioException && CancelToken.isCancel(e)) {
         if (!isClosed) {
+          await _checkPartialDownload();
           emit(state.copyWith(
             status: MapDownloadStatus.idle,
-            hasPartialDownload: true,
           ));
         }
       } else {
