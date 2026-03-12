@@ -30,8 +30,10 @@ class UmsLogCubit extends Cubit<List<String>> {
   }
 
   // Strip leading timestamp ("YYYY-MM-DD HH:MM:SS " = 20 chars) for display.
+  // Checks position 10 (space) and 13 (colon between HH and MM) to identify
+  // the format produced by Go's time.Format("2006-01-02 15:04:05").
   static String _stripTimestamp(String entry) {
-    if (entry.length > 20 && entry[10] == ' ' && entry[13] == ':') {
+    if (entry.length > 20 && entry[10] == ' ' && entry[16] == ':') {
       return entry.substring(20);
     }
     return entry;
@@ -40,7 +42,7 @@ class UmsLogCubit extends Cubit<List<String>> {
   Future<void> _poll() async {
     try {
       final entries = await _repository.lrange("usb:log", 0, 19);
-      emit(entries.reversed.map(_stripTimestamp).toList());
+      if (!isClosed) emit(entries.reversed.map(_stripTimestamp).toList());
     } catch (_) {}
   }
 

@@ -16,22 +16,18 @@ class UmsOverlay extends StatefulWidget {
 }
 
 class _UmsOverlayState extends State<UmsOverlay> {
-  String _previousStatus = "idle";
-
   void _onStatusChanged(BuildContext context, String status) {
     final logCubit = context.read<UmsLogCubit>();
 
-    if (_previousStatus == "idle" && status != "idle") {
+    if (status == "idle") {
+      logCubit.stopPolling();
       logCubit.clear();
-    }
-
-    if (status == "processing") {
+    } else if (status == "processing") {
       logCubit.startPolling();
     } else {
       logCubit.stopPolling();
     }
 
-    _previousStatus = status;
   }
 
   @override
