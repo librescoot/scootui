@@ -84,6 +84,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSetupDownloadUnsupported => 'No maps available for your location';
 
   @override
+  String get navSetupUpdateButton => 'Update maps';
+
+  @override
+  String get navSetupResumeButton => 'Resume download';
+
+  @override
+  String get navSetupCheckingUpdates => 'Checking for updates...';
+
+  @override
+  String navSetupDownloadProgressBytes(String downloaded, String total) {
+    return 'Downloading... $downloaded / $total MB';
+  }
+
+  @override
+  String get navSetupInsufficientSpace => 'Not enough storage space';
+
+  @override
   String get menuEnterDestinationCode => 'Enter Destination Code';
 
   @override

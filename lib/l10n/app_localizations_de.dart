@@ -84,6 +84,23 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navSetupDownloadUnsupported => 'Keine Karten für Ihren Standort verfügbar';
 
   @override
+  String get navSetupUpdateButton => 'Karten aktualisieren';
+
+  @override
+  String get navSetupResumeButton => 'Download fortsetzen';
+
+  @override
+  String get navSetupCheckingUpdates => 'Suche nach Updates...';
+
+  @override
+  String navSetupDownloadProgressBytes(String downloaded, String total) {
+    return 'Herunterladen... $downloaded / $total MB';
+  }
+
+  @override
+  String get navSetupInsufficientSpace => 'Nicht genügend Speicherplatz';
+
+  @override
   String get menuEnterDestinationCode => 'Zielcode eingeben';
 
   @override

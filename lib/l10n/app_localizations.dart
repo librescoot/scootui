@@ -236,6 +236,36 @@ abstract class AppLocalizations {
   /// **'No maps available for your location'**
   String get navSetupDownloadUnsupported;
 
+  /// No description provided for @navSetupUpdateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Update maps'**
+  String get navSetupUpdateButton;
+
+  /// No description provided for @navSetupResumeButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume download'**
+  String get navSetupResumeButton;
+
+  /// No description provided for @navSetupCheckingUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get navSetupCheckingUpdates;
+
+  /// No description provided for @navSetupDownloadProgressBytes.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading... {downloaded} / {total} MB'**
+  String navSetupDownloadProgressBytes(String downloaded, String total);
+
+  /// No description provided for @navSetupInsufficientSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough storage space'**
+  String get navSetupInsufficientSpace;
+
   /// No description provided for @menuEnterDestinationCode.
   ///
   /// In en, this message translates to:

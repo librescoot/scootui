@@ -43,6 +43,8 @@ class _Content extends StatelessWidget {
     final divider = isDark ? Colors.white12 : Colors.black12;
 
     final anyMissing = !navState.localDisplayMapsAvailable || !navState.routingAvailable;
+    final downloadState = context.watch<MapDownloadCubit>().state;
+    final showDownloadSection = anyMissing || downloadState.updateAvailable || downloadState.hasPartialDownload;
 
     final String title;
     if (!navState.routingAvailable && !navState.localDisplayMapsAvailable) {
@@ -90,7 +92,7 @@ class _Content extends StatelessWidget {
                         available: navState.routingAvailable,
                         isDark: isDark,
                       ),
-                      if (anyMissing) ...[
+                      if (showDownloadSection) ...[
                         const SizedBox(height: 12),
                         Divider(color: divider),
                         const SizedBox(height: 4),
@@ -164,12 +166,19 @@ class _DownloadSection extends StatelessWidget {
     final hasGps = gps.state == GpsState.fixEstablished && gps.latitude != 0;
 
     switch (downloadState.status) {
+      case MapDownloadStatus.checkingUpdates:
+        return Text(l10n.navSetupCheckingUpdates,
+            style: TextStyle(fontSize: 13, color: fgDim));
+
       case MapDownloadStatus.locating:
         return Text(l10n.navSetupDownloadLocating,
             style: TextStyle(fontSize: 13, color: fgDim));
 
       case MapDownloadStatus.downloading:
         final percent = (downloadState.progress * 100).toInt();
+        final downloadedMB = (downloadState.downloadedBytes / 1048576).toStringAsFixed(0);
+        final totalMB = (downloadState.totalBytes / 1048576).toStringAsFixed(0);
+        final hasSize = downloadState.totalBytes > 0;
         return Column(
           children: [
             LinearProgressIndicator(
@@ -178,8 +187,12 @@ class _DownloadSection extends StatelessWidget {
               backgroundColor: isDark ? Colors.white24 : Colors.black12,
             ),
             const SizedBox(height: 6),
-            Text(l10n.navSetupDownloadProgress(percent),
-                style: TextStyle(fontSize: 13, color: fgDim)),
+            Text(
+              hasSize
+                  ? l10n.navSetupDownloadProgressBytes(downloadedMB, totalMB)
+                  : l10n.navSetupDownloadProgress(percent),
+              style: TextStyle(fontSize: 13, color: fgDim),
+            ),
           ],
         );
 
@@ -192,12 +205,17 @@ class _DownloadSection extends StatelessWidget {
             style: TextStyle(fontSize: 13, color: Colors.green.shade600));
 
       case MapDownloadStatus.error:
+        final errorMsg = downloadState.errorMessage == 'insufficient_space'
+            ? l10n.navSetupInsufficientSpace
+            : downloadState.errorMessage == 'unsupported'
+                ? l10n.navSetupDownloadUnsupported
+                : l10n.navSetupDownloadError;
         return Column(
           children: [
-            Text(l10n.navSetupDownloadError,
+            Text(errorMsg,
                 style: TextStyle(fontSize: 13, color: Colors.red.shade400)),
             const SizedBox(height: 4),
-            _downloadButton(context, gps, l10n),
+            _downloadButton(context, gps, l10n, downloadState),
           ],
         );
 
@@ -210,21 +228,31 @@ class _DownloadSection extends StatelessWidget {
           return Text(l10n.navSetupDownloadWaitingGps,
               style: TextStyle(fontSize: 13, color: fgDim));
         }
-        return _downloadButton(context, gps, l10n);
+        return _downloadButton(context, gps, l10n, downloadState);
     }
   }
 
-  Widget _downloadButton(BuildContext context, GpsData gps, dynamic l10n) {
+  Widget _downloadButton(
+      BuildContext context, GpsData gps, dynamic l10n, MapDownloadState downloadState) {
+    final isUpdate = downloadState.updateAvailable;
+    final isResume = downloadState.hasPartialDownload && !isUpdate;
+    final label = isUpdate
+        ? l10n.navSetupUpdateButton
+        : isResume
+            ? l10n.navSetupResumeButton
+            : l10n.navSetupDownloadButton;
+    final icon = isUpdate ? Icons.update_outlined : Icons.download_outlined;
+
     return TextButton.icon(
       style: TextButton.styleFrom(padding: EdgeInsets.zero),
-      icon: Icon(Icons.download_outlined, color: Colors.green.shade600, size: 18),
-      label: Text(l10n.navSetupDownloadButton,
+      icon: Icon(icon, color: Colors.green.shade600, size: 18),
+      label: Text(label,
           style: TextStyle(color: Colors.green.shade600, fontSize: 13)),
       onPressed: () => context.read<MapDownloadCubit>().startDownload(
             latitude: gps.latitude,
             longitude: gps.longitude,
-            needsDisplayMaps: !navState.localDisplayMapsAvailable,
-            needsRoutingMaps: !navState.routingAvailable,
+            needsDisplayMaps: isUpdate || !navState.localDisplayMapsAvailable,
+            needsRoutingMaps: isUpdate || !navState.routingAvailable,
           ),
     );
   }

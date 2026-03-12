@@ -31,6 +31,17 @@
   "navSetupDownloadWaitingGps": "Waiting for GPS fix...",
   "navSetupDownloadNoInternet": "No internet connection",
   "navSetupDownloadUnsupported": "No maps available for your location",
+  "navSetupUpdateButton": "Update maps",
+  "navSetupResumeButton": "Resume download",
+  "navSetupCheckingUpdates": "Checking for updates...",
+  "navSetupDownloadProgressBytes": "Downloading... {downloaded} / {total} MB",
+  "@navSetupDownloadProgressBytes": {
+    "placeholders": {
+      "downloaded": {"type": "String"},
+      "total": {"type": "String"}
+    }
+  },
+  "navSetupInsufficientSpace": "Not enough storage space",
   "menuEnterDestinationCode": "Enter Destination Code",
   "menuSavedLocations": "Saved Locations",
   "menuSavedLocationsHeader": "SAVED LOCATIONS",
