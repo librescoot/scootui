@@ -7,6 +7,7 @@ import '../cubits/mdb_cubits.dart';
 import '../cubits/screen_cubit.dart';
 import '../cubits/theme_cubit.dart';
 import '../l10n/l10n.dart';
+import '../repositories/mdb_repository.dart';
 import '../services/l10n_service.dart';
 import '../services/toast_service.dart';
 import '../widgets/general/control_gestures_detector.dart';
@@ -70,6 +71,64 @@ class _AboutScreenState extends State<AboutScreen> {
   final _scrollController = ScrollController();
   static const _scrollStep = 80.0;
   int _eggStep = 0;
+
+  Map<String, String> _systemData = {};
+  Map<String, String> _mdbVersionData = {};
+  Map<String, String> _dbcVersionData = {};
+  Map<String, String> _engineEcuData = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersionData();
+  }
+
+  Future<void> _loadVersionData() async {
+    final repo = context.read<MDBRepository>();
+    Future<Map<String, String>> getAll(String key) async {
+      try {
+        final entries = await repo.getAll(key);
+        return Map.fromEntries(entries.map((e) => MapEntry(e.$1, e.$2)));
+      } catch (_) {
+        return {};
+      }
+    }
+
+    final system = await getAll('system');
+    final mdb = await getAll('version:mdb');
+    final dbc = await getAll('version:dbc');
+    final ecu = await getAll('engine-ecu');
+
+    if (mounted) {
+      setState(() {
+        _systemData = system;
+        _mdbVersionData = mdb;
+        _dbcVersionData = dbc;
+        _engineEcuData = ecu;
+      });
+    }
+  }
+
+  List<(String, String)> get _versionRows {
+    final rows = <(String, String)>[];
+    if (_mdbVersionData.isNotEmpty) {
+      final v = _mdbVersionData['version'] ?? '';
+      rows.add(('MDB', v.isNotEmpty ? v : '—'));
+    } else if (_systemData.containsKey('mdb-version')) {
+      rows.add(('MDB', _systemData['mdb-version']!));
+    }
+    if (_dbcVersionData.isNotEmpty) {
+      final v = _dbcVersionData['version'] ?? '';
+      rows.add(('DBC', v.isNotEmpty ? v : '—'));
+    } else if (_systemData.containsKey('dbc-version')) {
+      rows.add(('DBC', _systemData['dbc-version']!));
+    }
+    final nrf = _systemData['nrf-fw-version'];
+    if (nrf != null && nrf.isNotEmpty) rows.add(('nRF', nrf));
+    final ecu = _engineEcuData['fw-version'];
+    if (ecu != null && ecu.isNotEmpty) rows.add(('ECU', ecu));
+    return rows;
+  }
 
   @override
   void dispose() {
@@ -245,6 +304,35 @@ class _AboutScreenState extends State<AboutScreen> {
                       style: TextStyle(fontSize: 12, color: subtle),
                       textAlign: TextAlign.center,
                     ),
+
+                    if (_versionRows.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 40),
+                        child: Column(
+                          children: _versionRows.map((row) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 36,
+                                  child: Text(
+                                    '${row.$1}:',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: subtle),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  row.$2,
+                                  style: TextStyle(fontSize: 12, color: subtle, fontFamily: 'monospace'),
+                                ),
+                              ],
+                            ),
+                          )).toList(),
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 20),
                     Divider(color: divider, indent: 40, endIndent: 40),
