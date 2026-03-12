@@ -49,7 +49,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navSetupNoRoutingBody =>
-      'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.';
+      'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine, either local (routing maps required) or a remote server.';
 
   @override
   String get navSetupScanForInstructions => 'Scan for setup instructions';
@@ -596,7 +596,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDestinationUnreachable => 'Destination is unreachable. Please select a different location.';
 
   @override
-  String get navNewDestination => 'New navigation destination received. Calculating route...';
+  String get navNewDestination => 'Destination updated. Calculating route...';
 
   @override
   String get navWaitingForGps => 'Waiting for GPS fix';
@@ -611,7 +611,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navArrivedAtDestination => 'You have arrived at your destination!';
 
   @override
-  String get navOffRouteRerouting => 'Off route. Attempting to reroute...';
+  String get navOffRouteRerouting => 'Off route, recalculating...';
 
   @override
   String get navCouldNotCalculateNewRoute => 'Could not calculate new route';
@@ -891,7 +891,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectionLost => 'Connection to vehicle system lost';
 
   @override
-  String get connectionReconnecting => 'Attempting to reconnect to vehicle system...';
+  String get connectionReconnecting => 'Reconnecting to vehicle system...';
 
   @override
   String get connectionRestored => 'Connected to vehicle system';
@@ -925,7 +925,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get connectingExplanation =>
-      'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.';
+      'Usually a missing or unreliable connection between the Dashboard Computer (DBC) and the Middle Driver Board (MDB). Check the USB cable if this persists.';
 
   @override
   String get connectingBypassHint =>

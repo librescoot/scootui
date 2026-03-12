@@ -18,7 +18,6 @@ import '../l10n/l10n.dart';
 import '../state/enums.dart';
 import '../state/gps.dart';
 import '../state/vehicle.dart';
-import 'navigation_setup_screen.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({
@@ -30,11 +29,6 @@ class MapScreen extends StatelessWidget {
     final ThemeState(:theme) = ThemeCubit.watch(context);
     final MapCubit(:state) = context.watch<MapCubit>();
     final gpsData = GpsSync.watch(context);
-
-    // No local maps: show the setup screen instead of a broken map
-    if (state is MapUnavailable) {
-      return const NavigationSetupScreen();
-    }
 
     // No GPS fix yet: show waiting message instead of map (prevents tile requests at 0,0)
     if (state is MapOffline && gpsData.state != GpsState.fixEstablished) {

@@ -49,7 +49,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get navSetupNoRoutingBody =>
-      'Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Für Routing wird eine Valhalla-Engine benötigt — lokal (Routing-Karten erforderlich) oder ein Remote-Server.';
+      'Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Routing benötigt Valhalla, entweder lokal (Kartendownload erforderlich) oder als Remote-Server.';
 
   @override
   String get navSetupScanForInstructions => 'Für Anleitung scannen';
@@ -596,7 +596,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navDestinationUnreachable => 'Ziel ist nicht erreichbar. Bitte anderen Standort wählen.';
 
   @override
-  String get navNewDestination => 'Neues Navigationsziel empfangen. Route wird berechnet...';
+  String get navNewDestination => 'Ziel aktualisiert. Route wird berechnet...';
 
   @override
   String get navWaitingForGps => 'Warte auf GPS-Signal';
@@ -611,7 +611,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navArrivedAtDestination => 'Du hast dein Ziel erreicht!';
 
   @override
-  String get navOffRouteRerouting => 'Abseits der Route. Neue Route wird berechnet...';
+  String get navOffRouteRerouting => 'Abseits der Route, neu berechnen...';
 
   @override
   String get navCouldNotCalculateNewRoute => 'Neue Route konnte nicht berechnet werden';
@@ -925,7 +925,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get connectingExplanation =>
-      'Dies deutet in der Regel auf eine fehlende oder instabile Verbindung zwischen dem Dashboard-Computer (DBC) und dem Middle Driver Board (MDB) hin. Überprüfe das USB-Kabel, falls das Problem anhält.';
+      'Meist eine fehlende oder instabile Verbindung zwischen dem Dashboard Computer (DBC) und dem Middle Driver Board (MDB). USB-Kabel prüfen, falls das Problem anhält.';
 
   @override
   String get connectingBypassHint =>

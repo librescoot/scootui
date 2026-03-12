@@ -173,7 +173,7 @@ abstract class AppLocalizations {
   /// No description provided for @navSetupNoRoutingBody.
   ///
   /// In en, this message translates to:
-  /// **'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.'**
+  /// **'Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine, either local (routing maps required) or a remote server.'**
   String get navSetupNoRoutingBody;
 
   /// No description provided for @navSetupScanForInstructions.
@@ -1163,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @navNewDestination.
   ///
   /// In en, this message translates to:
-  /// **'New navigation destination received. Calculating route...'**
+  /// **'Destination updated. Calculating route...'**
   String get navNewDestination;
 
   /// No description provided for @navWaitingForGps.
@@ -1193,7 +1193,7 @@ abstract class AppLocalizations {
   /// No description provided for @navOffRouteRerouting.
   ///
   /// In en, this message translates to:
-  /// **'Off route. Attempting to reroute...'**
+  /// **'Off route, recalculating...'**
   String get navOffRouteRerouting;
 
   /// No description provided for @navCouldNotCalculateNewRoute.
@@ -1733,7 +1733,7 @@ abstract class AppLocalizations {
   /// No description provided for @connectionReconnecting.
   ///
   /// In en, this message translates to:
-  /// **'Attempting to reconnect to vehicle system...'**
+  /// **'Reconnecting to vehicle system...'**
   String get connectionReconnecting;
 
   /// No description provided for @connectionRestored.
@@ -1799,7 +1799,7 @@ abstract class AppLocalizations {
   /// No description provided for @connectingExplanation.
   ///
   /// In en, this message translates to:
-  /// **'This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.'**
+  /// **'Usually a missing or unreliable connection between the Dashboard Computer (DBC) and the Middle Driver Board (MDB). Check the USB cable if this persists.'**
   String get connectingExplanation;
 
   /// No description provided for @connectingBypassHint.

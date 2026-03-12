@@ -83,7 +83,10 @@ MenuNode buildMenuTree(BuildContext context) {
         },
         isVisible: (context) {
           final screen = context.read<ScreenCubit>();
-          return screen.state is ScreenCluster;
+          if (screen.state is! ScreenCluster) return false;
+          final navState = context.read<NavigationAvailabilityCubit>().state;
+          final s = context.read<SettingsSync>().state;
+          return navState.localDisplayMapsAvailable || s.mapType == MapType.online;
         },
       ),
 

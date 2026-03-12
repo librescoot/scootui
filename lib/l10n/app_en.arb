@@ -15,7 +15,7 @@
   "navSetupTitleBothUnavailable": "Navigation Not Available",
   "navSetupLocalDisplayMaps": "Offline display maps",
   "navSetupRoutingEngine": "Routing engine",
-  "navSetupNoRoutingBody": "Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine — local (needs routing maps) or a remote server.",
+  "navSetupNoRoutingBody": "Map display and routing are independent. Display tiles can be local (offline .mbtiles) or online. Routing requires a Valhalla engine, either local (routing maps required) or a remote server.",
   "navSetupScanForInstructions": "Scan for setup instructions",
   "navSetupDownloadButton": "Download maps",
   "navSetupDownloadLocating": "Detecting your region...",
@@ -322,12 +322,12 @@
   "navCurrentPositionNotAvailable": "Current position not available",
   "navCouldNotCalculateRoute": "Could not calculate route",
   "navDestinationUnreachable": "Destination is unreachable. Please select a different location.",
-  "navNewDestination": "New navigation destination received. Calculating route...",
+  "navNewDestination": "Destination updated. Calculating route...",
   "navWaitingForGps": "Waiting for GPS fix",
   "navWaitingForGpsRoute": "Waiting for recent GPS fix to calculate route.",
   "navResumingNavigation": "Resuming navigation.",
   "navArrivedAtDestination": "You have arrived at your destination!",
-  "navOffRouteRerouting": "Off route. Attempting to reroute...",
+  "navOffRouteRerouting": "Off route, recalculating...",
   "navCouldNotCalculateNewRoute": "Could not calculate new route",
 
   "batteryKm": "km",
@@ -456,7 +456,7 @@
   "aboutGenuineAdvantage": "Genuine Advantage activated.",
 
   "connectionLost": "Connection to vehicle system lost",
-  "connectionReconnecting": "Attempting to reconnect to vehicle system...",
+  "connectionReconnecting": "Reconnecting to vehicle system...",
   "connectionRestored": "Connected to vehicle system",
 
   "shortcutPressToConfirm": "Press to confirm",
@@ -470,7 +470,7 @@
   "carplayWaitingForVideo": "Waiting for video...",
 
   "connectingTitle": "Trying to connect to vehicle system...",
-  "connectingExplanation": "This usually indicates a missing or unreliable connection between the dashboard computer (DBC) and the middle driver board (MDB). Check the USB cable if this persists.",
+  "connectingExplanation": "Usually a missing or unreliable connection between the Dashboard Computer (DBC) and the Middle Driver Board (MDB). Check the USB cable if this persists.",
   "connectingBypassHint": "To put your scooter into drive mode anyway, raise the kickstand, hold both brakes and press the seatbox button.",
 
   "destinationOfflineOnly": "The destination selector only works with offline maps",

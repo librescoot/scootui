@@ -79,6 +79,7 @@ class _Content extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: fg),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       _StatusRow(
@@ -104,11 +105,11 @@ class _Content extends StatelessWidget {
                         style: TextStyle(fontSize: 14, color: fgDim, height: 1.4),
                         textAlign: TextAlign.center,
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 20),
                       QrImageView(
                         data: _docsUrl,
                         version: QrVersions.auto,
-                        size: 140,
+                        size: 130,
                         backgroundColor: Colors.white,
                         eyeStyle: const QrEyeStyle(
                           eyeShape: QrEyeShape.square,

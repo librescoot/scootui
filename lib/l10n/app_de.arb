@@ -15,7 +15,7 @@
   "navSetupTitleBothUnavailable": "Navigation nicht verfügbar",
   "navSetupLocalDisplayMaps": "Offline-Kartenkacheln",
   "navSetupRoutingEngine": "Routing-Engine",
-  "navSetupNoRoutingBody": "Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Für Routing wird eine Valhalla-Engine benötigt — lokal (Routing-Karten erforderlich) oder ein Remote-Server.",
+  "navSetupNoRoutingBody": "Kartenanzeige und Routing sind unabhängig. Kartenkacheln können lokal (offline .mbtiles) oder online sein. Routing benötigt Valhalla, entweder lokal (Kartendownload erforderlich) oder als Remote-Server.",
   "navSetupScanForInstructions": "Für Anleitung scannen",
   "navSetupDownloadButton": "Karten herunterladen",
   "navSetupDownloadLocating": "Region wird erkannt...",
@@ -185,12 +185,12 @@
   "navCurrentPositionNotAvailable": "Aktuelle Position nicht verfügbar",
   "navCouldNotCalculateRoute": "Route konnte nicht berechnet werden",
   "navDestinationUnreachable": "Ziel ist nicht erreichbar. Bitte anderen Standort wählen.",
-  "navNewDestination": "Neues Navigationsziel empfangen. Route wird berechnet...",
+  "navNewDestination": "Ziel aktualisiert. Route wird berechnet...",
   "navWaitingForGps": "Warte auf GPS-Signal",
   "navWaitingForGpsRoute": "Warte auf GPS-Signal zur Routenberechnung.",
   "navResumingNavigation": "Navigation wird fortgesetzt.",
   "navArrivedAtDestination": "Du hast dein Ziel erreicht!",
-  "navOffRouteRerouting": "Abseits der Route. Neue Route wird berechnet...",
+  "navOffRouteRerouting": "Abseits der Route, neu berechnen...",
   "navCouldNotCalculateNewRoute": "Neue Route konnte nicht berechnet werden",
 
   "batteryKm": "km",
@@ -313,7 +313,7 @@
   "carplayWaitingForVideo": "Warte auf Video...",
 
   "connectingTitle": "Verbindung zum Fahrzeugsystem wird hergestellt...",
-  "connectingExplanation": "Dies deutet in der Regel auf eine fehlende oder instabile Verbindung zwischen dem Dashboard-Computer (DBC) und dem Middle Driver Board (MDB) hin. Überprüfe das USB-Kabel, falls das Problem anhält.",
+  "connectingExplanation": "Meist eine fehlende oder instabile Verbindung zwischen dem Dashboard Computer (DBC) und dem Middle Driver Board (MDB). USB-Kabel prüfen, falls das Problem anhält.",
   "connectingBypassHint": "Um den Fahrmodus trotzdem zu aktivieren, klappe den Seitenständer hoch, halte beide Bremsen und drücke den Sitzbankknopf.",
 
   "destinationOfflineOnly": "Die Zielauswahl funktioniert nur mit Offline-Karten",
