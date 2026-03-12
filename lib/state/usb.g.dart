@@ -9,6 +9,7 @@ part of 'usb.dart';
 abstract mixin class $UsbData implements Syncable<UsbData> {
   String get status;
   String get mode;
+  String get step;
   get syncSettings => SyncSettings(
       "usb",
       Duration(microseconds: 5000000),
@@ -27,6 +28,13 @@ abstract mixin class $UsbData implements Syncable<UsbData> {
             typeName: "String",
             defaultValue: "normal",
             interval: null),
+        SyncFieldSettings(
+            name: "step",
+            variable: "step",
+            type: SyncFieldType.string,
+            typeName: "String",
+            defaultValue: "",
+            interval: null),
       ],
       "null",
       []);
@@ -36,6 +44,7 @@ abstract mixin class $UsbData implements Syncable<UsbData> {
     return UsbData(
       status: "status" != name ? status : value,
       mode: "mode" != name ? mode : value,
+      step: "step" != name ? step : value,
     );
   }
 
@@ -44,10 +53,11 @@ abstract mixin class $UsbData implements Syncable<UsbData> {
     return UsbData(
       status: status,
       mode: mode,
+      step: step,
     );
   }
 
-  List<Object?> get props => [status, mode];
+  List<Object?> get props => [status, mode, step];
   @override
   String toString() {
     final buf = StringBuffer();
@@ -55,6 +65,7 @@ abstract mixin class $UsbData implements Syncable<UsbData> {
     buf.writeln("UsbData(");
     buf.writeln("	status = $status");
     buf.writeln("	mode = $mode");
+    buf.writeln("	step = $step");
     buf.writeln(")");
 
     return buf.toString();

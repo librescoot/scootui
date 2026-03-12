@@ -13,8 +13,13 @@ class UsbData with $UsbData {
   @StateField(defaultValue: "normal")
   String mode;
 
+  @override
+  @StateField(defaultValue: "")
+  String step;
+
   UsbData({
     this.status = "idle",
     this.mode = "normal",
+    this.step = "",
   });
 }

@@ -451,4 +451,18 @@ class RedisMDBRepository implements MDBRepository {
       await cmd.send_object(["SREM", setKey, member]);
     });
   }
+
+  @override
+  Future<List<String>> lrange(String key, int start, int stop) {
+    return _withConnection((cmd) async {
+      final result = await cmd.send_object(["LRANGE", key, start, stop]);
+      final List<String> items = [];
+      if (result is List) {
+        for (final item in result) {
+          items.add(item.toString());
+        }
+      }
+      return items;
+    });
+  }
 }

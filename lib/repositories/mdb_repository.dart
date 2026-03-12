@@ -28,6 +28,8 @@ abstract class MDBRepository {
   Future<void> removeFromSet(String setKey, String member);
 
   Future<void> hdel(String key, String field);
+
+  Future<List<String>> lrange(String key, int start, int stop);
 }
 
 class InMemoryMDBRepository implements MDBRepository {
@@ -180,6 +182,11 @@ class InMemoryMDBRepository implements MDBRepository {
     if (_setStorage[setKey]?.isEmpty ?? false) {
       _setStorage.remove(setKey);
     }
+  }
+
+  @override
+  Future<List<String>> lrange(String key, int start, int stop) async {
+    return [];
   }
 
   @override
