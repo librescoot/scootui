@@ -62,7 +62,7 @@ class GpsData extends Equatable with $GpsData {
       final gpsTime = DateTime.parse(ts);
       final now = DateTime.now();
       final diff = now.difference(gpsTime).inSeconds;
-      return diff <= 10; // GPS fix is recent if within 10 seconds
+      return diff <= 20; // GPS fix is recent if within 20 seconds
     } catch (e) {
       return false;
     }

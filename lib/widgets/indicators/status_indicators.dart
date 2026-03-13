@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:simple_animations/simple_animations.dart';
 
 import '../../cubits/mdb_cubits.dart';
 import '../../cubits/theme_cubit.dart';
@@ -25,6 +27,7 @@ class _Icons {
   static const String cloudDisconnected = 'librescoot-internet-cloud-disconnected.svg';
   static const String gpsOff = 'librescoot-gps-off.svg';
   static const String gpsSearching = 'librescoot-gps-searching.svg';
+  static const String gpsCenterDot = 'librescoot-gps-center-dot.svg';
   static const String gpsFixEstablished = 'librescoot-gps-fix-established.svg';
   static const String gpsError = 'librescoot-gps-error.svg';
 }
@@ -109,6 +112,15 @@ class StatusIndicators extends StatelessWidget {
 
   bool _gpsHasErrorFields(GpsState state) => state == GpsState.error;
 
+  /// Whether the GPS indicator should show the searching animation (pulsing center dot)
+  bool _gpsIsSearching(GpsState state, bool hasRecentFix, bool hasTimestamp) {
+    if (state == GpsState.off) {
+      return !hasRecentFix && hasTimestamp;
+    }
+    return state == GpsState.searching ||
+        (state == GpsState.fixEstablished && !hasRecentFix);
+  }
+
   String _gpsIconFields(GpsState state, bool hasRecentFix, bool hasTimestamp) {
     if (state == GpsState.off) {
       if (hasRecentFix) return _Icons.gpsFixEstablished;
@@ -121,6 +133,65 @@ class StatusIndicators extends StatelessWidget {
       GpsState.error => _Icons.gpsError,
       GpsState.off => _Icons.gpsOff,
     };
+  }
+
+  /// Builds the GPS indicator widget — uses a pulsing center dot animation for searching state
+  Widget _buildGpsIndicator(GpsState gpsState, bool gpsRecent, bool gpsHasTs, Color color, double size) {
+    if (_gpsIsSearching(gpsState, gpsRecent, gpsHasTs)) {
+      // Searching: show crosshair solidly + pulse the center dot
+      return SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          children: [
+            // Base crosshair (always visible)
+            SvgPicture.asset(
+              'assets/icons/${_Icons.gpsSearching}',
+              colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              width: size,
+              height: size,
+            ),
+            // Pulsing center dot overlay
+            CustomAnimationBuilder<double>(
+              control: Control.loop,
+              tween: TweenSequence<double>([
+                TweenSequenceItem(
+                  tween: Tween(begin: 0.0, end: 1.0)
+                      .chain(CurveTween(curve: Curves.easeInOut)),
+                  weight: 600,
+                ),
+                TweenSequenceItem(
+                  tween: Tween(begin: 1.0, end: 0.0)
+                      .chain(CurveTween(curve: Curves.easeInOut)),
+                  weight: 600,
+                ),
+                TweenSequenceItem(
+                  tween: ConstantTween<double>(0.0),
+                  weight: 300,
+                ),
+              ]),
+              duration: const Duration(milliseconds: 1500),
+              builder: (context, value, child) => Opacity(
+                opacity: value,
+                child: SvgPicture.asset(
+                  'assets/icons/${_Icons.gpsCenterDot}',
+                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                  width: size,
+                  height: size,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return IndicatorLight(
+      icon: IndicatorLight.svgAsset(_gpsIconFields(gpsState, gpsRecent, gpsHasTs)),
+      isActive: true,
+      size: size,
+      activeColor: color,
+    );
   }
 
   bool bluetoothIsActive(BluetoothData bluetooth) {
@@ -195,12 +266,7 @@ class StatusIndicators extends StatelessWidget {
     ];
 
     if (shouldShowIndicator(showGps ?? 'error', _gpsIsActiveFields(gpsState, gpsRecent), _gpsHasErrorFields(gpsState))) {
-      children.add(IndicatorLight(
-        icon: IndicatorLight.svgAsset(_gpsIconFields(gpsState, gpsRecent, gpsHasTs)),
-        isActive: true,
-        size: size,
-        activeColor: color,
-      ));
+      children.add(_buildGpsIndicator(gpsState, gpsRecent, gpsHasTs, color, size));
     }
 
     if (shouldShowIndicator(showBt ?? 'active-or-error', bluetoothIsActive(bluetooth), bluetoothHasError(bluetooth))) {

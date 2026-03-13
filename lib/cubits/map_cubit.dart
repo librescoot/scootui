@@ -697,7 +697,7 @@ class MapCubit extends Cubit<MapState> {
 
     // Check preconditions
     final gpsData = _lastGpsData;
-    if (gpsData == null || !gpsData.hasRecentFix || _estimatedPosition == null) {
+    if (gpsData == null || _estimatedPosition == null) {
       return;
     }
 
@@ -767,8 +767,8 @@ class MapCubit extends Cubit<MapState> {
       heading = _lastValidHeading;
     }
 
-    // Blend toward GPS correction target
-    if (_gpsCorrectionTarget != null) {
+    // Blend toward GPS correction target (only when GPS fix is recent)
+    if (_gpsCorrectionTarget != null && gpsData.hasRecentFix) {
       final target = _gpsCorrectionTarget!;
       final currentPos = LatLng(estLat, estLng);
       final errorM = distanceCalculator.distance(currentPos, target);

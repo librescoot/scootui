@@ -30,7 +30,7 @@ class NavigationCubit extends Cubit<NavigationState> {
 
   static const double _arrivalProximityMeters = 50.0;
   static const double _shutdownProximityMeters = 250.0;
-  static const double _offRouteTolerance = 40.0; // meters
+  static const double _offRouteTolerance = 60.0; // meters
   DateTime? _lastReroute;
   DateTime? _lastStreetLog;
   LatLng? _currentPosition;
@@ -291,15 +291,14 @@ class NavigationCubit extends Cubit<NavigationState> {
   }
 
   void _onGpsData(GpsData data) {
-    // Only update position if GPS fix is recent (within 10 seconds)
+    // Update position when GPS fix is recent; keep last known position when stale
+    // so navigation and dead reckoning can continue through brief GPS gaps
     if (data.hasRecentFix) {
       final position = LatLng(data.latitude, data.longitude);
       _currentPosition = position;
 
       // Log nearest street properties
       _logNearestStreetProperties(position);
-    } else {
-      _currentPosition = null;
     }
 
     final currentState = state;
@@ -423,7 +422,7 @@ class NavigationCubit extends Cubit<NavigationState> {
     ));
 
     // Check if we need to reroute
-    if (isOffRoute && (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 5))) {
+    if (isOffRoute && (_lastReroute == null || DateTime.now().difference(_lastReroute!) > const Duration(seconds: 15))) {
       ToastService.showWarning(L10nService.current.navOffRouteRerouting);
       _reroute(position, destination);
     }
