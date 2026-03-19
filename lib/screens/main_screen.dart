@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
@@ -10,7 +9,6 @@ import '../l10n/l10n.dart';
 import '../cubits/mdb_cubits.dart';
 import '../cubits/menu_cubit.dart';
 import '../cubits/screen_cubit.dart';
-import '../cubits/shutdown_cubit.dart';
 import '../env_config.dart';
 import '../repositories/mdb_repository.dart';
 import '../repositories/redis_mdb_repository.dart';
@@ -46,7 +44,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  bool _poweroffScheduled = false;
   Stream<bool>? _prolongedDisconnectStream;
   bool _startupGraceElapsed = false;
   Timer? _startupTimer;
@@ -95,18 +92,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return OKToast(
       child: ToastListenerWrapper(
-        child: BlocListener<ShutdownCubit, ShutdownState>(
-          listenWhen: (prev, curr) => prev.status != curr.status,
-          listener: (context, shutdownState) {
-            if (shutdownState.status == ShutdownStatus.exiting && !_poweroffScheduled) {
-              debugPrint('Poweroff: shutdown animation complete, executing poweroff');
-              if (Platform.isLinux && Platform.environment['USER'] == 'root') {
-                _poweroffScheduled = true;
-                Process.run('poweroff', []);
-              }
-            }
-          },
-          child: BlocListener<VehicleSync, VehicleData>(
+        child: BlocListener<VehicleSync, VehicleData>(
             listenWhen: (prev, curr) => prev.state != curr.state,
             listener: (context, vehicleData) {
               final vehicleState = vehicleData.state;
@@ -169,7 +155,6 @@ class _MainScreenState extends State<MainScreen> {
               },
             ),
           ),
-        ),
       ),
     );
   }
