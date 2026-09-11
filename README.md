@@ -1,6 +1,10 @@
-# ScootUI - LibreScoot's User Interface
+# ScootUI - Librescoot's User Interface
 
-ScootUI is the user interface component for the LibreScoot electric scooter project. It's a Flutter application designed to run on a display mounted on electric scooters, providing riders with real-time information, controls, and navigation capabilities.
+ScootUI is the user interface component for the Librescoot electric scooter project. It's a Flutter application designed to run on a display mounted on electric scooters, providing riders with real-time information, controls, and navigation capabilities.
+
+> **Archived.** ScootUI has been superseded by [scootui-qt](https://github.com/librescoot/scootui-qt) for the DBC dashboard; this repository is kept for history only.
+
+Part of the [Librescoot](https://librescoot.org/) open-source platform.
 
 [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
 
